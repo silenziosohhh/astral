@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tornei - Astral Cup</title>
+    <link rel="stylesheet" href="../styles/main.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-container">
+        <a href="/" class="navbar-brand">
+          <img src="../images/astralcup.png" alt="Astral Cup Logo" />
+          <span>ASTRAL CUP</span>
+        </a>
+
+        <div class="navbar-content">
+          <ul class="navbar-menu">
+            <li><a href="staff.html">Staff</a></li>
+            <li><a href="classifica.html">Classifica</a></li>
+            <li><a href="/">Home</a></li>
+            <li><a href="memories.html">Memories</a></li>            
+            <li><a href="tornei.html" class="outline-glow">Tornei</a></li>
+          </ul>
+        </div>
+        <div class="navbar-actions">
+            <a href="/discord" class="btn-discord outline-glow"
+                ><i class="fab fa-discord"></i> Login</a
+            >
+        </div>
+        <div class="navbar-login">
+          <!-- Populated by JS when logged in -->
+        </div>
+        
+        <div class="navbar-toggle" id="mobile-menu">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container" style="padding-top: 120px; padding-bottom: 50px">
+      <h1 class="section-title">Tornei Disponibili</h1>
+
+      <div class="grid-3">
+        <!-- Torneo 1 -->
+        <div class="card">
+          <div class="card-icon"><i class="fas fa-gamepad"></i></div>
+          <h3>Astral Weekly #45</h3>
+          <p style="margin: 0.5rem 0">Data: 15/11/2023 - 15:00</p>
+          <p style="margin-bottom: 1.5rem">Montepremi: <strong>50€</strong></p>
+          <p style="margin-bottom: 1.5rem">
+            Stato: <span class="status-open">Aperto</span>
+          </p>
+          <a href="#" class="btn-visit">Iscriviti Ora</a>
+        </div>
+
+        <!-- Torneo 2 -->
+        <div class="card">
+          <div class="card-icon"><i class="fas fa-trophy"></i></div>
+          <h3>Monthly Cup November</h3>
+          <p style="margin: 0.5rem 0">Data: 30/11/2023 - 16:00</p>
+          <p style="margin-bottom: 1.5rem">Montepremi: <strong>200€</strong></p>
+          <p style="margin-bottom: 1.5rem">
+            Stato: <span class="status-open">Aperto</span>
+          </p>
+          <a href="#" class="btn-visit">Iscriviti Ora</a>
+        </div>
+
+        <!-- Torneo 3 -->
+        <div class="card" style="opacity: 0.7">
+          <div class="card-icon"><i class="fas fa-lock"></i></div>
+          <h3>Astral Weekly #44</h3>
+          <p style="margin: 0.5rem 0">Data: 08/11/2023</p>
+          <p style="margin-bottom: 1.5rem">
+            Stato: <span class="status-closed">Concluso</span>
+          </p>
+          <a
+            href="#"
+            class="btn-visit"
+            style="border-color: #64748b; color: #64748b"
+            >Vedi Risultati</a
+          >
+        </div>
+      </div>
+    </div>
+    <!-- Footer -->
+    <footer>
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h3>Astral Cup</h3>
+            <p>
+              La piattaforma competitiva definitiva per dimostrare il tuo
+              valore. Unisciti alla community, partecipa ai tornei e scala la
+              classifica verso la gloria eterna.
+            </p>
+            <div class="social-links">
+              <a href="#"><i class="fab fa-discord"></i></a>
+              <a href="#"><i class="fab fa-twitter"></i></a>
+              <a href="#"><i class="fab fa-instagram"></i></a>
+              <a href="#"><i class="fab fa-youtube"></i></a>
+            </div>
+          </div>
+          <div class="footer-section">
+            <h3>Navigazione</h3>
+            <ul class="footer-links">
+              <li><a href="../index.html">Home</a></li>
+              <li><a href="tornei.html">Tornei</a></li>
+              <li><a href="classifica.html">Classifica</a></li>
+              <li><a href="../index.html#staff">Staff</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h3>Supporto</h3>
+            <ul class="footer-links">
+              <li><a href="#">Regolamento</a></li>
+              <li><a href="#">FAQ</a></li>
+              <li><a href="#">Contattaci</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2023 Astral Cup. Tutti i diritti riservati.</p>
+        </div>
+      </div>
+    </footer>
+    <script src="../js/navbar.js"></script>
+  </body>
+</html>

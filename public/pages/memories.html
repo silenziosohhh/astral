@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Memories - Astral Cup</title>
+    <link rel="stylesheet" href="../styles/main.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-container">
+        <a href="/" class="navbar-brand">
+          <img src="../images/astralcup.png" alt="Astral Cup Logo" />
+          <span>ASTRAL CUP</span>
+        </a>
+
+        <div class="navbar-content">
+          <ul class="navbar-menu">
+            <li><a href="staff.html">Staff</a></li>
+            <li><a href="classifica.html">Classifica</a></li>
+            <li><a href="/">Home</a></li>
+            <li><a href="memories.html" class="outline-glow">Memories</a></li>            
+            <li><a href="tornei.html">Tornei</a></li>
+          </ul>
+        </div>
+        <div class="navbar-actions">
+            <a href="/discord" class="btn-discord outline-glow"
+                ><i class="fab fa-discord"></i> Login</a
+            >
+        </div>
+        <div class="navbar-login">
+          <!-- Populated by JS when logged in -->
+        </div>
+        
+        <div class="navbar-toggle" id="mobile-menu">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container" style="padding-top: 120px; padding-bottom: 50px">
+      <h1 class="section-title">Memories & Clips</h1>
+      <p
+        style="
+          text-align: center;
+          color: var(--light);
+          margin-bottom: 3rem;
+          font-size: 1.2rem;
+        "
+      >
+        I momenti più epici, le giocate leggendarie e la storia della Astral
+        Cup.
+      </p>
+
+      <div class="grid-3">
+        <div class="card memory-card" style="cursor: pointer">
+          <div style="font-size: 3rem; color: var(--light); opacity: 0.8">
+            <i class="fas fa-play-circle"></i>
+          </div>
+          <p style="margin-top: 1rem">Best of Weekly #44</p>
+        </div>
+        <div class="card memory-card" style="cursor: pointer">
+          <div style="font-size: 3rem; color: var(--light); opacity: 0.8">
+            <i class="fas fa-play-circle"></i>
+          </div>
+          <p style="margin-top: 1rem">Finale Monthly Cup</p>
+        </div>
+        <div class="card memory-card" style="cursor: pointer">
+          <div style="font-size: 3rem; color: var(--light); opacity: 0.8">
+            <i class="fas fa-play-circle"></i>
+          </div>
+          <p style="margin-top: 1rem">Insane Clutch by PlayerX</p>
+        </div>
+        <div class="card memory-card" style="cursor: pointer">
+          <div style="font-size: 3rem; color: var(--light); opacity: 0.8">
+            <i class="fas fa-play-circle"></i>
+          </div>
+          <p style="margin-top: 1rem">Season 1 Highlights</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h3>Astral Cup</h3>
+            <p>
+              La piattaforma competitiva definitiva per dimostrare il tuo
+              valore. Unisciti alla community, partecipa ai tornei e scala la
+              classifica verso la gloria eterna.
+            </p>
+            <div class="social-links">
+              <a href="#"><i class="fab fa-discord"></i></a>
+              <a href="#"><i class="fab fa-twitter"></i></a>
+              <a href="#"><i class="fab fa-instagram"></i></a>
+              <a href="#"><i class="fab fa-youtube"></i></a>
+            </div>
+          </div>
+          <div class="footer-section">
+            <h3>Navigazione</h3>
+            <ul class="footer-links">
+              <li><a href="../index.html">Home</a></li>
+              <li><a href="tornei.html">Tornei</a></li>
+              <li><a href="classifica.html">Classifica</a></li>
+              <li><a href="../index.html#staff">Staff</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h3>Supporto</h3>
+            <ul class="footer-links">
+              <li><a href="#">Regolamento</a></li>
+              <li><a href="#">FAQ</a></li>
+              <li><a href="#">Contattaci</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2023 Astral Cup. Tutti i diritti riservati.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="../js/navbar.js"></script>
+  </body>
+</html>
