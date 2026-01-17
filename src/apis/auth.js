@@ -6,7 +6,6 @@ const User = require("../database/User");
 
 const router = express.Router();
 
-// Configurazione Passport Discord Strategy
 passport.use(
   new DiscordStrategy(
     {
@@ -17,7 +16,6 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        // Cerca l'utente nel DB o crealo se non esiste
         let user = await User.findOne({ discordId: profile.id });
 
         if (!user) {
@@ -26,10 +24,10 @@ passport.use(
             username: profile.username,
             discriminator: profile.discriminator,
             avatar: profile.avatar,
+            role: "utente",
           });
           await user.save();
         } else {
-          // Aggiorna i dati se sono cambiati
           user.username = profile.username;
           user.avatar = profile.avatar;
           user.discriminator = profile.discriminator;
@@ -43,13 +41,11 @@ passport.use(
   ),
 );
 
-// Serializzazione utente per la sessione temporanea OAuth
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser((id, done) =>
   User.findById(id).then((user) => done(null, user)),
 );
 
-// Middleware per verificare il token JWT dai cookie
 const verifyToken = (req, res, next) => {
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ message: "Unauthorized" });
@@ -61,7 +57,6 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-// Rotta per ottenere i dati dell'utente corrente
 router.get("/me", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
@@ -72,15 +67,12 @@ router.get("/me", verifyToken, async (req, res) => {
   }
 });
 
-// 1. Rotta per iniziare il login
 router.get("/discord", passport.authenticate("discord"));
 
-// 2. Callback di Discord
 router.get(
   "/discord/callback",
   passport.authenticate("discord", { failureRedirect: "/" }),
   (req, res) => {
-    // Login avvenuto con successo, generiamo il JWT
     const token = jwt.sign(
       {
         id: req.user._id,
@@ -91,14 +83,13 @@ router.get(
       { expiresIn: "7d" },
     );
 
-    // Salviamo il token in un cookie sicuro httpOnly
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Solo https in produzione
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 giorni
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.redirect("/"); // Torna alla home
+    res.redirect("/");
   },
 );
 

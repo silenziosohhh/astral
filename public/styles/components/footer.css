@@ -2,7 +2,7 @@ footer {
   background: var(--glass-dark);
   border-top: 1px solid var(--glass-border-light);
   padding: 4rem 0 1rem;
-  margin-top: auto; /* Assicura che il footer stia in fondo se la pagina è corta */
+  margin-top: auto;
   backdrop-filter: blur(10px);
   position: relative;
   z-index: 10;

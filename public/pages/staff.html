@@ -1,16 +1,17 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Il Nostro Staff</title>
-    <link rel="stylesheet" href="../styles/main.css">
-    <!-- Opzionale: FontAwesome per le icone social -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head>
-<body>
-
-    <!-- Header Semplice -->
+    <link rel="stylesheet" href="../styles/main.css" />
+    <link rel="icon" type="image/x-icon" href="../images/astralcup-logo.png">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
+  <body>
     <nav class="navbar">
       <div class="navbar-container">
         <a href="/" class="navbar-brand">
@@ -23,19 +24,18 @@
             <li><a href="staff.html" class="outline-glow">Staff</a></li>
             <li><a href="classifica.html">Classifica</a></li>
             <li><a href="/">Home</a></li>
-            <li><a href="memories.html">Memories</a></li>            
+            <li><a href="memories.html">Memories</a></li>
             <li><a href="tornei.html">Tornei</a></li>
           </ul>
         </div>
         <div class="navbar-actions">
-            <a href="/discord" class="btn-discord outline-glow"
-                ><i class="fab fa-discord"></i> Login</a
-            >
+          <a href="/discord" class="btn-discord outline-glow"
+            ><i class="fab fa-discord"></i> Login</a
+          >
         </div>
         <div class="navbar-login">
-          <!-- Populated by JS when logged in -->
         </div>
-        
+
         <div class="navbar-toggle" id="mobile-menu">
           <span class="bar"></span>
           <span class="bar"></span>
@@ -44,65 +44,16 @@
       </div>
     </nav>
 
-    <!-- Sezione Staff -->
     <div class="container" style="padding-top: 120px; padding-bottom: 50px">
-        <div class="section-title">
-            <h2>Il Nostro Team</h2>
-            <p>Incontra le persone che rendono tutto questo possibile.</p>
-        </div>
+      <div class="section-title">
+        <h2>Il Nostro Team</h2>
+        <p>Incontra le persone che rendono tutto questo possibile.</p>
+      </div>
 
-        <div class="team-grid">
-            <!-- Membro 1 -->
-            <div class="team-card">
-                <div class="img-wrapper">
-                    <img src="https://via.placeholder.com/300x300" alt="Foto di Mario Rossi">
-                </div>
-                <div class="card-content">
-                    <h3>Mario Rossi</h3>
-                    <span class="role">CEO & Founder</span>
-                    <p class="bio">Mario guida la visione strategica dell'azienda con oltre 10 anni di esperienza nel settore.</p>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-linkedin"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Membro 2 -->
-            <div class="team-card">
-                <div class="img-wrapper">
-                    <img src="https://via.placeholder.com/300x300" alt="Foto di Giulia Bianchi">
-                </div>
-                <div class="card-content">
-                    <h3>Giulia Bianchi</h3>
-                    <span class="role">Lead Developer</span>
-                    <p class="bio">Esperta di codice pulito e architetture scalabili. Ama risolvere problemi complessi.</p>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-github"></i></a>
-                        <a href="#"><i class="fab fa-linkedin"></i></a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Membro 3 -->
-            <div class="team-card">
-                <div class="img-wrapper">
-                    <img src="https://via.placeholder.com/300x300" alt="Foto di Luca Verdi">
-                </div>
-                <div class="card-content">
-                    <h3>Luca Verdi</h3>
-                    <span class="role">Creative Director</span>
-                    <p class="bio">Luca trasforma le idee in realtà visive mozzafiato. Appassionato di UI/UX design.</p>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-dribbble"></i></a>
-                    </div>
-                </div>
-            </div>
-        </div>
+      <div class="grid-3" id="staff-grid">
+      </div>
     </div>
 
-    <!-- Footer Semplice -->
     <footer>
       <div class="container">
         <div class="footer-content">
@@ -145,5 +96,6 @@
     </footer>
 
     <script src="../js/navbar.js"></script>
-</body>
+    <script src="../js/app.js"></script>
+  </body>
 </html>

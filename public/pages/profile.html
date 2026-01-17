@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Memories - Astral Cup</title>
+    <title>Il Mio Profilo - Astral Cup</title>
     <link rel="stylesheet" href="../styles/main.css" />
     <link rel="icon" type="image/x-icon" href="../images/astralcup-logo.png">
     <link
@@ -14,7 +14,7 @@
   <body>
     <nav class="navbar">
       <div class="navbar-container">
-        <a href="/" class="navbar-brand">
+        <a href="../index.html" class="navbar-brand">
           <img src="../images/astralcup.png" alt="Astral Cup Logo" />
           <span>ASTRAL CUP</span>
         </a>
@@ -23,8 +23,8 @@
           <ul class="navbar-menu">
             <li><a href="staff.html">Staff</a></li>
             <li><a href="classifica.html">Classifica</a></li>
-            <li><a href="/">Home</a></li>
-            <li><a href="memories.html" class="outline-glow">Memories</a></li>
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="memories.html">Memories</a></li>
             <li><a href="tornei.html">Tornei</a></li>
           </ul>
         </div>
@@ -45,24 +45,43 @@
     </nav>
 
     <div class="container" style="padding-top: 120px; padding-bottom: 50px">
-      <h1 class="section-title">Memories & Clips</h1>
-      <p
-        style="
-          text-align: center;
-          color: var(--light);
-          margin-bottom: 3rem;
-          font-size: 1.2rem;
-        "
-      >
-        I momenti più epici, le giocate leggendarie e la storia della Astral
-        Cup.
-      </p>
+      <div class="profile-header admin-card">
+        <div class="profile-info-main">
+          <img id="profile-avatar" src="" alt="Avatar" />
+          <div>
+            <h1 id="profile-username">Caricamento...</h1>
+            <span id="profile-role" class="role-badge">...</span>
+          </div>
+        </div>
+        <div class="profile-stats">
+          <div class="stat-box">
+            <h3 id="stat-wins">0</h3>
+            <p>Vittorie</p>
+          </div>
+          <div class="stat-box">
+            <h3 id="stat-kills">0</h3>
+            <p>Kills</p>
+          </div>
+          <div class="stat-box">
+            <h3 id="stat-points">0</h3>
+            <p>Punti</p>
+          </div>
+        </div>
+      </div>
 
-      <div class="grid-3">
+      <div class="section-header-flex">
+        <h2 class="section-title" style="margin-bottom: 0; text-align: left">
+          Le Mie Memories
+        </h2>
+        <button onclick="openAddMemoryModal()" class="btn-primary">
+          <i class="fas fa-plus"></i> Nuova Memory
+        </button>
+      </div>
+
+      <div class="grid-3" id="my-memories-grid">
       </div>
     </div>
 
-    <!-- Footer -->
     <footer>
       <div class="container">
         <div class="footer-content">
@@ -86,7 +105,7 @@
               <li><a href="../index.html">Home</a></li>
               <li><a href="tornei.html">Tornei</a></li>
               <li><a href="classifica.html">Classifica</a></li>
-              <li><a href="../index.html#staff">Staff</a></li>
+              <li><a href="staff.html">Staff</a></li>
             </ul>
           </div>
           <div class="footer-section">
@@ -106,5 +125,6 @@
 
     <script src="../js/navbar.js"></script>
     <script src="../js/app.js"></script>
+    <script src="../js/profile.js"></script>
   </body>
 </html>

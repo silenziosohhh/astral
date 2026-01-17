@@ -9,51 +9,89 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
+    <link rel="icon" type="image/x-icon" href="../images/astralcup-logo.png">
   </head>
   <body>
-    <!-- Navbar Admin -->
     <nav class="navbar">
       <div class="navbar-container">
         <a href="../index.html" class="navbar-brand">
           <img src="../images/astralcup.png" alt="Astral Cup Logo" />
           <span>ASTRAL ADMIN</span>
         </a>
+
+        <div class="navbar-content">
+          <ul class="navbar-menu">
+            <li><a href="./adminpanel/classifica.html">Gestione Classifica/a></li>
+            <li><a href="./adminpanel/iscrizioni.html">Gestione Iscrizioni</a></li>
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="./adminpanel/tornei.html">Gestione Tornei</a></li>
+            <li><a href="./adminpanel/user.html">Gestione Utenti</a></li>
+          </ul>
+        </div>
         <div class="navbar-actions">
-          <a href="/logout" class="btn-discord outline-glow">
-            <i class="fas fa-sign-out-alt"></i> Logout
-          </a>
+          <a href="/discord" class="btn-discord outline-glow"
+            ><i class="fab fa-discord"></i> Login</a
+          >
+        </div>
+        <div class="navbar-login">
+        </div>
+
+        <div class="navbar-toggle" id="mobile-menu">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
         </div>
       </div>
     </nav>
 
-    <div class="container" style="padding-top: 100px; padding-bottom: 50px">
+    <div class="container" style="padding-top: 120px; padding-bottom: 50px">
       <h1 class="section-title">Dashboard Amministrazione</h1>
 
-      <!-- 1. Creazione Torneo -->
       <section class="admin-card">
         <h2><i class="fas fa-plus-circle"></i> Crea Nuovo Torneo</h2>
         <form class="admin-form">
           <div class="form-group">
             <label>Titolo Torneo</label>
-            <input type="text" placeholder="Es. Astral Weekly #45" />
+            <div class="input-group">
+              <i class="fas fa-trophy"></i>
+              <input type="text" placeholder="Es. Astral Weekly #45" required />
+            </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Data e Ora</label>
-              <input type="datetime-local" />
+              <div class="input-group">
+                <i class="fas fa-calendar-alt"></i>
+                <input type="datetime-local" required />
+              </div>
             </div>
             <div class="form-group">
               <label>Montepremi</label>
-              <input type="text" placeholder="Es. 50€" />
+              <div class="input-group">
+                <i class="fas fa-euro-sign"></i>
+                <input type="text" placeholder="Es. 50€" />
+              </div>
             </div>
           </div>
           <div class="form-group">
             <label>URL Immagine</label>
-            <input type="url" placeholder="https://..." />
+            <div class="input-group">
+              <i class="fas fa-image"></i>
+              <input type="url" placeholder="https://..." />
+            </div>
           </div>
           <div class="form-group">
             <label>Descrizione</label>
-            <textarea rows="4" placeholder="Dettagli del torneo..."></textarea>
+            <div class="input-group">
+              <i
+                class="fas fa-align-left"
+                style="top: 20px; transform: none"
+              ></i>
+              <textarea
+                rows="4"
+                placeholder="Dettagli del torneo..."
+              ></textarea>
+            </div>
           </div>
           <button
             type="submit"
@@ -65,7 +103,6 @@
         </form>
       </section>
 
-      <!-- 2. Lista Tornei -->
       <section class="admin-card">
         <h2><i class="fas fa-list"></i> Lista Tornei</h2>
         <div class="table-responsive">
@@ -78,26 +115,12 @@
                 <th>Azioni</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td>Astral Weekly #44</td>
-                <td>12/10/2023 15:00</td>
-                <td>50€</td>
-                <td>
-                  <button class="btn-icon edit">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button class="btn-icon delete">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </td>
-              </tr>
+            <tbody id="admin-tournaments-body">
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- 3. Iscrizioni Ricevute -->
       <section class="admin-card">
         <h2><i class="fas fa-users"></i> Iscrizioni Ricevute</h2>
         <div class="table-responsive">
@@ -124,7 +147,6 @@
         </div>
       </section>
 
-      <!-- 4. Gestione Punteggi e Classifica -->
       <section class="admin-card">
         <h2><i class="fas fa-trophy"></i> Gestione Classifica</h2>
         <div class="table-responsive">
@@ -159,5 +181,49 @@
         </div>
       </section>
     </div>
+
+    <footer>
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h3>Astral Cup</h3>
+            <p>
+              La piattaforma competitiva definitiva per dimostrare il tuo
+              valore. Unisciti alla community, partecipa ai tornei e scala la
+              classifica verso la gloria eterna.
+            </p>
+            <div class="social-links">
+              <a href="#"><i class="fab fa-discord"></i></a>
+              <a href="#"><i class="fab fa-twitter"></i></a>
+              <a href="#"><i class="fab fa-instagram"></i></a>
+              <a href="#"><i class="fab fa-youtube"></i></a>
+            </div>
+          </div>
+          <div class="footer-section">
+            <h3>Navigazione</h3>
+            <ul class="footer-links">
+              <li><a href="../index.html">Home</a></li>
+              <li><a href="tornei.html">Tornei</a></li>
+              <li><a href="classifica.html">Classifica</a></li>
+              <li><a href="staff.html">Staff</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h3>Supporto</h3>
+            <ul class="footer-links">
+              <li><a href="#">Regolamento</a></li>
+              <li><a href="#">FAQ</a></li>
+              <li><a href="#">Contattaci</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2023 Astral Cup. Tutti i diritti riservati.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="../js/navbar.js"></script>
+    <script src="../js/admin.js"></script>
   </body>
 </html>

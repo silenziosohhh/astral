@@ -5,7 +5,11 @@ const UserSchema = new mongoose.Schema({
   username: { type: String, required: true },
   discriminator: { type: String },
   avatar: { type: String },
-  role: { type: String, default: "user" }, // 'admin', 'user'
+  role: { type: String, default: "utente" }, // 'utente', 'iscritto', 'developer', 'gestore', 'founder'
+  wins: { type: Number, default: 0 },
+  kills: { type: Number, default: 0 },
+  bedBroken: { type: Number, default: 0 },
+  points: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
 });
 

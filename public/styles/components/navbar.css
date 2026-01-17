@@ -1,4 +1,3 @@
-/* Navbar Base */
 .navbar {
   position: fixed;
   top: 0;
@@ -20,7 +19,6 @@
   position: relative;
 }
 
-/* Wrapper per menu e azioni (Desktop default) */
 .navbar-content {
   position: absolute;
   left: 50%;
@@ -32,7 +30,6 @@
   width: auto;
 }
 
-/* Brand */
 .navbar-brand {
   display: flex;
   align-items: center;
@@ -52,7 +49,6 @@
   filter: invert(1) brightness(2);
 }
 
-/* Menu Links */
 .navbar-menu {
   display: flex;
   list-style: none;
@@ -80,7 +76,6 @@
   color: var(--primary-2);
 }
 
-/* Underline Animation (esclude i pulsanti come Home/Login) */
 .navbar-menu li a:not(.outline-glow)::after {
   content: "";
   position: absolute;
@@ -97,7 +92,6 @@
   width: 100%;
 }
 
-/* Actions / Discord Button */
 .btn-discord {
   display: flex;
   align-items: center;
@@ -116,11 +110,10 @@
 
 .btn-discord:hover {
   background: #4752c4;
-  transform: translateY(-2px);
+  transform: none;
   box-shadow: 0 4px 12px rgba(88, 101, 242, 0.3);
 }
 
-/* Specific style for Home link to look like a button */
 .navbar-menu li a.outline-glow {
   background: var(--primary-1);
   color: var(--light);
@@ -129,7 +122,6 @@
   opacity: 1;
 }
 
-/* Hamburger Menu Icon */
 .navbar-toggle {
   display: none;
   flex-direction: column;
@@ -145,7 +137,6 @@
   border-radius: 2px;
 }
 
-/* User Profile (Authenticated) */
 .navbar-login {
   display: none;
   align-items: center;
@@ -181,14 +172,12 @@
   font-size: 1.2rem;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 1250px) {
   .navbar-toggle {
     display: flex;
     z-index: 1002;
   }
 
-  /* Sidebar Mobile */
   .navbar-content {
     position: fixed;
     top: 0;
@@ -219,7 +208,6 @@
     gap: 2rem;
   }
 
-  /* Animazione Hamburger */
   .navbar-toggle.is-active .bar:nth-child(1) {
     transform: translate(0, 9px) rotate(-45deg);
   }

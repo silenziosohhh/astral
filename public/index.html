@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Astral</title>
     <link rel="stylesheet" href="styles/main.css" />
+    <link rel="icon" type="image/x-icon" href="./images/astralcup-logo.png">
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -23,17 +24,16 @@
             <li><a href="pages/staff.html">Staff</a></li>
             <li><a href="pages/classifica.html">Classifica</a></li>
             <li><a href="index.html" class="outline-glow">Home</a></li>
-            <li><a href="pages/memories.html">Memories</a></li>            
+            <li><a href="pages/memories.html">Memories</a></li>
             <li><a href="pages/tornei.html">Tornei</a></li>
           </ul>
         </div>
         <div class="navbar-actions">
-            <a href="/discord" class="btn-discord outline-glow"
-                ><i class="fab fa-discord"></i> Login</a
-            >
+          <a href="/discord" class="btn-discord outline-glow"
+            ><i class="fab fa-discord"></i> Login</a
+          >
         </div>
         <div class="navbar-login">
-          <!-- Populated by JS when logged in -->
         </div>
 
         <div class="navbar-toggle" id="mobile-menu">
@@ -44,7 +44,6 @@
       </div>
     </nav>
 
-    <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
         <h1>ASTRAL CUP</h1>
@@ -53,26 +52,10 @@
       </div>
     </section>
 
-    <!-- Staff Section -->
     <section id="staff" class="section-padding">
       <div class="container">
         <h2 class="section-title">IL NOSTRO STAFF</h2>
         <div class="grid-3">
-          <div class="card">
-            <div class="card-icon"><i class="fas fa-user-shield"></i></div>
-            <h3>Admin</h3>
-            <p>Gestione Tornei</p>
-          </div>
-          <div class="card">
-            <div class="card-icon"><i class="fas fa-gavel"></i></div>
-            <h3>Moderator</h3>
-            <p>Supporto Player</p>
-          </div>
-          <div class="card">
-            <div class="card-icon"><i class="fas fa-code"></i></div>
-            <h3>Developer</h3>
-            <p>Sviluppo Web</p>
-          </div>
         </div>
         <div class="section-footer">
           <a href="#" class="btn-visit">Visita ora</a>
@@ -80,26 +63,10 @@
       </div>
     </section>
 
-    <!-- Tornei Section -->
     <section id="tornei" class="section-padding">
       <div class="container">
         <h2 class="section-title">TORNEI IN EVIDENZA</h2>
         <div class="grid-3">
-          <div class="card">
-            <div class="card-icon"><i class="fas fa-gamepad"></i></div>
-            <h3>Astral Weekly</h3>
-            <p>Stato: <span class="status-open">Aperto</span></p>
-          </div>
-          <div class="card">
-            <div class="card-icon"><i class="fas fa-trophy"></i></div>
-            <h3>Monthly Cup</h3>
-            <p>Stato: <span class="status-live">In Corso</span></p>
-          </div>
-          <div class="card">
-            <div class="card-icon"><i class="fas fa-star"></i></div>
-            <h3>Special Event</h3>
-            <p>Stato: <span class="status-closed">Chiuso</span></p>
-          </div>
         </div>
         <div class="section-footer">
           <a href="#" class="btn-visit">Visita ora</a>
@@ -107,7 +74,6 @@
       </div>
     </section>
 
-    <!-- Classifica Section -->
     <section id="classifica" class="section-padding">
       <div class="container">
         <h2 class="section-title">TOP 3 CLASSIFICA</h2>
@@ -140,37 +106,17 @@
       </div>
     </section>
 
-    <!-- Memories Section -->
     <section id="memories" class="section-padding">
       <div class="container">
         <h2 class="section-title">MEMORIES</h2>
         <div class="grid-3">
-          <div class="card memory-card" style="cursor: pointer">
-            <div style="font-size: 3rem; color: var(--light); opacity: 0.8">
-              <i class="fas fa-play-circle"></i>
-            </div>
-            <p style="margin-top: 1rem">Best of Weekly #44</p>
-          </div>
-          <div class="card memory-card" style="cursor: pointer">
-            <div style="font-size: 3rem; color: var(--light); opacity: 0.8">
-              <i class="fas fa-play-circle"></i>
-            </div>
-            <p style="margin-top: 1rem">Finale Monthly Cup</p>
-          </div>
-          <div class="card memory-card" style="cursor: pointer">
-            <div style="font-size: 3rem; color: var(--light); opacity: 0.8">
-              <i class="fas fa-play-circle"></i>
-            </div>
-            <p style="margin-top: 1rem">Insane Clutch</p>
-          </div>
         </div>
         <div class="section-footer">
-          <a href="#" class="btn-visit">Visita ora</a>
+          <a href="pages/memories.html" class="btn-visit">Visita ora</a>
         </div>
       </div>
     </section>
 
-    <!-- Footer -->
     <footer>
       <div class="container">
         <div class="footer-content">
@@ -213,5 +159,6 @@
     </footer>
 
     <script src="./js/navbar.js"></script>
+    <script src="./js/app.js"></script>
   </body>
 </html>
