@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Il Mio Profilo - Astral Cup</title>
     <link rel="stylesheet" href="../styles/main.css" />
-    <link rel="icon" type="image/x-icon" href="../images/astralcup-logo.png">
+    <link rel="icon" type="image/x-icon" href="../images/astralcup-logo.png" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -32,8 +32,7 @@
               ><i class="fab fa-discord"></i> Login</a
             >
           </div>
-          <div class="navbar-login">
-          </div>
+          <div class="navbar-login"></div>
         </div>
 
         <div class="navbar-toggle" id="mobile-menu">
@@ -51,6 +50,48 @@
           <div>
             <h1 id="profile-username">Caricamento...</h1>
             <span id="profile-role" class="role-badge">...</span>
+            <div
+              style="
+                margin-top: 12px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+              "
+            >
+              <input
+                type="text"
+                id="minecraft-nick"
+                placeholder="Minecraft Nick (Richiesto)"
+                style="
+                  background: rgba(0, 0, 0, 0.2);
+                  border: 1px solid #334155;
+                  color: #fff;
+                  padding: 5px 10px;
+                  border-radius: 4px;
+                  outline: none;
+                  font-size: 0.9rem;
+                "
+              />
+              <button
+                id="save-mc-nick"
+                class="btn-icon"
+                title="Salva Nickname"
+                style="
+                  background: var(--primary-2);
+                  color: #000;
+                  width: 30px;
+                  height: 30px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  border: none;
+                "
+              >
+                <i class="fas fa-save"></i>
+              </button>
+            </div>
           </div>
         </div>
         <div class="profile-stats">
@@ -78,8 +119,7 @@
         </button>
       </div>
 
-      <div class="grid-3" id="my-memories-grid">
-      </div>
+      <div class="grid-3" id="my-memories-grid"></div>
     </div>
 
     <footer>

@@ -8,8 +8,49 @@ if (menu) {
   });
 }
 
+function handleResponsiveAuth() {
+  const width = window.innerWidth;
+  const navContent = document.querySelector(".navbar-content");
+  const loginContainer = document.querySelector(".navbar-login");
+  const actionsContainer = document.querySelector(".navbar-actions");
+
+  if (!navContent) return;
+  const navWrapper = navContent.parentElement;
+
+  if (width <= 1250) {
+    if (loginContainer && loginContainer.parentElement !== navContent) {
+      navContent.appendChild(loginContainer);
+      loginContainer.style.width = "100%";
+      loginContainer.style.justifyContent = "center";
+      loginContainer.style.marginTop = "1rem";
+    }
+    if (actionsContainer && actionsContainer.parentElement !== navContent) {
+      navContent.appendChild(actionsContainer);
+      actionsContainer.style.width = "100%";
+      actionsContainer.style.justifyContent = "center";
+      actionsContainer.style.marginTop = "1rem";
+    }
+  } else {
+    if (loginContainer && loginContainer.parentElement === navContent) {
+      navWrapper.appendChild(loginContainer);
+      loginContainer.style.width = "";
+      loginContainer.style.justifyContent = "";
+      loginContainer.style.marginTop = "";
+    }
+    if (actionsContainer && actionsContainer.parentElement === navContent) {
+      navWrapper.appendChild(actionsContainer);
+      actionsContainer.style.width = "";
+      actionsContainer.style.justifyContent = "";
+      actionsContainer.style.marginTop = "";
+    }
+  }
+}
+
+window.addEventListener("resize", handleResponsiveAuth);
+
 document.addEventListener("DOMContentLoaded", async () => {
-  // Mostra notifica beta solo al primo accesso
+  handleResponsiveAuth();
+
   if (!localStorage.getItem("astral_beta_notice_shown")) {
     showToast(
       "Il sito è in beta! Potresti riscontrare bug o problemi.",
@@ -23,6 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (response.ok) {
       const user = await response.json();
       updateNavbarUI(user);
+      handleResponsiveAuth();
     }
   } catch (error) {
     console.log("Utente non loggato");

@@ -1,6 +1,34 @@
 document.addEventListener("DOMContentLoaded", async () => {
   loadUserProfile();
   loadMyMemories();
+
+  const addBtn = document.querySelector(".btn-primary[onclick]");
+  if (addBtn) {
+    addBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (typeof openAddMemoryModal === "function") openAddMemoryModal();
+    });
+  }
+
+  const saveNickBtn = document.getElementById("save-mc-nick");
+  if (saveNickBtn) {
+    saveNickBtn.addEventListener("click", async () => {
+      const nickInput = document.getElementById("minecraft-nick");
+      const val = nickInput.value;
+      try {
+        const res = await fetch("/api/me", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ minecraftUsername: val }),
+        });
+        const data = await res.json();
+        if (res.ok) showToast("Nickname aggiornato!", "success");
+        else showToast(data.message || "Errore", "error");
+      } catch (err) {
+        showToast("Errore di connessione", "error");
+      }
+    });
+  }
 });
 
 async function loadUserProfile() {
@@ -15,6 +43,10 @@ async function loadUserProfile() {
     document.getElementById("profile-username").textContent = user.username;
     document.getElementById("profile-role").textContent =
       user.role.toUpperCase();
+
+    const nickInput = document.getElementById("minecraft-nick");
+    if (nickInput && user.minecraftUsername)
+      nickInput.value = user.minecraftUsername;
 
     let avatarUrl = "https://cdn.discordapp.com/embed/avatars/0.png";
     if (user.avatar) {

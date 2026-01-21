@@ -5,6 +5,7 @@ const UserSchema = new mongoose.Schema({
   username: { type: String, required: true },
   discriminator: { type: String },
   avatar: { type: String },
+  minecraftUsername: { type: String },
   role: { type: String, default: "utente" }, // 'utente', 'iscritto', 'developer', 'gestore', 'founder'
   wins: { type: Number, default: 0 },
   kills: { type: Number, default: 0 },

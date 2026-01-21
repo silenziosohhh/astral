@@ -49,7 +49,38 @@ router.get("/me", ensureAuth, async (req, res) => {
       username: user.username,
       avatar: user.avatar,
       role: user.role,
+      minecraftUsername: user.minecraftUsername,
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put("/me", ensureAuth, async (req, res) => {
+  try {
+    const { minecraftUsername } = req.body;
+    if (!minecraftUsername || minecraftUsername.trim().length < 3) {
+      return res.status(400).json({ message: "Nickname non valido (min 3 caratteri)" });
+    }
+    const user = await User.findOne({ discordId: req.user.discordId });
+    if (!user) return res.status(404).json({ message: "Utente non trovato" });
+
+    user.minecraftUsername = minecraftUsername.trim();
+    await user.save();
+    res.json({ message: "Nickname aggiornato con successo", minecraftUsername: user.minecraftUsername });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/users/search", async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query || query.length < 2) return res.json([]);
+    const users = await User.find({
+      username: { $regex: query, $options: "i" },
+    }).limit(5).select("username avatar discordId minecraftUsername");
+    res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -57,10 +88,16 @@ router.get("/me", ensureAuth, async (req, res) => {
 
 router.get("/tournaments", async (req, res) => {
   try {
-    const tournaments = await Tournament.find().sort({ date: 1 }).populate({
-      path: "subscribers",
-      select: "username avatar discordId",
-    });
+    const tournaments = await Tournament.find()
+      .sort({ date: 1 })
+      .populate({
+        path: "subscribers",
+        select: "username avatar discordId",
+      })
+      .populate({
+        path: "teams.captain",
+        select: "username avatar discordId",
+      });
     res.json(tournaments);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -71,11 +108,28 @@ router.post("/tournaments", protect, async (req, res) => {
   try {
     const tournament = new Tournament(req.body);
     await tournament.save();
-    // Notifica tutti i client
+
     req.app
       .get("io")
       .emit("tournaments:update", { type: "create", tournament });
     res.json(tournament);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete("/tournaments/:id", protect, async (req, res) => {
+  try {
+    const tournament = await Tournament.findByIdAndDelete(req.params.id);
+    if (!tournament) {
+      return res.status(404).json({ message: "Torneo non trovato" });
+    }
+
+    req.app.get("io").emit("tournaments:update", {
+      type: "delete",
+      tournamentId: req.params.id,
+    });
+    res.json({ message: "Torneo eliminato" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -91,10 +145,13 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
       return res.status(400).json({ message: "Le iscrizioni sono chiuse" });
     }
 
-    // Trova l'utente tramite discordId
     const user = await User.findOne({ discordId: req.user.discordId });
     if (!user) {
       return res.status(404).json({ message: "Utente non trovato" });
+    }
+
+    if (!user.minecraftUsername) {
+      return res.status(400).json({ message: "Devi impostare il tuo nickname di Minecraft nel profilo per iscriverti." });
     }
 
     const isSubscribed = tournament.subscribers.some(
@@ -106,10 +163,72 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
         .json({ message: "Sei già iscritto a questo torneo" });
     }
 
+    const { teammates } = req.body;
+    if (tournament.format === "duo") {
+      if (
+        !Array.isArray(teammates) ||
+        teammates.length !== 1 ||
+        !teammates[0]
+      ) {
+        return res
+          .status(400)
+          .json({ message: "Devi inserire il nickname del tuo compagno." });
+      }
+    } else if (tournament.format === "trio") {
+      if (
+        !Array.isArray(teammates) ||
+        teammates.length !== 2 ||
+        !teammates[0] ||
+        !teammates[1]
+      ) {
+        return res
+          .status(400)
+          .json({ message: "Devi inserire i nickname dei tuoi 2 compagni." });
+      }
+    }
+
+    if (teammates && teammates.length > 0) {
+      const unique = new Set(teammates);
+      if (unique.size !== teammates.length) {
+        return res.status(400).json({ message: "Hai inserito lo stesso compagno più volte." });
+      }
+      if (teammates.includes(user.username)) {
+        return res.status(400).json({ message: "Non puoi inserire te stesso come compagno." });
+      }
+
+      const foundUsers = await User.find({ username: { $in: teammates } });
+      if (foundUsers.length !== teammates.length) {
+        return res.status(400).json({ message: "Uno o più compagni non sono registrati sul sito." });
+      }
+
+      for (const tUser of foundUsers) {
+        if (!tUser.minecraftUsername) {
+          return res.status(400).json({ message: `Il compagno ${tUser.username} non ha impostato il nickname di Minecraft.` });
+        }
+        const isCaptain = tournament.subscribers.some(
+          (sub) => sub.toString() === tUser._id.toString()
+        );
+        if (isCaptain) {
+          return res.status(400).json({ message: `${tUser.username} è già iscritto a questo torneo.` });
+        }
+        if (tournament.teams) {
+          const isInTeam = tournament.teams.some((t) => t.teammates.includes(tUser.username));
+          if (isInTeam) {
+            return res.status(400).json({ message: `${tUser.username} è già in un team.` });
+          }
+        }
+      }
+    }
+
     tournament.subscribers.push(user._id);
+    if (tournament.format !== "solo") {
+      tournament.teams.push({
+        captain: user._id,
+        teammates: teammates || [],
+      });
+    }
     await tournament.save();
 
-    // Aggiorna anche l'utente
     if (
       !user.tournaments.some(
         (tid) => tid.toString() === tournament._id.toString(),
@@ -118,14 +237,12 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
       user.tournaments.push(tournament._id);
       await user.save();
     }
-    // Notifica tutti i client
-    req.app
-      .get("io")
-      .emit("subscriptions:update", {
-        type: "join",
-        tournamentId: tournament._id,
-        userId: user._id,
-      });
+
+    req.app.get("io").emit("subscriptions:update", {
+      type: "join",
+      tournamentId: tournament._id,
+      userId: user._id,
+    });
 
     res.json({ message: "Iscrizione effettuata con successo", tournament });
   } catch (err) {
@@ -140,7 +257,6 @@ router.post("/tournaments/:id/unsubscribe", ensureAuth, async (req, res) => {
       return res.status(404).json({ message: "Torneo non trovato" });
     }
 
-    // Trova l'utente tramite discordId
     const user = await User.findOne({ discordId: req.user.discordId });
     if (!user) {
       return res.status(404).json({ message: "Utente non trovato" });
@@ -157,21 +273,24 @@ router.post("/tournaments/:id/unsubscribe", ensureAuth, async (req, res) => {
         .json({ message: "Non sei iscritto a questo torneo" });
     }
 
+    if (tournament.teams) {
+      tournament.teams = tournament.teams.filter(
+        (t) => t.captain.toString() !== user._id.toString(),
+      );
+    }
+
     await tournament.save();
 
-    // Rimuovi anche il torneo dall'array tournaments dell'utente
     user.tournaments = user.tournaments.filter(
       (tid) => tid.toString() !== tournament._id.toString(),
     );
     await user.save();
-    // Notifica tutti i client
-    req.app
-      .get("io")
-      .emit("subscriptions:update", {
-        type: "leave",
-        tournamentId: tournament._id,
-        userId: user._id,
-      });
+
+    req.app.get("io").emit("subscriptions:update", {
+      type: "leave",
+      tournamentId: tournament._id,
+      userId: user._id,
+    });
 
     res.json({ message: "Disiscrizione avvenuta con successo" });
   } catch (err) {

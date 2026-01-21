@@ -30,6 +30,44 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.get("/torneo/:id", async (req, res) => {
+  const Tournament = require("./src/database/Tournament");
+  try {
+    const t = await Tournament.findById(req.params.id).populate({
+      path: "subscribers",
+      select: "username avatar discordId",
+    });
+    if (!t) return res.status(404).send("Torneo non trovato");
+    const ogImage = `https://res.cloudinary.com/demo/image/upload/l_text:Arial_60_bold:${encodeURIComponent(t.title)},co_rgb:ffffff,g_center,y_-40/l_text:Arial_40:Partecipanti%3A%20${t.subscribers.length},co_rgb:60a5fa,g_center,y_40,w_600/v1690000000/astralcup_bg.png`;
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="it">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>${t.title} | Astral Cup</title>
+        <meta property="og:title" content="${t.title} | Astral Cup" />
+        <meta property="og:description" content="Partecipa a ${t.title} su Astral Cup! Iscritti: ${t.subscribers.length}" />
+        <meta property="og:image" content="${ogImage}" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="${req.protocol}://${req.get("host")}${req.originalUrl}" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="${t.title} | Astral Cup" />
+        <meta name="twitter:description" content="Partecipa a ${t.title} su Astral Cup! Iscritti: ${t.subscribers.length}" />
+        <meta name="twitter:image" content="${ogImage}" />
+        <link rel="stylesheet" href="/styles/main.css" />
+        <link rel="icon" type="image/x-icon" href="/images/astralcup-logo.png">
+      </head>
+      <body>
+        <script>window.location.replace('/pages/torneo.html?tid=${t._id}');</script>
+      </body>
+      </html>
+    `);
+  } catch (err) {
+    res.status(500).send("Errore caricamento torneo");
+  }
+});
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
