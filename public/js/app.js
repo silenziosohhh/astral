@@ -226,7 +226,7 @@ async function loadMemories() {
             <i class="fas fa-camera-retro"></i>
             <h3>Nessuna Memory Presente</h3>
             <p>Aggiungi ora i momenti più belli della Astral Cup!</p>
-            <button onclick="openAddMemoryModal()" class="btn-primary" style="margin-top: 1rem;"><i class="fas fa-plus"></i> Aggiungi Memory</button>
+            <a onclick="openAddMemoryModal()" class="btn-primary" style="margin-top: 1rem;">Aggiungi Memory</a>
         </div>`;
       return;
     }

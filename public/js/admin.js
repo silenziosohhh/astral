@@ -68,6 +68,12 @@ async function loadAdminTournaments() {
   try {
     const res = await fetch("/api/tournaments");
     const tournaments = await res.json();
+    console.log("Tornei caricati:", tournaments);
+    if (tournaments.length > 0) {
+      tournaments.forEach((t) => {
+        console.log(`Iscritti torneo '${t.title}':`, t.subscribers);
+      });
+    }
     adminTournamentsData = tournaments;
 
     tbody.innerHTML = "";
@@ -107,13 +113,25 @@ window.showSubscribers = function (id) {
     subsHtml = `<ul style="list-style: none; padding: 0;">`;
     subs.forEach((s) => {
       let avatarUrl = "https://cdn.discordapp.com/embed/avatars/0.png";
-      if (s.avatar) {
+      if (
+        s.avatar &&
+        s.avatar !== "null" &&
+        s.avatar !== null &&
+        s.avatar !== ""
+      ) {
         avatarUrl = `https://cdn.discordapp.com/avatars/${s.discordId}/${s.avatar}.png`;
       }
+      let username =
+        s.username &&
+        s.username !== "null" &&
+        s.username !== null &&
+        s.username !== ""
+          ? s.username
+          : "Sconosciuto";
       subsHtml += `
                 <li style="display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">
                     <img src="${avatarUrl}" style="width: 35px; height: 35px; border-radius: 50%; border: 1px solid var(--primary-2);">
-                    <span style="font-weight: 600; color: var(--light);">${s.username}</span>
+                    <span style="font-weight: 600; color: var(--light);">${username}</span>
                 </li>
             `;
     });

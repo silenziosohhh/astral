@@ -12,6 +12,9 @@ const authRoutes = require("./src/apis/auth");
 const apiRoutes = require("./src/apis/api");
 
 const app = express();
+const http = require("http").createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(http);
 
 app.use(express.json());
 app.use(cookieParser());
@@ -68,7 +71,13 @@ app.get("/pages/admin.html", async (req, res, next) => {
 
 app.use(express.static(path.join(__dirname, "public")));
 
+io.on("connection", (socket) => {
+  console.log("New Connection", socket.id);
+});
+
+app.set("io", io);
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+http.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

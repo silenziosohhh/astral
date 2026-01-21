@@ -6,9 +6,13 @@ const TournamentSchema = new mongoose.Schema({
   prize: { type: String },
   image: { type: String },
   description: { type: String },
-  status: { type: String, enum: ['Aperto', 'In Corso', 'Concluso'], default: 'Aperto' },
+  status: {
+    type: String,
+    enum: ["Aperto", "In Corso", "Concluso"],
+    default: "Aperto",
+  },
   createdAt: { type: Date, default: Date.now },
-  subscribers: { type: Array, default: [] }
+  subscribers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 });
 
 module.exports = mongoose.model("Tournament", TournamentSchema);

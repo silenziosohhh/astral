@@ -57,7 +57,10 @@ router.get("/me", ensureAuth, async (req, res) => {
 
 router.get("/tournaments", async (req, res) => {
   try {
-    const tournaments = await Tournament.find().sort({ date: 1 });
+    const tournaments = await Tournament.find().sort({ date: 1 }).populate({
+      path: "subscribers",
+      select: "username avatar discordId",
+    });
     res.json(tournaments);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -68,6 +71,10 @@ router.post("/tournaments", protect, async (req, res) => {
   try {
     const tournament = new Tournament(req.body);
     await tournament.save();
+    // Notifica tutti i client
+    req.app
+      .get("io")
+      .emit("tournaments:update", { type: "create", tournament });
     res.json(tournament);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -84,8 +91,14 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
       return res.status(400).json({ message: "Le iscrizioni sono chiuse" });
     }
 
+    // Trova l'utente tramite discordId
+    const user = await User.findOne({ discordId: req.user.discordId });
+    if (!user) {
+      return res.status(404).json({ message: "Utente non trovato" });
+    }
+
     const isSubscribed = tournament.subscribers.some(
-      (sub) => sub.discordId === req.user.discordId,
+      (sub) => sub.toString() === user._id.toString(),
     );
     if (isSubscribed) {
       return res
@@ -93,14 +106,27 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
         .json({ message: "Sei già iscritto a questo torneo" });
     }
 
-    tournament.subscribers.push({
-      discordId: req.user.discordId,
-      username: req.user.username,
-      avatar: req.user.avatar,
-      joinedAt: new Date(),
-    });
-
+    tournament.subscribers.push(user._id);
     await tournament.save();
+
+    // Aggiorna anche l'utente
+    if (
+      !user.tournaments.some(
+        (tid) => tid.toString() === tournament._id.toString(),
+      )
+    ) {
+      user.tournaments.push(tournament._id);
+      await user.save();
+    }
+    // Notifica tutti i client
+    req.app
+      .get("io")
+      .emit("subscriptions:update", {
+        type: "join",
+        tournamentId: tournament._id,
+        userId: user._id,
+      });
+
     res.json({ message: "Iscrizione effettuata con successo", tournament });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -114,10 +140,15 @@ router.post("/tournaments/:id/unsubscribe", ensureAuth, async (req, res) => {
       return res.status(404).json({ message: "Torneo non trovato" });
     }
 
-    const before = tournament.subscribers.length;
+    // Trova l'utente tramite discordId
+    const user = await User.findOne({ discordId: req.user.discordId });
+    if (!user) {
+      return res.status(404).json({ message: "Utente non trovato" });
+    }
 
+    const before = tournament.subscribers.length;
     tournament.subscribers = tournament.subscribers.filter(
-      (sub) => sub.discordId !== req.user.discordId,
+      (sub) => sub.toString() !== user._id.toString(),
     );
 
     if (tournament.subscribers.length === before) {
@@ -127,6 +158,21 @@ router.post("/tournaments/:id/unsubscribe", ensureAuth, async (req, res) => {
     }
 
     await tournament.save();
+
+    // Rimuovi anche il torneo dall'array tournaments dell'utente
+    user.tournaments = user.tournaments.filter(
+      (tid) => tid.toString() !== tournament._id.toString(),
+    );
+    await user.save();
+    // Notifica tutti i client
+    req.app
+      .get("io")
+      .emit("subscriptions:update", {
+        type: "leave",
+        tournamentId: tournament._id,
+        userId: user._id,
+      });
+
     res.json({ message: "Disiscrizione avvenuta con successo" });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -21,19 +21,18 @@
 
         <div class="navbar-content">
           <ul class="navbar-menu">
-            <li><a href="./adminpanel/classifica.html">Gestione Classifica/a></li>
+            <li><a href="./adminpanel/classifica.html">Gestione Classifica</a></li>
             <li><a href="./adminpanel/iscrizioni.html">Gestione Iscrizioni</a></li>
-            <li><a href="../index.html">Home</a></li>
             <li><a href="./adminpanel/tornei.html">Gestione Tornei</a></li>
             <li><a href="./adminpanel/user.html">Gestione Utenti</a></li>
           </ul>
-        </div>
-        <div class="navbar-actions">
-          <a href="/discord" class="btn-discord outline-glow"
-            ><i class="fab fa-discord"></i> Login</a
-          >
-        </div>
-        <div class="navbar-login">
+          <div class="navbar-actions">
+            <a href="/discord" class="btn-discord outline-glow"
+              ><i class="fab fa-discord"></i> Login</a
+            >
+          </div>
+          <div class="navbar-login">
+          </div>
         </div>
 
         <div class="navbar-toggle" id="mobile-menu">
@@ -107,41 +106,8 @@
         <h2><i class="fas fa-list"></i> Lista Tornei</h2>
         <div class="table-responsive">
           <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Titolo</th>
-                <th>Data</th>
-                <th>Montepremi</th>
-                <th>Azioni</th>
-              </tr>
-            </thead>
+            
             <tbody id="admin-tournaments-body">
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="admin-card">
-        <h2><i class="fas fa-users"></i> Iscrizioni Ricevute</h2>
-        <div class="table-responsive">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Torneo</th>
-                <th>Player 1</th>
-                <th>Player 2</th>
-                <th>Discord</th>
-                <th>Data</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Astral Weekly #45</td>
-                <td>UserOne</td>
-                <td>UserTwo</td>
-                <td>user#1234</td>
-                <td>Oggi, 14:30</td>
-              </tr>
             </tbody>
           </table>
         </div>
@@ -223,6 +189,8 @@
       </div>
     </footer>
 
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="../js/socket.js"></script>
     <script src="../js/navbar.js"></script>
     <script src="../js/admin.js"></script>
   </body>

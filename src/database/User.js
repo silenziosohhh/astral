@@ -11,6 +11,7 @@ const UserSchema = new mongoose.Schema({
   bedBroken: { type: Number, default: 0 },
   points: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
+  tournaments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tournament" }],
 });
 
 module.exports = mongoose.model("User", UserSchema);
