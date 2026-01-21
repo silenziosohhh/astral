@@ -91,7 +91,33 @@ app.use("/auth", authRoutes);
 
 app.use("/api", apiRoutes);
 
-app.get("/pages/admin.html", async (req, res, next) => {
+app.get("/staff", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "pages", "staff.html"));
+});
+
+app.get("/classifica", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "pages", "classifica.html"));
+});
+
+app.get("/memories", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "pages", "memories.html"));
+});
+
+app.get("/tornei", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "pages", "tornei.html"));
+});
+
+app.get("/profile", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "pages", "profile.html"));
+});
+
+app.get("/profile/:username", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "pages", "profile.html"));
+});
+
+app.get("/pages/admin.html", (req, res) => res.redirect("/admin"));
+
+app.get("/admin", async (req, res) => {
   const token = req.cookies.token;
   if (!token) return res.redirect("/");
 
@@ -99,7 +125,9 @@ app.get("/pages/admin.html", async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
     if (user && ["gestore", "founder", "developer"].includes(user.role)) {
-      return next();
+      return res.sendFile(
+        path.join(__dirname, "public", "pages", "admin.html"),
+      );
     }
     return res.redirect("/");
   } catch (err) {

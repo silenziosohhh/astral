@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Il Mio Profilo - Astral Cup</title>
-    <link rel="stylesheet" href="../styles/main.css" />
-    <link rel="icon" type="image/x-icon" href="../images/astralcup-logo.png" />
+    <link rel="stylesheet" href="/styles/main.css" />
+    <link rel="icon" type="image/x-icon" href="/images/astralcup-logo.png" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -14,18 +14,18 @@
   <body>
     <nav class="navbar">
       <div class="navbar-container">
-        <a href="../index.html" class="navbar-brand">
-          <img src="../images/astralcup.png" alt="Astral Cup Logo" />
+        <a href="/" class="navbar-brand">
+          <img src="/images/astralcup.png" alt="Astral Cup Logo" />
           <span>ASTRAL CUP</span>
         </a>
 
         <div class="navbar-content">
           <ul class="navbar-menu">
-            <li><a href="staff.html">Staff</a></li>
-            <li><a href="classifica.html">Classifica</a></li>
-            <li><a href="../index.html">Home</a></li>
-            <li><a href="memories.html">Memories</a></li>
-            <li><a href="tornei.html">Tornei</a></li>
+            <li><a href="/staff">Staff</a></li>
+            <li><a href="/classifica">Classifica</a></li>
+            <li><a href="/">Home</a></li>
+            <li><a href="/memories">Memories</a></li>
+            <li><a href="/tornei">Tornei</a></li>
           </ul>
           <div class="navbar-actions">
             <a href="/discord" class="btn-discord outline-glow"
@@ -110,11 +110,56 @@
         </div>
       </div>
 
+      <div class="admin-card" style="margin-top: 2rem">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+          "
+        >
+          <h2 style="margin: 0; font-size: 1.5rem; color: #fff">
+            Skills & Specialità
+          </h2>
+          <button
+            id="edit-skills-btn"
+            class="btn-icon"
+            style="
+              background: var(--primary-2);
+              color: #000;
+              width: 32px;
+              height: 32px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border-radius: 4px;
+              border: none;
+              cursor: pointer;
+            "
+          >
+            <i class="fas fa-pen"></i>
+          </button>
+        </div>
+        <div
+          id="skills-container"
+          style="display: flex; flex-wrap: wrap; gap: 10px"
+        >
+          <span style="color: #94a3b8; font-style: italic"
+            >Caricamento skills...</span
+          >
+        </div>
+      </div>
+
       <div class="section-header-flex">
-        <h2 class="section-title" style="margin-bottom: 0; text-align: left">
+        <h2
+          id="memories-title"
+          class="section-title"
+          style="margin-bottom: 0; text-align: left"
+        >
           Le Mie Memories
         </h2>
-        <button onclick="openAddMemoryModal()" class="btn-primary">
+        <button id="add-memory-btn" class="btn-primary">
           <i class="fas fa-plus"></i> Nuova Memory
         </button>
       </div>
@@ -142,10 +187,10 @@
           <div class="footer-section">
             <h3>Navigazione</h3>
             <ul class="footer-links">
-              <li><a href="../index.html">Home</a></li>
-              <li><a href="tornei.html">Tornei</a></li>
-              <li><a href="classifica.html">Classifica</a></li>
-              <li><a href="staff.html">Staff</a></li>
+              <li><a href="/">Home</a></li>
+              <li><a href="/tornei">Tornei</a></li>
+              <li><a href="/classifica">Classifica</a></li>
+              <li><a href="/staff">Staff</a></li>
             </ul>
           </div>
           <div class="footer-section">
@@ -163,8 +208,8 @@
       </div>
     </footer>
 
-    <script src="../js/navbar.js"></script>
-    <script src="../js/app.js"></script>
-    <script src="../js/profile.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/profile.js"></script>
   </body>
 </html>

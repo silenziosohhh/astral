@@ -11,6 +11,7 @@ const UserSchema = new mongoose.Schema({
   kills: { type: Number, default: 0 },
   bedBroken: { type: Number, default: 0 },
   points: { type: Number, default: 0 },
+  skills: { type: [String], default: [] },
   createdAt: { type: Date, default: Date.now },
   tournaments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tournament" }],
 });

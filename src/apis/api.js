@@ -50,6 +50,7 @@ router.get("/me", ensureAuth, async (req, res) => {
       avatar: user.avatar,
       role: user.role,
       minecraftUsername: user.minecraftUsername,
+      skills: user.skills || [],
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -60,14 +61,36 @@ router.put("/me", ensureAuth, async (req, res) => {
   try {
     const { minecraftUsername } = req.body;
     if (!minecraftUsername || minecraftUsername.trim().length < 3) {
-      return res.status(400).json({ message: "Nickname non valido (min 3 caratteri)" });
+      return res
+        .status(400)
+        .json({ message: "Nickname non valido (min 3 caratteri)" });
     }
     const user = await User.findOne({ discordId: req.user.discordId });
     if (!user) return res.status(404).json({ message: "Utente non trovato" });
 
     user.minecraftUsername = minecraftUsername.trim();
     await user.save();
-    res.json({ message: "Nickname aggiornato con successo", minecraftUsername: user.minecraftUsername });
+    res.json({
+      message: "Nickname aggiornato con successo",
+      minecraftUsername: user.minecraftUsername,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put("/me/skills", ensureAuth, async (req, res) => {
+  try {
+    const { skills } = req.body;
+    if (!Array.isArray(skills))
+      return res.status(400).json({ message: "Dati non validi" });
+
+    const user = await User.findOne({ discordId: req.user.discordId });
+    if (!user) return res.status(404).json({ message: "Utente non trovato" });
+
+    user.skills = skills.slice(0, 15); // Limite di sicurezza
+    await user.save();
+    res.json({ message: "Skills aggiornate", skills: user.skills });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -79,8 +102,45 @@ router.get("/users/search", async (req, res) => {
     if (!query || query.length < 2) return res.json([]);
     const users = await User.find({
       username: { $regex: query, $options: "i" },
-    }).limit(5).select("username avatar discordId minecraftUsername");
+    })
+      .limit(5)
+      .select("username avatar discordId minecraftUsername");
     res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/users/:username", async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username });
+    if (!user) return res.status(404).json({ message: "Utente non trovato" });
+
+    res.json({
+      username: user.username,
+      avatar: user.avatar,
+      discordId: user.discordId,
+      role: user.role,
+      minecraftUsername: user.minecraftUsername,
+      wins: user.wins,
+      kills: user.kills,
+      points: user.points,
+      skills: user.skills || [],
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/users/:username/memories", async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username });
+    if (!user) return res.status(404).json({ message: "Utente non trovato" });
+
+    const memories = await Memory.find({ authorId: user.discordId }).sort({
+      createdAt: -1,
+    });
+    res.json(memories);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -151,7 +211,12 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
     }
 
     if (!user.minecraftUsername) {
-      return res.status(400).json({ message: "Devi impostare il tuo nickname di Minecraft nel profilo per iscriverti." });
+      return res
+        .status(400)
+        .json({
+          message:
+            "Devi impostare il tuo nickname di Minecraft nel profilo per iscriverti.",
+        });
     }
 
     const isSubscribed = tournament.subscribers.some(
@@ -190,31 +255,51 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
     if (teammates && teammates.length > 0) {
       const unique = new Set(teammates);
       if (unique.size !== teammates.length) {
-        return res.status(400).json({ message: "Hai inserito lo stesso compagno più volte." });
+        return res
+          .status(400)
+          .json({ message: "Hai inserito lo stesso compagno più volte." });
       }
       if (teammates.includes(user.username)) {
-        return res.status(400).json({ message: "Non puoi inserire te stesso come compagno." });
+        return res
+          .status(400)
+          .json({ message: "Non puoi inserire te stesso come compagno." });
       }
 
       const foundUsers = await User.find({ username: { $in: teammates } });
       if (foundUsers.length !== teammates.length) {
-        return res.status(400).json({ message: "Uno o più compagni non sono registrati sul sito." });
+        return res
+          .status(400)
+          .json({
+            message: "Uno o più compagni non sono registrati sul sito.",
+          });
       }
 
       for (const tUser of foundUsers) {
         if (!tUser.minecraftUsername) {
-          return res.status(400).json({ message: `Il compagno ${tUser.username} non ha impostato il nickname di Minecraft.` });
+          return res
+            .status(400)
+            .json({
+              message: `Il compagno ${tUser.username} non ha impostato il nickname di Minecraft.`,
+            });
         }
         const isCaptain = tournament.subscribers.some(
-          (sub) => sub.toString() === tUser._id.toString()
+          (sub) => sub.toString() === tUser._id.toString(),
         );
         if (isCaptain) {
-          return res.status(400).json({ message: `${tUser.username} è già iscritto a questo torneo.` });
+          return res
+            .status(400)
+            .json({
+              message: `${tUser.username} è già iscritto a questo torneo.`,
+            });
         }
         if (tournament.teams) {
-          const isInTeam = tournament.teams.some((t) => t.teammates.includes(tUser.username));
+          const isInTeam = tournament.teams.some((t) =>
+            t.teammates.includes(tUser.username),
+          );
           if (isInTeam) {
-            return res.status(400).json({ message: `${tUser.username} è già in un team.` });
+            return res
+              .status(400)
+              .json({ message: `${tUser.username} è già in un team.` });
           }
         }
       }

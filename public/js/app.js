@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const path = window.location.pathname;
 
   if (
-    path.includes("tornei.html") ||
+    path.includes("tornei") ||
     path === "/" ||
     path.includes("index.html")
   ) {
@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (
-    path.includes("classifica.html") ||
+    path.includes("classifica") ||
     path === "/" ||
     path.includes("index.html")
   ) {
@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (
-    path.includes("memories.html") ||
+    path.includes("memories") ||
     path === "/" ||
     path.includes("index.html")
   ) {
@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (
-    path.includes("staff.html") ||
+    path.includes("staff") ||
     path === "/" ||
     path.includes("index.html")
   ) {
@@ -62,7 +62,7 @@ async function loadTournaments() {
 
     container.innerHTML = "";
 
-    const isHome = !window.location.pathname.includes("tornei.html");
+    const isHome = !window.location.pathname.includes("tornei");
     const itemsToShow = isHome ? tournaments.slice(0, 3) : tournaments;
 
     itemsToShow.forEach((t) => {

@@ -86,7 +86,7 @@ function updateNavbarUI(user) {
 
   actionsContainer.innerHTML = `
         <div class="user-profile">
-            <a href="/pages/profile.html" class="user-info" style="text-decoration: none;">
+            <a href="/profile" class="user-info" style="text-decoration: none;">
                 <img src="${avatarUrl}" alt="${user.username}">
             </a>
             <a href="/logout" class="btn-icon logout-btn" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
