@@ -5,6 +5,8 @@ const MemorySchema = new mongoose.Schema({
   videoUrl: { type: String },
   description: { type: String },
   authorId: { type: String },
+  likes: [{ type: String }],
+  shares: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
 });
 

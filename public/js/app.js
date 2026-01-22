@@ -1,11 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const path = window.location.pathname;
 
-  if (
-    path.includes("tornei") ||
-    path === "/" ||
-    path.includes("index.html")
-  ) {
+  if (path.includes("tornei") || path === "/" || path.includes("index.html")) {
     loadTournaments();
   }
 
@@ -25,14 +21,186 @@ document.addEventListener("DOMContentLoaded", () => {
     loadMemories();
   }
 
-  if (
-    path.includes("staff") ||
-    path === "/" ||
-    path.includes("index.html")
-  ) {
+  if (path.includes("staff") || path === "/" || path.includes("index.html")) {
     loadStaff();
   }
+
+  const searchInput = document.getElementById("search-memories");
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      const term = e.target.value.toLowerCase();
+      document.querySelectorAll(".memory-card").forEach((card) => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(term) ? "flex" : "none";
+      });
+    });
+  }
 });
+
+window.openMediaModal = function (
+  url,
+  type,
+  id,
+  authorName,
+  likes = 0,
+  shares = 0,
+  isLiked = false,
+) {
+  const existing = document.querySelector(".media-modal-overlay");
+  if (existing) existing.remove();
+
+  const overlay = document.createElement("div");
+  overlay.className = "media-modal-overlay";
+  overlay.setAttribute("data-memory-id", id);
+  overlay.style.cssText =
+    "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; animation: fadeIn 0.3s ease;";
+
+  const mediaStyle =
+    "max-width: 90vw; max-height: 85vh; width: auto; height: auto; border-radius: 16px; box-shadow: 0 0 40px rgba(0,0,0,0.5); object-fit: contain;";
+
+  let content = "";
+  if (type === "image") {
+    content = `<img src="${url}" style="${mediaStyle}" onclick="event.stopPropagation()">`;
+  } else if (type === "video") {
+    content = `<video src="${url}" controls autoplay loop style="${mediaStyle}" onclick="event.stopPropagation()"></video>`;
+  }
+
+  const heartClass = isLiked ? "fas" : "far";
+  const heartColor = isLiked ? "#ef4444" : "white";
+
+  const actionsHtml = `
+    <div style="position: absolute; right: 20px; bottom: 100px; display: flex; flex-direction: column; gap: 15px; z-index: 10001; align-items: center;">
+        <div class="action-btn like-btn" onclick="event.stopPropagation(); toggleLike(this, '${id}')" style="display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s;">
+            <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 12px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                <i class="${heartClass} fa-heart" style="font-size: 1.5rem; color: ${heartColor};"></i>
+            </div>
+            <span class="like-count" style="color: white; font-size: 0.75rem; margin-top: 4px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">${likes}</span>
+        </div>
+        <div class="action-btn share-btn" onclick="event.stopPropagation(); shareMemory('${id}', '${authorName}', 'Memory di ${authorName}', this)" style="display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s;">
+            <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 12px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                <i class="fas fa-share" style="font-size: 1.5rem; color: white;"></i>
+            </div>
+            <span class="share-count" style="color: white; font-size: 0.75rem; margin-top: 4px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">${shares}</span>
+        </div>
+    </div>
+    <button onclick="event.stopPropagation(); this.closest('.media-modal-overlay').remove()" style="position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; cursor: pointer; z-index: 10002; backdrop-filter: blur(5px); transition: 0.2s;">&times;</button>
+  `;
+
+  overlay.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative;">${content}${actionsHtml}</div>`;
+
+  document.body.appendChild(overlay);
+  overlay.onclick = () => overlay.remove();
+
+  const btns = overlay.querySelectorAll(".action-btn, button");
+  btns.forEach((btn) => {
+    btn.onmouseover = () => (btn.style.transform = "scale(1.1)");
+    btn.onmouseout = () => (btn.style.transform = "scale(1)");
+  });
+};
+
+window.toggleLike = async function (el, memoryId) {
+  const icon = el.querySelector("i");
+  const countSpan = el.querySelector(".like-count") || el.querySelector("span");
+
+  const wasLiked = icon.classList.contains("fas");
+  const currentCount = parseInt(countSpan ? countSpan.textContent : 0) || 0;
+
+  if (wasLiked) {
+    icon.classList.remove("fas");
+    icon.classList.add("far");
+    icon.style.color = el.classList.contains("action-btn")
+      ? "white"
+      : "#cbd5e1";
+    if (countSpan)
+      countSpan.textContent = el.classList.contains("action-btn")
+        ? Math.max(0, currentCount - 1)
+        : ` ${Math.max(0, currentCount - 1)}`;
+  } else {
+    icon.classList.remove("far");
+    icon.classList.add("fas");
+    icon.style.color = "#ef4444";
+    icon.animate(
+      [
+        { transform: "scale(1)" },
+        { transform: "scale(1.4)" },
+        { transform: "scale(1)" },
+      ],
+      { duration: 300, easing: "cubic-bezier(0.175, 0.885, 0.32, 1.275)" },
+    );
+    if (countSpan)
+      countSpan.textContent = el.classList.contains("action-btn")
+        ? currentCount + 1
+        : ` ${currentCount + 1}`;
+  }
+
+  try {
+    const res = await fetch(`/api/memories/${memoryId}/like`, {
+      method: "POST",
+    });
+    if (res.status === 401) {
+      if (typeof showToast === "function")
+        showToast("Accedi per mettere like!", "error");
+
+      if (wasLiked) {
+        icon.classList.add("fas");
+        icon.classList.remove("far");
+        icon.style.color = "#ef4444";
+        if (countSpan)
+          countSpan.textContent = el.classList.contains("action-btn")
+            ? currentCount
+            : ` ${currentCount}`;
+      } else {
+        icon.classList.add("far");
+        icon.classList.remove("fas");
+        icon.style.color = el.classList.contains("action-btn")
+          ? "white"
+          : "#cbd5e1";
+        if (countSpan)
+          countSpan.textContent = el.classList.contains("action-btn")
+            ? currentCount
+            : ` ${currentCount}`;
+      }
+      return;
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+window.shareMemory = async function (id, authorName, title, el) {
+  const link = `${window.location.origin}/profile/${encodeURIComponent(authorName)}?memory=${id}`;
+
+  try {
+    const res = await fetch(`/api/memories/${id}/share`, { method: "POST" });
+    const data = await res.json();
+    if (el) {
+      const countSpan =
+        el.querySelector(".share-count") || el.querySelector("span");
+      if (countSpan) {
+        if (el.classList.contains("action-btn")) {
+          countSpan.textContent = data.shares;
+        } else {
+          countSpan.textContent = ` ${data.shares}`;
+        }
+      }
+    }
+  } catch (e) {}
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: title || "Astral Cup Memory",
+        text: `Guarda questa memory di ${authorName}!`,
+        url: link,
+      });
+      return;
+    } catch (err) {}
+  }
+
+  navigator.clipboard.writeText(link).then(() => {
+    if (typeof showToast === "function") showToast("Link copiato!", "success");
+  });
+};
 
 async function loadTournaments() {
   try {
@@ -219,7 +387,11 @@ function showJoinTeamModal(tid, format) {
   overlay.style.zIndex = 9999;
 
   overlay.innerHTML = `
-    <div class="modal" style="background: #181a20; padding: 2rem; border-radius: 16px; width: 100%; max-width: 400px; position: relative;">
+    <style>
+      .modal-custom { background: #181a20; padding: 2rem; border-radius: 16px; width: 90%; max-width: 400px; position: relative; }
+      @media (max-width: 480px) { .modal-custom { padding: 1.5rem; width: 95%; } }
+    </style>
+    <div class="modal-custom">
       <button class="modal-close" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:1.5rem;color:#fff;cursor:pointer;">&times;</button>
       <h2 style="margin-bottom:1.2rem;text-align:center; color: var(--primary-2);">Iscrizione Team ${format.toUpperCase()}</h2>
       <p style="margin-bottom:1.5rem; text-align:center; color: #94a3b8;">Inserisci i nickname dei tuoi compagni.</p>
@@ -232,6 +404,9 @@ function showJoinTeamModal(tid, format) {
 
   document.body.appendChild(overlay);
   overlay.querySelector(".modal-close").onclick = () => overlay.remove();
+  overlay.onclick = (e) => {
+    if (e.target === overlay) overlay.remove();
+  };
 
   const inputs = overlay.querySelectorAll(".teammate-input");
   inputs.forEach((input) => {
@@ -345,6 +520,12 @@ async function loadMemories() {
     const res = await fetch("/api/memories");
     const memories = await res.json();
 
+    let currentUser = null;
+    try {
+      const meRes = await fetch("/api/me");
+      if (meRes.ok) currentUser = await meRes.json();
+    } catch (e) {}
+
     const container =
       document.querySelector("#memories .grid-3") ||
       document.querySelector(".grid-3");
@@ -369,6 +550,11 @@ async function loadMemories() {
     const itemsToShow = isHome ? memories.slice(0, 3) : memories;
 
     itemsToShow.forEach((m) => {
+      const likesCount = m.likes ? m.likes.length : 0;
+      const sharesCount = m.shares || 0;
+      const isLiked =
+        currentUser && m.likes && m.likes.includes(currentUser.discordId);
+
       let media = "";
       if (m.videoUrl && m.videoUrl.includes("youtube")) {
         const match =
@@ -382,25 +568,41 @@ async function loadMemories() {
         }
       } else if (
         m.videoUrl &&
-        (m.videoUrl.endsWith(".jpg") ||
-          m.videoUrl.endsWith(".png") ||
-          m.videoUrl.endsWith(".jpeg") ||
-          m.videoUrl.endsWith(".webp"))
+        /\.(jpg|jpeg|png|webp|gif|bmp)(\?.*)?$/i.test(m.videoUrl)
       ) {
-        media = `<img src="${m.videoUrl}" alt="Memory" style="width:100%;height:180px;object-fit:cover;border-radius:10px;">`;
+        media = `<img src="${m.videoUrl}" alt="Memory" onclick="event.stopPropagation(); openMediaModal('${m.videoUrl}', 'image', '${m._id}', '${m.authorName || ""}', ${likesCount}, ${sharesCount}, ${isLiked})" style="width:100%;height:180px;object-fit:cover;border-radius:10px; cursor: zoom-in;">`;
       } else if (m.videoUrl) {
-        media = `<a href="${m.videoUrl}" target="_blank">${m.videoUrl}</a>`;
+        media = `<a href="${m.videoUrl}" target="_blank" onclick="event.stopPropagation()">${m.videoUrl}</a>`;
       }
 
       const date = m.createdAt
         ? new Date(m.createdAt).toLocaleDateString()
         : "";
+
+      const authorHtml = m.authorName
+        ? `<div onclick="event.stopPropagation(); window.location.href='/profile/${encodeURIComponent(m.authorName)}'" style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--primary-2); font-weight: 600; cursor: pointer; display: inline-block;"><i class="fas fa-user" style="margin-right: 5px;"></i> ${m.authorName}</div>`
+        : "";
+
+      const heartClass = isLiked ? "fas" : "far";
+      const heartColor = isLiked ? "#ef4444" : "#cbd5e1";
+
       const card = `
-        <div class="card memory-card" style="min-height:320px;display:flex;flex-direction:column;justify-content:space-between;">
-          ${media}
-          <h3 style="margin:0.7rem 0 0.3rem 0;">${m.title || "Memory"}</h3>
-          <p style="font-size:0.98em;color:#aaa;margin-bottom:0.5rem;">${date}</p>
-          <p style="margin-bottom:0.7rem;">${m.description ? m.description : ""}</p>
+        <div class="card memory-card" onclick="window.location.href='/profile/${encodeURIComponent(m.authorName)}?memory=${m._id}'" style="min-height:320px;display:flex;flex-direction:column;justify-content:space-between; cursor: pointer;">
+          <div>
+            ${media}
+            <h3 style="margin:0.7rem 0 0.3rem 0;">${m.title || "Memory"}</h3>
+            ${authorHtml}
+            <p style="font-size:0.98em;color:#aaa;margin-bottom:0.5rem;">${date}</p>
+            <p style="margin-bottom:0.7rem;">${m.description ? m.description : ""}</p>
+          </div>
+          <div style="display: flex; gap: 15px; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+            <button onclick="event.stopPropagation(); toggleLike(this, '${m._id}')" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
+                <i class="${heartClass} fa-heart" style="font-size: 1.1rem; color: ${heartColor};"></i> <span>${likesCount}</span>
+            </button>
+            <button onclick="event.stopPropagation(); shareMemory('${m._id}', '${m.authorName || ""}', '${m.title || "Memory"}', this)" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
+                <i class="fas fa-share" style="font-size: 1.1rem;"></i> <span>${sharesCount}</span>
+            </button>
+          </div>
         </div>
       `;
       container.innerHTML += card;
@@ -427,17 +629,12 @@ function openAddMemoryModal() {
   overlay.style.justifyContent = "center";
   overlay.style.zIndex = 9999;
 
-  const modal = document.createElement("div");
-  modal.className = "modal";
-  modal.style.background = "#181a20";
-  modal.style.padding = "2rem";
-  modal.style.borderRadius = "16px";
-  modal.style.boxShadow = "0 8px 32px rgba(0,0,0,0.25)";
-  modal.style.width = "100%";
-  modal.style.maxWidth = "420px";
-  modal.style.position = "relative";
-
-  modal.innerHTML = `
+  overlay.innerHTML = `
+    <style>
+      .modal-custom { background: #181a20; padding: 2rem; border-radius: 16px; width: 90%; max-width: 420px; position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.25); }
+      @media (max-width: 480px) { .modal-custom { padding: 1.5rem; width: 95%; } }
+    </style>
+    <div class="modal-custom">
     <button class="modal-close" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:1.5rem;color:#fff;cursor:pointer;" title="Chiudi">&times;</button>
     <h2 style="margin-bottom:1.2rem;text-align:center; color: var(--primary-2);">Aggiungi una Memory</h2>
     <form id="add-memory-form" autocomplete="off">
@@ -455,17 +652,17 @@ function openAddMemoryModal() {
       </div>
       <button type="submit" class="btn-primary" style="width:100%;font-size:1.1rem;">Carica Memory</button>
     </form>
+    </div>
   `;
 
-  overlay.appendChild(modal);
   document.body.appendChild(overlay);
 
-  modal.querySelector(".modal-close").onclick = () => overlay.remove();
+  overlay.querySelector(".modal-close").onclick = () => overlay.remove();
   overlay.onclick = (e) => {
     if (e.target === overlay) overlay.remove();
   };
 
-  const form = modal.querySelector("#add-memory-form");
+  const form = overlay.querySelector("#add-memory-form");
   form.onsubmit = async (e) => {
     e.preventDefault();
     const title = form.title.value.trim();

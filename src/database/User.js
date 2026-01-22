@@ -12,6 +12,13 @@ const UserSchema = new mongoose.Schema({
   bedBroken: { type: Number, default: 0 },
   points: { type: Number, default: 0 },
   skills: { type: [String], default: [] },
+  socials: {
+    tiktok: String,
+    youtube: String,
+    instagram: String,
+    discord: String,
+    twitch: String,
+  },
   createdAt: { type: Date, default: Date.now },
   tournaments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tournament" }],
 });

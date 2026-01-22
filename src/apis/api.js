@@ -4,6 +4,7 @@ const Tournament = require("../database/Tournament");
 const Memory = require("../database/Memory");
 const User = require("../database/User");
 const jwt = require("jsonwebtoken");
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 const protect = async (req, res, next) => {
   const apiKey = process.env.API_KEY || null;
@@ -51,6 +52,7 @@ router.get("/me", ensureAuth, async (req, res) => {
       role: user.role,
       minecraftUsername: user.minecraftUsername,
       skills: user.skills || [],
+      socials: user.socials || {},
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -88,9 +90,23 @@ router.put("/me/skills", ensureAuth, async (req, res) => {
     const user = await User.findOne({ discordId: req.user.discordId });
     if (!user) return res.status(404).json({ message: "Utente non trovato" });
 
-    user.skills = skills.slice(0, 15); // Limite di sicurezza
+    user.skills = skills;
     await user.save();
     res.json({ message: "Skills aggiornate", skills: user.skills });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put("/me/socials", ensureAuth, async (req, res) => {
+  try {
+    const { tiktok, youtube, instagram, discord, twitch } = req.body;
+    const user = await User.findOne({ discordId: req.user.discordId });
+    if (!user) return res.status(404).json({ message: "Utente non trovato" });
+
+    user.socials = { tiktok, youtube, instagram, discord, twitch };
+    await user.save();
+    res.json({ message: "Social aggiornati", socials: user.socials });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -113,7 +129,11 @@ router.get("/users/search", async (req, res) => {
 
 router.get("/users/:username", async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.params.username });
+    const usernameRegex = new RegExp(
+      `^${req.params.username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+      "i",
+    );
+    const user = await User.findOne({ username: { $regex: usernameRegex } });
     if (!user) return res.status(404).json({ message: "Utente non trovato" });
 
     res.json({
@@ -126,6 +146,7 @@ router.get("/users/:username", async (req, res) => {
       kills: user.kills,
       points: user.points,
       skills: user.skills || [],
+      socials: user.socials || {},
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -134,7 +155,11 @@ router.get("/users/:username", async (req, res) => {
 
 router.get("/users/:username/memories", async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.params.username });
+    const usernameRegex = new RegExp(
+      `^${req.params.username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+      "i",
+    );
+    const user = await User.findOne({ username: { $regex: usernameRegex } });
     if (!user) return res.status(404).json({ message: "Utente non trovato" });
 
     const memories = await Memory.find({ authorId: user.discordId }).sort({
@@ -211,12 +236,10 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
     }
 
     if (!user.minecraftUsername) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Devi impostare il tuo nickname di Minecraft nel profilo per iscriverti.",
-        });
+      return res.status(400).json({
+        message:
+          "Devi impostare il tuo nickname di Minecraft nel profilo per iscriverti.",
+      });
     }
 
     const isSubscribed = tournament.subscribers.some(
@@ -267,30 +290,24 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
 
       const foundUsers = await User.find({ username: { $in: teammates } });
       if (foundUsers.length !== teammates.length) {
-        return res
-          .status(400)
-          .json({
-            message: "Uno o più compagni non sono registrati sul sito.",
-          });
+        return res.status(400).json({
+          message: "Uno o più compagni non sono registrati sul sito.",
+        });
       }
 
       for (const tUser of foundUsers) {
         if (!tUser.minecraftUsername) {
-          return res
-            .status(400)
-            .json({
-              message: `Il compagno ${tUser.username} non ha impostato il nickname di Minecraft.`,
-            });
+          return res.status(400).json({
+            message: `Il compagno ${tUser.username} non ha impostato il nickname di Minecraft.`,
+          });
         }
         const isCaptain = tournament.subscribers.some(
           (sub) => sub.toString() === tUser._id.toString(),
         );
         if (isCaptain) {
-          return res
-            .status(400)
-            .json({
-              message: `${tUser.username} è già iscritto a questo torneo.`,
-            });
+          return res.status(400).json({
+            message: `${tUser.username} è già iscritto a questo torneo.`,
+          });
         }
         if (tournament.teams) {
           const isInTeam = tournament.teams.some((t) =>
@@ -385,8 +402,21 @@ router.post("/tournaments/:id/unsubscribe", ensureAuth, async (req, res) => {
 
 router.get("/memories", async (req, res) => {
   try {
-    const memories = await Memory.find().sort({ createdAt: -1 });
-    res.json(memories);
+    const memories = await Memory.find().sort({ createdAt: -1 }).lean();
+
+    const authorIds = [...new Set(memories.map((m) => m.authorId))];
+    const users = await User.find({ discordId: { $in: authorIds } }).select(
+      "discordId username avatar",
+    );
+
+    const memoriesWithAuthor = memories.map((m) => {
+      const author = users.find((u) => u.discordId === m.authorId);
+      return {
+        ...m,
+        authorName: author ? author.username : "Utente",
+      };
+    });
+    res.json(memoriesWithAuthor);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -448,6 +478,55 @@ router.delete("/memories/:id", ensureAuth, async (req, res) => {
       return res.status(403).json({ message: "Non autorizzato" });
     await Memory.findByIdAndDelete(req.params.id);
     res.json({ message: "Memory eliminata" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/memories/:id/like", ensureAuth, async (req, res) => {
+  try {
+    const memory = await Memory.findById(req.params.id);
+    if (!memory) return res.status(404).json({ message: "Memory non trovata" });
+
+    const userId = req.user.discordId;
+    const index = memory.likes.indexOf(userId);
+
+    if (index === -1) {
+      memory.likes.push(userId);
+    } else {
+      memory.likes.splice(index, 1);
+    }
+
+    await memory.save();
+
+    req.app.get("io").emit("memory:update", {
+      id: memory._id,
+      likes: memory.likes.length,
+      shares: memory.shares,
+    });
+
+    res.json({ likes: memory.likes.length, isLiked: index === -1 });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/memories/:id/share", async (req, res) => {
+  try {
+    const memory = await Memory.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { shares: 1 } },
+      { new: true },
+    );
+    if (!memory) return res.status(404).json({ message: "Memory non trovata" });
+
+    req.app.get("io").emit("memory:update", {
+      id: memory._id,
+      likes: memory.likes.length,
+      shares: memory.shares,
+    });
+
+    res.json({ shares: memory.shares });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -521,6 +600,111 @@ router.get("/staff", async (req, res) => {
     res.json(staffData);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/proxy/coralmc/:username", async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    // UUID Mojang
+    let uuid = null;
+    try {
+      const uuidRes = await fetch(`https://api.ashcon.app/mojang/v2/user/${username}`);
+      if (uuidRes.ok) {
+        const uuidData = await uuidRes.json();
+        uuid = uuidData.uuid;
+      }
+    } catch (e) {
+      console.warn(`UUID non trovato per ${username}: ${e.message}`);
+    }
+
+    // Fetch HTML della pagina CoralMC
+    const response = await fetch(`https://coralmc.it/it/stats/player/${username}`, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
+
+    if (response.status === 404) {
+      return res.status(404).json({ exists: false, message: "Player non trovato" });
+    }
+
+    const html = await response.text();
+
+    // Funzione per estrarre le stats dall'HTML
+    const getStat = (labels, htmlContent) => {
+      for (const label of labels) {
+        const safeLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const regexes = [
+          new RegExp(`>\\s*${safeLabel}\\s*<[\\s\\S]*?>\\s*([\\d\\.]+)\\s*<`, "i"),
+          new RegExp(`${safeLabel}\\s*:\\s*([\\d\\.]+)`, "i"),
+          new RegExp(`${safeLabel}[^\\d]*?([\\d\\.]+)`, "i"),
+        ];
+        for (const regex of regexes) {
+          const match = htmlContent.match(regex);
+          if (match && match[1]) return parseInt(match[1].replace(/\./g, "").trim());
+        }
+      }
+      return null;
+    };
+
+    // Prova a leggere le stats dall'HTML
+    let stats = {
+      wins: getStat(["Vittorie", "Wins"], html),
+      kills: getStat(["Uccisioni", "Kills"], html),
+      deaths: getStat(["Morti", "Deaths"], html),
+      beds: getStat(["Letti rotti", "Letti distrutti", "Beds broken"], html),
+      finals: getStat(["Final kills", "Uccisioni finali", "Finali"], html),
+      finalDeaths: getStat(["Morti finali", "Final deaths"], html),
+      games: getStat(["Partite giocate", "Games played", "Partite"], html),
+      level: getStat(["Livello", "Level"], html),
+    };
+
+    // Se HTML non ha trovato nulla → fallback API JSON
+    const allNull = Object.values(stats).every((v) => v === null);
+    if (allNull) {
+      try {
+        const jsonResponse = await fetch(`https://coralmc.it/api/player/${username}`, {
+          headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json" },
+        });
+
+        if (jsonResponse.ok) {
+          const data = await jsonResponse.json();
+          stats = {
+            wins: data.stats?.wins ?? 0,
+            kills: data.stats?.kills ?? 0,
+            deaths: data.stats?.deaths ?? 0,
+            beds: data.stats?.bedsBroken ?? 0,
+            finals: data.stats?.finalKills ?? 0,
+            finalDeaths: data.stats?.finalDeaths ?? 0,
+            games: data.stats?.gamesPlayed ?? 0,
+            level: data.level ?? 0,
+          };
+          console.log(`Stats di ${username} caricate dal fallback API JSON`);
+        } else {
+          console.warn(`API JSON CoralMC fallita per ${username}, status: ${jsonResponse.status}`);
+        }
+      } catch (e) {
+        console.error(`Errore fallback API JSON per ${username}:`, e.message);
+      }
+    } else {
+      console.log(`Stats di ${username} caricate dall'HTML`);
+    }
+
+    // Normalizza eventuali null a 0
+    for (const key in stats) {
+      if (stats[key] === null || stats[key] === undefined) stats[key] = 0;
+    }
+
+    res.json({
+      uuid,
+      username,
+      exists: true,
+      stats,
+    });
+
+  } catch (err) {
+    console.error(`Errore endpoint CoralMC per ${req.params.username}:`, err);
+    res.status(500).json({ exists: false, error: err.message });
   }
 });
 

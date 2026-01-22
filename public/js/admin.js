@@ -99,7 +99,6 @@ async function loadAdminTournaments() {
       tbody.innerHTML += row;
     });
 
-    // Eventi elimina torneo con modal custom
     tbody.querySelectorAll(".btn-icon.delete").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -107,15 +106,18 @@ async function loadAdminTournaments() {
         showDeleteTournamentModal(id);
       });
     });
-    // Modal custom per conferma eliminazione torneo
+
     function showDeleteTournamentModal(tournamentId) {
-      // Rimuovi eventuali modali già presenti
       document
         .querySelectorAll(".modal-overlay.delete-modal")
         .forEach((m) => m.remove());
       const modalHTML = `
+    <style>
+      .modal-custom { background: #1e293b; padding: 2rem; border-radius: 16px; width: 90%; max-width: 400px; position: relative; border: 1px solid rgba(255,255,255,0.1); }
+      @media (max-width: 480px) { .modal-custom { padding: 1.5rem; width: 95%; } }
+    </style>
     <div class="modal-overlay delete-modal active">
-      <div class="modal-content" style="max-width: 400px; text-align: center;">
+      <div class="modal-custom" style="text-align: center;">
         <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
         <h2 style="color: var(--primary-2); margin-bottom: 1.2rem;">Conferma eliminazione</h2>
         <p style="color: #cbd5e1; margin-bottom: 2rem;">Sei sicuro di voler eliminare questo torneo? Questa azione è <b>irreversibile</b>.</p>
@@ -127,6 +129,12 @@ async function loadAdminTournaments() {
     </div>
   `;
       document.body.insertAdjacentHTML("beforeend", modalHTML);
+      const overlay = document.querySelector(".modal-overlay.delete-modal");
+      if (overlay) {
+        overlay.addEventListener("click", (e) => {
+          if (e.target === overlay) overlay.remove();
+        });
+      }
       document.getElementById("confirm-delete-tournament").onclick =
         async () => {
           try {
@@ -148,7 +156,6 @@ async function loadAdminTournaments() {
         };
     }
 
-    // Eventi copia link
     tbody.querySelectorAll(".btn-icon.copy-link").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -249,8 +256,12 @@ window.showSubscribers = function (id) {
   }
 
   const modalHTML = `
+    <style>
+      .modal-custom { background: #0f172a; padding: 2rem; border-radius: 20px; width: 90%; max-width: 500px; position: relative; border: 1px solid var(--primary-2); box-shadow: 0 0 30px rgba(59, 130, 246, 0.3); }
+      @media (max-width: 480px) { .modal-custom { padding: 1.5rem; width: 95%; } }
+    </style>
     <div class="modal-overlay active">
-        <div class="modal-content">
+        <div class="modal-custom">
             <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
             <h2 style="color: var(--primary-2); margin-bottom: 0.5rem; text-align: center;">Iscritti: ${tournament.title}</h2>
             <p style="text-align: center; color: #64748b; margin-bottom: 1.5rem; font-size: 0.9rem;">Formato: ${tournament.format ? tournament.format.toUpperCase() : "SOLO"}</p>
@@ -262,4 +273,11 @@ window.showSubscribers = function (id) {
     </div>
     `;
   document.body.insertAdjacentHTML("beforeend", modalHTML);
+  const overlays = document.querySelectorAll(".modal-overlay.active");
+  const overlay = overlays[overlays.length - 1];
+  if (overlay) {
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+  }
 };

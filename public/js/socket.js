@@ -13,7 +13,33 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  socket.on("leaderboard:update", (data) => {
-    // to implement: refresh leaderboard if on leaderboard page
+  socket.on("leaderboard:update", (data) => {});
+
+  socket.on("memory:update", (data) => {
+    const { id, likes, shares } = data;
+
+    const card = document.getElementById(`memory-${id}`);
+    if (card) {
+      const likeBtn = card.querySelector(".fa-heart").closest("button");
+      if (likeBtn) {
+        const span = likeBtn.querySelector("span");
+        if (span) span.textContent = ` ${likes}`;
+      }
+      const shareBtn = card.querySelector(".fa-share").closest("button");
+      if (shareBtn) {
+        const span = shareBtn.querySelector("span");
+        if (span) span.textContent = ` ${shares}`;
+      }
+    }
+
+    const modal = document.querySelector(
+      `.media-modal-overlay[data-memory-id="${id}"]`,
+    );
+    if (modal) {
+      const likeCount = modal.querySelector(".like-count");
+      if (likeCount) likeCount.textContent = likes;
+      const shareCount = modal.querySelector(".share-count");
+      if (shareCount) shareCount.textContent = shares;
+    }
   });
 });

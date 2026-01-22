@@ -46,7 +46,6 @@ async function loadTournament() {
         : "status-closed";
   const statusLabel = t.status;
 
-  // Logica Pulsante Azione
   const isSubscribed =
     user && t.subscribers.some((s) => s.discordId === user.discordId);
   let actionBtn = "";
@@ -65,7 +64,6 @@ async function loadTournament() {
     actionBtn = `<button disabled style="width: 100%; padding: 0.8rem; border-radius: 8px; font-weight: 600; margin-bottom: 12px; background: #334155; color: #94a3b8; border: none; cursor: not-allowed;">Iscrizioni Chiuse</button>`;
   }
 
-  // Lista Partecipanti
   let subsHtml = "";
   if (t.subscribers && t.subscribers.length > 0) {
     subsHtml = `
@@ -98,7 +96,7 @@ async function loadTournament() {
         .t-info-row { display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .t-info-row:last-child { border-bottom: none; }
         .t-info-label { color: #94a3b8; display: flex; align-items: center; gap: 10px; }
-        .t-info-val { font-weight: 600; color: #fff; }
+        .t-info-val { font-weight: 600; color: #fff; text-align: right; }
         .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
         .status-open { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
         .status-live { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
@@ -171,7 +169,6 @@ async function loadTournament() {
     });
   };
 
-  // Gestione Eventi Iscrizione
   const subBtn = document.getElementById("btn-subscribe");
   if (subBtn) {
     subBtn.onclick = async () => {
@@ -259,7 +256,11 @@ function showJoinTeamModal(tid, format) {
   overlay.style.zIndex = 9999;
 
   overlay.innerHTML = `
-    <div class="modal" style="background: #181a20; padding: 2rem; border-radius: 16px; width: 100%; max-width: 400px; position: relative;">
+    <style>
+      .modal-custom { background: #181a20; padding: 2rem; border-radius: 16px; width: 90%; max-width: 400px; position: relative; }
+      @media (max-width: 480px) { .modal-custom { padding: 1.5rem; width: 95%; } }
+    </style>
+    <div class="modal-custom">
       <button class="modal-close" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:1.5rem;color:#fff;cursor:pointer;">&times;</button>
       <h2 style="margin-bottom:1.2rem;text-align:center; color: var(--primary-2);">Iscrizione Team ${format.toUpperCase()}</h2>
       <p style="margin-bottom:1.5rem; text-align:center; color: #94a3b8;">Inserisci i nickname dei tuoi compagni.</p>
@@ -272,6 +273,9 @@ function showJoinTeamModal(tid, format) {
 
   document.body.appendChild(overlay);
   overlay.querySelector(".modal-close").onclick = () => overlay.remove();
+  overlay.onclick = (e) => {
+    if (e.target === overlay) overlay.remove();
+  };
 
   const inputs = overlay.querySelectorAll(".teammate-input");
   inputs.forEach((input) => {
