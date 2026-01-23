@@ -128,22 +128,39 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function loadUserProfile(username) {
+  const cacheKey = username ? `profile_${username}` : `profile_me`;
+  
+  // 1. Cache First (Render immediato)
+  if (typeof getCache === 'function') {
+    const cached = getCache(cacheKey);
+    if (cached) renderUserProfile(cached, username);
+  }
+
   try {
     let url = "/api/me";
     if (username) url = `/api/users/${encodeURIComponent(username)}`;
 
     const res = await fetch(url);
     if (!res.ok) {
-      if (username) {
+      // Mostra errore solo se non abbiamo cache da mostrare
+      if (username && (!typeof getCache === 'function' || !getCache(cacheKey))) {
         document.querySelector(".container").innerHTML =
           "<h2 style='text-align:center; margin-top: 50px;'>Utente non trovato</h2>";
-      } else {
+      } else if (!username) {
         window.location.href = "/";
       }
       return;
     }
     const user = await res.json();
+    
+    if (typeof setCache === 'function') setCache(cacheKey, user);
+    renderUserProfile(user, username);
+  } catch (err) {
+    console.error("Errore caricamento profilo", err);
+  }
+}
 
+async function renderUserProfile(user, username) {
     document.getElementById("profile-username").textContent = user.username;
     document.getElementById("profile-role").textContent =
       user.role.toUpperCase();
@@ -153,15 +170,23 @@ async function loadUserProfile(username) {
     const clearNickBtn = document.getElementById("clear-mc-nick");
 
     if (username) {
-      if (nickInput) {
-        const displaySpan = document.createElement("span");
+      // Gestione visualizzazione nick per altri profili (sostituisce input con span)
+      let displaySpan = document.getElementById("mc-nick-display");
+      
+      if (!displaySpan && nickInput) {
+        displaySpan = document.createElement("span");
+        displaySpan.id = "mc-nick-display";
         displaySpan.style.cssText =
           "color: #fff; font-size: 1.1rem; margin-left: 5px;";
+        nickInput.parentNode.replaceChild(displaySpan, nickInput);
+      }
+      
+      if (displaySpan) {
         displaySpan.innerHTML = user.minecraftUsername
           ? `<i class="fas fa-cube" style="margin-right:5px; color:#22c55e;"></i> ${user.minecraftUsername}`
           : `<span style="color:#94a3b8; font-style:italic;">Nessun nickname MC</span>`;
-        nickInput.parentNode.replaceChild(displaySpan, nickInput);
       }
+
       if (saveNickBtn) saveNickBtn.remove();
       if (clearNickBtn) clearNickBtn.remove();
     } else {
@@ -204,6 +229,13 @@ async function loadUserProfile(username) {
     const bwSkinRender = document.getElementById("bw-skin-render");
     const bwCardBg = document.getElementById("bw-card-bg");
     const coralStatsLink = document.getElementById("coral-stats-link");
+
+    if (bwCardBg) {
+      const statsCard = bwCardBg.closest(".admin-card");
+      if (statsCard) {
+        statsCard.style.display = user.minecraftUsername ? "block" : "none";
+      }
+    }
 
     if (levelEl)
       levelEl.textContent = (user.points || 0).toLocaleString("it-IT");
@@ -446,9 +478,9 @@ async function loadUserProfile(username) {
       }
     }
 
-    const socialsDisplay = document.getElementById("socials-display");
-    if (socialsDisplay) {
-      socialsDisplay.innerHTML = "";
+    const socialsContainer = document.getElementById("header-socials-container");
+    if (socialsContainer) {
+      socialsContainer.innerHTML = "";
       const socials = user.socials || {};
       const links = [
         { key: "twitch", icon: "fab fa-twitch", color: "#9146FF" },
@@ -458,11 +490,9 @@ async function loadUserProfile(username) {
         { key: "discord", icon: "fab fa-discord", color: "#5865F2" },
       ];
 
-      let count = 0;
       links.forEach((l) => {
         let handle = socials[l.key];
         if (handle && handle.trim() !== "") {
-          count++;
           handle = handle.trim();
 
           let cleanHandle = handle;
@@ -477,23 +507,28 @@ async function loadUserProfile(username) {
                 "",
               )
               .replace(/\/$/, "");
-            displayText = cleanHandle;
+            displayText = `@${cleanHandle}`;
           } else {
             displayText = "Discord Server";
           }
 
           const a = document.createElement("a");
-          a.style.cssText =
-            "display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; transition: 0.2s; text-decoration: none; cursor: pointer; color: #e2e8f0; font-weight: 500; font-size: 0.9rem;";
-          a.innerHTML = `<i class="${l.icon}" style="color: ${l.color}; font-size: 1.2rem;"></i> <span>${displayText}</span>`;
+          a.className = "social-pill";
+          a.innerHTML = `<i class="${l.icon}" style="color: ${l.color}; font-size: 1rem;"></i> <span>${displayText}</span>`;
+          a.title = displayText;
+
           a.onmouseover = () => {
-            a.style.background = "rgba(255,255,255,0.1)";
-            a.style.borderColor = "rgba(255,255,255,0.2)";
+            a.style.transform = "translateY(-2px)";
+            a.style.borderColor = l.color;
+            a.style.background = "rgba(255,255,255,0.05)";
+            a.style.boxShadow = `0 4px 12px ${l.color}20`;
             a.style.color = "#fff";
           };
           a.onmouseout = () => {
-            a.style.background = "rgba(255,255,255,0.05)";
+            a.style.transform = "translateY(0)";
             a.style.borderColor = "rgba(255,255,255,0.1)";
+            a.style.background = "rgba(0,0,0,0.3)";
+            a.style.boxShadow = "none";
             a.style.color = "#e2e8f0";
           };
 
@@ -526,7 +561,9 @@ async function loadUserProfile(username) {
                 .then((r) => r.json())
                 .then((d) => {
                   if (d.guild && d.guild.name) {
-                    a.querySelector("span").textContent = d.guild.name;
+                    a.title = `Discord: ${d.guild.name}`;
+                    const span = a.querySelector("span");
+                    if (span) span.textContent = d.guild.name;
                   }
                 })
                 .catch(() => {});
@@ -535,54 +572,48 @@ async function loadUserProfile(username) {
             a.target = "_blank";
             if (l.key === "tiktok") {
               a.href = `https://www.tiktok.com/@${cleanHandle}`;
-              a.querySelector("span").textContent = `@${cleanHandle}`;
             } else if (l.key === "youtube") {
               a.href = `https://www.youtube.com/@${cleanHandle}`;
-              a.querySelector("span").textContent = `@${cleanHandle}`;
             } else if (l.key === "instagram") {
               a.href = `https://www.instagram.com/${cleanHandle}`;
-              a.querySelector("span").textContent = `@${cleanHandle}`;
             } else if (l.key === "twitch") {
               a.href = `https://www.twitch.tv/${cleanHandle}`;
-              a.querySelector("span").textContent = cleanHandle;
             }
           }
 
-          socialsDisplay.appendChild(a);
+          socialsContainer.appendChild(a);
         }
       });
-
-      if (count === 0) {
-        socialsDisplay.innerHTML =
-          '<span style="color: #94a3b8; font-style: italic;">Nessun social collegato.</span>';
-      }
     }
-  } catch (err) {
-    console.error("Errore caricamento profilo", err);
-  }
 }
 
 async function loadMemories(username) {
+  const cacheKey = username ? `memories_${username}` : `memories_my`;
+  const container = document.getElementById("my-memories-grid");
+  
+  // Recupera utente corrente dalla cache (per i like)
+  let currentUser = typeof getCache === 'function' ? getCache('user_me') : null;
+
+  // 1. Cache First
+  if (typeof getCache === 'function') {
+    const cachedMemories = getCache(cacheKey);
+    if (cachedMemories) renderProfileMemories(cachedMemories, username, currentUser, container);
+  }
+
   try {
     let url = "/api/my-memories";
-    let currentAuthorName = username;
 
     if (username) {
       url = `/api/users/${encodeURIComponent(username)}/memories`;
-    } else {
-      try {
-        const meRes = await fetch("/api/me");
-        if (meRes.ok) {
-          const me = await meRes.json();
-          currentAuthorName = me.username;
-        }
-      } catch (e) {}
     }
 
-    let currentUser = null;
+    // Aggiorna currentUser dalla rete
     try {
       const meRes = await fetch("/api/me");
-      if (meRes.ok) currentUser = await meRes.json();
+      if (meRes.ok) {
+        currentUser = await meRes.json();
+        if (typeof setCache === 'function') setCache('user_me', currentUser);
+      }
     } catch (e) {}
 
     const res = await fetch(url);
@@ -592,8 +623,17 @@ async function loadMemories(username) {
     }
 
     const memories = await res.json();
-    const container = document.getElementById("my-memories-grid");
+    if (typeof setCache === 'function') setCache(cacheKey, memories);
+    
+    renderProfileMemories(memories, username, currentUser, container);
+  } catch (err) {
+    console.error("Errore caricamento memories", err);
+  }
+}
 
+function renderProfileMemories(memories, username, currentUser, container) {
+    let currentAuthorName = username || (currentUser ? currentUser.username : "Utente");
+    
     if (!Array.isArray(memories) || memories.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
@@ -607,9 +647,12 @@ async function loadMemories(username) {
     container.innerHTML = "";
     memories.forEach((m) => {
       const likesCount = m.likes ? m.likes.length : 0;
-      const sharesCount = m.shares || 0;
+      const sharesCount = (m.shares && Array.isArray(m.shares)) ? m.shares.length : 0;
       const isLiked =
         currentUser && m.likes && m.likes.includes(currentUser.discordId);
+
+      const safeTitle = (m.title || "Memory").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+      const safeAuthor = (currentAuthorName || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
       let media = "";
       if (m.videoUrl && m.videoUrl.includes("youtube")) {
@@ -626,7 +669,7 @@ async function loadMemories(username) {
         m.videoUrl &&
         /\.(jpg|jpeg|png|webp|gif|bmp)(\?.*)?$/i.test(m.videoUrl)
       ) {
-        media = `<img src="${m.videoUrl}" alt="Memory" onclick="event.stopPropagation(); openMediaModal('${m.videoUrl}', 'image', '${m._id}', '${currentAuthorName || ""}', ${likesCount}, ${sharesCount}, ${isLiked})" style="width:100%;height:180px;object-fit:cover;border-radius:10px; cursor: zoom-in;">`;
+        media = `<img src="${m.videoUrl}" alt="Memory" onclick="event.stopPropagation(); openMediaModal('${m.videoUrl}', 'image', '${m._id}', '${safeAuthor}', ${likesCount}, ${sharesCount}, ${isLiked})" style="width:100%;height:180px;object-fit:cover;border-radius:10px; cursor: zoom-in;">`;
       } else if (m.videoUrl) {
         media = `<a href="${m.videoUrl}" target="_blank" onclick="event.stopPropagation()" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${m.videoUrl}</a>`;
       }
@@ -661,7 +704,7 @@ async function loadMemories(username) {
                 <button onclick="event.stopPropagation(); toggleLike(this, '${m._id}')" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
                     <i class="${heartClass} fa-heart" style="font-size: 1.1rem; color: ${heartColor};"></i> <span>${likesCount}</span>
                 </button>
-                <button onclick="event.stopPropagation(); shareMemory('${m._id}', '${currentAuthorName || ""}', '${m.title || "Memory"}', this)" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
+                <button onclick="event.stopPropagation(); shareMemory('${m._id}', '${safeAuthor}', '${safeTitle}', this)" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
                     <i class="fas fa-share" style="font-size: 1.1rem;"></i> <span>${sharesCount}</span>
                 </button>
             </div>
@@ -680,24 +723,21 @@ async function loadMemories(username) {
         }
       }, 500);
     }
-  } catch (err) {
-    console.error("Errore caricamento memories", err);
-  }
 }
 
-async function deleteMemory(id) {
-  if (!confirm("Sei sicuro di voler eliminare questa memory?")) return;
-
-  try {
-    const res = await fetch(`/api/memories/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      loadMemories(null);
-    } else {
-      showToast("Errore durante l'eliminazione", "error");
+function deleteMemory(id) {
+  window.showConfirmModal("Elimina Memory", "Sei sicuro di voler eliminare questa memory?", async () => {
+    try {
+      const res = await fetch(`/api/memories/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        loadMemories(null);
+      } else {
+        showToast("Errore durante l'eliminazione", "error");
+      }
+    } catch (err) {
+      console.error(err);
     }
-  } catch (err) {
-    console.error(err);
-  }
+  });
 }
 
 function openSkillsModal() {

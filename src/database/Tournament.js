@@ -9,7 +9,7 @@ const TournamentSchema = new mongoose.Schema({
   description: { type: String },
   status: {
     type: String,
-    enum: ["Aperto", "In Corso", "Concluso"],
+    enum: ["Aperto", "In Corso", "Concluso", "Pausa"],
     default: "Aperto",
   },
   createdAt: { type: Date, default: Date.now },

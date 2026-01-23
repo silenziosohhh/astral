@@ -1,3 +1,51 @@
+const CACHE_TTL = 5 * 60 * 1000; // 5 minuti
+
+function getCache(key) {
+  const item = localStorage.getItem("astral_cache_" + key);
+  if (!item) return null;
+  try {
+    const { ts, data } = JSON.parse(item);
+    if (Date.now() - ts < CACHE_TTL) return data;
+  } catch (e) {}
+  return null;
+}
+
+function setCache(key, data) {
+  localStorage.setItem("astral_cache_" + key, JSON.stringify({ ts: Date.now(), data }));
+}
+
+// Global handlers for tournament actions (to avoid double listeners on re-render)
+window.handleTournamentAction = async function(el, tid, format, action) {
+    if (action === "login") {
+        window.location.href = "/auth/discord";
+        return;
+    }
+
+    if (action === "subscribe") {
+        if (format === "solo") {
+            el.disabled = true;
+            await joinTournament(tid, []);
+        } else {
+            showJoinTeamModal(tid, format);
+        }
+    } else if (action === "view_subscription") {
+        openSubscriptionModal(tid);
+    }
+    await loadTournaments();
+};
+
+window.copyLink = function(link) {
+    navigator.clipboard.writeText(link).then(() => {
+        if (typeof showToast === "function") showToast("Link copiato!", "success");
+    });
+};
+
+window.openTournamentPage = function(tid, e) {
+    // Prevent navigation if clicking on buttons
+    if (e.target.closest('button') || e.target.closest('.btn-visit') || e.target.closest('.btn-share')) return;
+    window.location.href = `/torneo/${tid}`;
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   const path = window.location.pathname;
 
@@ -68,6 +116,9 @@ window.openMediaModal = function (
   const heartClass = isLiked ? "fas" : "far";
   const heartColor = isLiked ? "#ef4444" : "white";
 
+  const safeAuthor = authorName.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+  const safeTitle = `Memory di ${safeAuthor}`;
+
   const actionsHtml = `
     <div style="position: absolute; right: 20px; bottom: 100px; display: flex; flex-direction: column; gap: 15px; z-index: 10001; align-items: center;">
         <div class="action-btn like-btn" onclick="event.stopPropagation(); toggleLike(this, '${id}')" style="display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s;">
@@ -76,7 +127,7 @@ window.openMediaModal = function (
             </div>
             <span class="like-count" style="color: white; font-size: 0.75rem; margin-top: 4px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">${likes}</span>
         </div>
-        <div class="action-btn share-btn" onclick="event.stopPropagation(); shareMemory('${id}', '${authorName}', 'Memory di ${authorName}', this)" style="display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s;">
+        <div class="action-btn share-btn" onclick="event.stopPropagation(); shareMemory('${id}', '${safeAuthor}', '${safeTitle}', this)" style="display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s;">
             <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 12px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
                 <i class="fas fa-share" style="font-size: 1.5rem; color: white;"></i>
             </div>
@@ -171,12 +222,12 @@ window.shareMemory = async function (id, authorName, title, el) {
   const link = `${window.location.origin}/profile/${encodeURIComponent(authorName)}?memory=${id}`;
 
   try {
-    const res = await fetch(`/api/memories/${id}/share`, { method: "POST" });
+    const res = await fetch(`/api/memories/${id}/share`, { method: "POST", credentials: "include" });
     const data = await res.json();
     if (el) {
       const countSpan =
         el.querySelector(".share-count") || el.querySelector("span");
-      if (countSpan) {
+      if (countSpan && data.shares !== undefined) {
         if (el.classList.contains("action-btn")) {
           countSpan.textContent = data.shares;
         } else {
@@ -203,22 +254,34 @@ window.shareMemory = async function (id, authorName, title, el) {
 };
 
 async function loadTournaments() {
+  const container = document.querySelector("#tornei .grid-3") || document.querySelector(".grid-3");
+  if (!container) return;
+
+  let user = null;
+  try {
+    const userRes = await fetch("/api/me", { credentials: "include" });
+    if (userRes.ok) user = await userRes.json();
+  } catch {}
+
+  // 1. Cache First (Render immediately)
+  const cached = getCache("tournaments");
+  if (cached) {
+    renderTournamentsList(cached, user, container);
+  }
+
+  // 2. Network (Update in background)
   try {
     const res = await fetch("/api/tournaments", { credentials: "include" });
     const tournaments = await res.json();
+    setCache("tournaments", tournaments);
+    renderTournamentsList(tournaments, user, container);
+  } catch (err) {
+    console.error("Errore caricamento tornei", err);
+  }
+}
 
-    let user = null;
-    try {
-      const userRes = await fetch("/api/me", { credentials: "include" });
-      if (userRes.ok) user = await userRes.json();
-    } catch {}
-    const container =
-      document.querySelector("#tornei .grid-3") ||
-      document.querySelector(".grid-3");
-
-    if (!container) return;
-
-    if (tournaments.length === 0) {
+function renderTournamentsList(tournaments, user, container) {
+    if (!tournaments || tournaments.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
             <i class="fas fa-trophy"></i>
@@ -242,10 +305,15 @@ async function loadTournaments() {
         : "";
 
       let isSubscribed = false;
-      if (user && Array.isArray(t.subscribers)) {
-        isSubscribed = t.subscribers.some(
-          (sub) => sub.discordId === user.discordId,
-        );
+      if (user) {
+        if (t.format === 'solo' && Array.isArray(t.subscribers)) {
+            isSubscribed = t.subscribers.some((sub) => sub.discordId === user.discordId);
+        } else if (t.format !== 'solo' && Array.isArray(t.teams)) {
+            isSubscribed = t.teams.some(team => 
+                (team.captain && team.captain.discordId === user.discordId) ||
+                (team.teammates && team.teammates.some(m => m.username === user.username))
+            );
+        }
       }
 
       let buttonLabel = "Iscriviti Ora";
@@ -259,100 +327,109 @@ async function loadTournaments() {
         buttonAction = "view_subscription";
       }
 
-      const shareLink = `${window.location.origin}/torneo/${t._id}`;
+      const shareLink = `${window.location.origin}/torneo?tid=${t._id}`;
+
+      // Admin Controls Section
+      let adminControls = "";
+      if (user && ["gestore", "founder", "developer", "admin"].includes(user.role)) {
+          adminControls = `
+            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Admin Zone</span>
+                    <i class="fas fa-shield-alt" style="color: #64748b; font-size: 0.8rem;"></i>
+            </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                    <button onclick="event.stopPropagation(); updateStatus('${t._id}', 'Aperto')" style="background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;">
+                        <i class="fas fa-door-open"></i> Aperto
+                    </button>
+                    <button onclick="event.stopPropagation(); updateStatus('${t._id}', 'In Corso')" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; ">
+                        <i class="fas fa-play"></i> Avvia
+                    </button>
+                    <button onclick="event.stopPropagation(); updateStatus('${t._id}', 'Pausa')" style="background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;">
+                        <i class="fas fa-pause"></i> Pausa
+                    </button>
+                    <button onclick="event.stopPropagation(); updateStatus('${t._id}', 'Concluso')" style="background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;">
+                        <i class="fas fa-flag-checkered"></i> Concludi
+                    </button>
+                </div>
+                <button onclick="event.stopPropagation(); deleteTournament('${t._id}')" style="width: 100%; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;">
+                    <i class="fas fa-trash-alt"></i> Elimina Torneo
+                </button>
+            </div>
+          `;
+      }
+
+      const dateObj = new Date(t.date);
+      const dateStr = dateObj.toLocaleDateString();
+      const timeStr = dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      
+      let statusStyle = "padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; display: inline-block;";
+      if (t.status === "Aperto") statusStyle += "background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);";
+      else if (t.status === "In Corso") statusStyle += "background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);";
+      else if (t.status === "Pausa") statusStyle += "background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);";
+      else statusStyle += "background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);";
 
       const card = `
-        <div class="card tournament-card" data-tid="${t._id}" data-format="${t.format || "solo"}" style="${bgStyle}; cursor: pointer;">
-          <div class="card-icon"><i class="fas fa-gamepad"></i></div>
-          <h3 style="${textStyle}">${t.title}</h3>
-          <p style="margin: 0.5rem 0; ${textStyle}">Data: ${new Date(t.date).toLocaleDateString()} ${new Date(t.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
-          <p style="margin-bottom: 1.5rem; ${textStyle}">Montepremi: <strong>${t.prize}</strong></p>
-          <p style="margin-bottom: 1.5rem; ${textStyle}">Stato: <span class="status-${t.status === "Aperto" ? "open" : t.status === "In Corso" ? "live" : "closed"}">${t.status}</span></p>
-          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 1rem;">
-            <button class="btn-visit btn-tournament-action" data-action="${buttonAction}" data-id="${t._id}" style="cursor: pointer;">${buttonLabel}</button>
-            <button class="btn-share" data-link="${shareLink}"><i class="fas fa-share"></i> Condividi </button>
+        <div class="card tournament-card" onclick="openTournamentPage('${t._id}', event)" style="${bgStyle}; cursor: pointer; display: flex; flex-direction: column; gap: 15px; padding: 1.5rem;">
+          
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+             <h3 style="${textStyle}; margin: 0; font-size: 1.4rem; line-height: 1.2; flex: 1; padding-right: 10px;">${t.title}</h3>
           </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; ${textStyle}; color: var(--light);">
+             <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                <span style="display: block; font-size: 0.75rem; opacity: 0.7; margin-bottom: 2px;"><i class="far fa-calendar-alt"></i> Data</span>
+                <span style="font-weight: 500; font-size: 0.9rem;">${dateStr}</span>
+             </div>
+             <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                <span style="display: block; font-size: 0.75rem; opacity: 0.7; margin-bottom: 2px;"><i class="far fa-clock"></i> Ora</span>
+                <span style="font-weight: 500; font-size: 0.9rem;">${timeStr}</span>
+             </div>
+             <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                <span style="display: block; font-size: 0.75rem; opacity: 0.7; margin-bottom: 2px;"><i class="fas fa-trophy"></i> Premio</span>
+                <span style="font-weight: 600; color: #fbbf24; font-size: 0.9rem;">${t.prize}</span>
+             </div>
+             <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; display: flex; flex-direction: column; justify-content: center;">
+                <span style="${statusStyle}; align-self: flex-start;">${t.status}</span>
+             </div>
+          </div>
+
+          <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn-visit" onclick="event.stopPropagation(); handleTournamentAction(this, '${t._id}', '${t.format || 'solo'}', '${buttonAction}')" style="cursor: pointer; width: 100%; justify-content: center; padding: 10px;">${buttonLabel}</button>
+            <button class="btn-share" onclick="event.stopPropagation(); copyLink('${shareLink}')" style="width: 100%; justify-content: center; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);"><i class="fas fa-share" style="margin-right: 6px;"></i> Condividi </button>
+          </div>
+
+          ${adminControls}
         </div>
       `;
       container.innerHTML += card;
     });
+}
 
-    setTimeout(() => {
-      document.querySelectorAll(".tournament-card").forEach((card) => {
-        card.addEventListener("click", (e) => {
-          if (e.target.closest("button")) return;
-          const tid = card.getAttribute("data-tid");
-          window.location.href = `/torneo/${tid}`;
-        });
-      });
-
-      document.querySelectorAll(".btn-share").forEach((btn) => {
-        btn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const link = btn.getAttribute("data-link");
-          navigator.clipboard.writeText(link).then(() => {
-            if (typeof showToast === "function")
-              showToast("Link torneo copiato!", "success");
-          });
-        });
-      });
-
-      document.querySelectorAll(".btn-tournament-action").forEach((btn) => {
-        btn.addEventListener("click", async (e) => {
-          e.stopPropagation();
-          const action = btn.getAttribute("data-action");
-          const tid = btn.getAttribute("data-id");
-          const card = btn.closest(".tournament-card");
-          const format = card ? card.getAttribute("data-format") : "solo";
-
-          if (action === "login") {
-            window.location.href = "/auth/discord";
-            return;
-          }
-
-          if (action === "subscribe") {
-            if (format === "solo") {
-              btn.disabled = true;
-              await joinTournament(tid, []);
-            } else {
-              showJoinTeamModal(tid, format);
-            }
-          } else if (action === "view_subscription") {
-            openSubscriptionModal(tid);
-          }
-          await loadTournaments();
-        });
-      });
-    }, 100);
-
-    async function joinTournament(id, teammates = []) {
-      try {
-        const res = await fetch(`/api/tournaments/${id}/join`, {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ teammates }),
-        });
-        if (res.status === 401) {
-          showToast("Devi effettuare il login per iscriverti!", "error");
-          return;
-        }
-        const contentType = res.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          showToast(
-            `Errore Server: ${res.status} (Riavvia il backend)`,
-            "error",
-          );
-          return;
-        }
-        const data = await res.json();
-        if (data && data.message) showToast(data.message, "success");
-      } catch (err) {
-        showToast("Errore durante l'iscrizione", "error");
-      }
+async function joinTournament(id, teammates = []) {
+  try {
+    const res = await fetch(`/api/tournaments/${id}/join`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ teammates }),
+    });
+    if (res.status === 401) {
+      showToast("Devi effettuare il login per iscriverti!", "error");
+      return;
     }
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      showToast(
+        `Errore Server: ${res.status} (Riavvia il backend)`,
+        "error",
+      );
+      return;
+    }
+    const data = await res.json();
+    if (data && data.message) showToast(data.message, "success");
   } catch (err) {
-    console.error("Errore caricamento tornei", err);
+    showToast("Errore durante l'iscrizione", "error");
   }
 }
 
@@ -491,6 +568,80 @@ function showJoinTeamModal(tid, format) {
     }
   };
 }
+
+window.showConfirmModal = function (title, message, onConfirm, confirmText = "Conferma", cancelText = "Annulla") {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay confirm-modal";
+  overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 20000;";
+
+  overlay.innerHTML = `
+    <style>
+      .modal-confirm-box { background: #181a20; padding: 2rem; border-radius: 16px; width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 25px rgba(0,0,0,0.5); animation: fadeIn 0.2s ease; }
+      .btn-confirm-action { padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
+      .btn-confirm-yes { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+      .btn-confirm-yes:hover { background: rgba(239, 68, 68, 0.3); }
+      .btn-confirm-no { background: rgba(255, 255, 255, 0.05); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.1); }
+      .btn-confirm-no:hover { background: rgba(255, 255, 255, 0.1); }
+    </style>
+    <div class="modal-confirm-box">
+        <h3 style="color: #fff; margin-bottom: 1rem; font-size: 1.3rem;">${title}</h3>
+        <p style="color: #94a3b8; margin-bottom: 1.5rem; line-height: 1.5;">${message}</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button id="btn-cancel-confirm" class="btn-confirm-action btn-confirm-no">${cancelText}</button>
+            <button id="btn-yes-confirm" class="btn-confirm-action btn-confirm-yes">${confirmText}</button>
+        </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  overlay.querySelector("#btn-cancel-confirm").onclick = close;
+  overlay.onclick = (e) => { if (e.target === overlay) close(); };
+
+  overlay.querySelector("#btn-yes-confirm").onclick = () => {
+    close();
+    if (onConfirm) onConfirm();
+  };
+};
+
+// Funzioni Globali per Gestione Admin (chiamate dai pulsanti nelle card)
+window.updateStatus = function(id, status) {
+    window.showConfirmModal("Aggiorna Stato", `Sei sicuro di voler impostare lo stato a: <b>${status}</b>?`, async () => {
+        try {
+            const res = await fetch(`/api/tournaments/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ status })
+            });
+            if (res.ok) {
+                showToast(`Stato aggiornato a ${status}`, "success");
+                if (typeof loadTournaments === "function") loadTournaments();
+                if (typeof loadTournament === "function") loadTournament();
+            } else {
+                showToast("Errore aggiornamento", "error");
+            }
+        } catch(e) { showToast("Errore di connessione", "error"); }
+    });
+};
+
+window.deleteTournament = function(id) {
+    window.showConfirmModal("Elimina Torneo", "Sei sicuro di voler eliminare questo torneo? Questa azione è irreversibile.", async () => {
+        try {
+            const res = await fetch(`/api/tournaments/${id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            if (res.ok) {
+                showToast("Torneo eliminato", "success");
+                if (typeof loadTournaments === "function") loadTournaments();
+            } else {
+                showToast("Errore eliminazione", "error");
+            }
+        } catch(e) { showToast("Errore di connessione", "error"); }
+    }, "Elimina");
+};
 
 async function openSubscriptionModal(tid) {
   try {
@@ -659,22 +810,31 @@ function unsubscribeTournament(id) {
 }
 
 async function loadMemories() {
+  const container = document.querySelector("#memories .grid-3") || document.querySelector(".grid-3");
+  if (!container) return;
+
+  let currentUser = null;
+  try {
+    const meRes = await fetch("/api/me");
+    if (meRes.ok) currentUser = await meRes.json();
+  } catch (e) {}
+
+  // Cache First
+  const cached = getCache("memories");
+  if (cached) renderMemoriesList(cached, currentUser, container);
+
+  // Network
   try {
     const res = await fetch("/api/memories");
     const memories = await res.json();
+    setCache("memories", memories);
+    renderMemoriesList(memories, currentUser, container);
+  } catch (err) {
+    console.error("Errore caricamento memories", err);
+  }
+}
 
-    let currentUser = null;
-    try {
-      const meRes = await fetch("/api/me");
-      if (meRes.ok) currentUser = await meRes.json();
-    } catch (e) {}
-
-    const container =
-      document.querySelector("#memories .grid-3") ||
-      document.querySelector(".grid-3");
-
-    if (!container) return;
-
+function renderMemoriesList(memories, currentUser, container) {
     if (memories.length === 0) {
       container.innerHTML =
         '<div class="empty-state">' +
@@ -694,9 +854,12 @@ async function loadMemories() {
 
     itemsToShow.forEach((m) => {
       const likesCount = m.likes ? m.likes.length : 0;
-      const sharesCount = m.shares || 0;
+      const sharesCount = (m.shares && Array.isArray(m.shares)) ? m.shares.length : 0;
       const isLiked =
         currentUser && m.likes && m.likes.includes(currentUser.discordId);
+
+      const safeTitle = (m.title || "Memory").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+      const safeAuthor = (m.authorName || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
       let media = "";
       if (m.videoUrl && m.videoUrl.includes("youtube")) {
@@ -713,7 +876,7 @@ async function loadMemories() {
         m.videoUrl &&
         /\.(jpg|jpeg|png|webp|gif|bmp)(\?.*)?$/i.test(m.videoUrl)
       ) {
-        media = `<img src="${m.videoUrl}" alt="Memory" onclick="event.stopPropagation(); openMediaModal('${m.videoUrl}', 'image', '${m._id}', '${m.authorName || ""}', ${likesCount}, ${sharesCount}, ${isLiked})" style="width:100%;height:180px;object-fit:cover;border-radius:10px; cursor: zoom-in;">`;
+        media = `<img src="${m.videoUrl}" alt="Memory" onclick="event.stopPropagation(); openMediaModal('${m.videoUrl}', 'image', '${m._id}', '${safeAuthor}', ${likesCount}, ${sharesCount}, ${isLiked})" style="width:100%;height:180px;object-fit:cover;border-radius:10px; cursor: zoom-in;">`;
       } else if (m.videoUrl) {
         media = `<a href="${m.videoUrl}" target="_blank" onclick="event.stopPropagation()">${m.videoUrl}</a>`;
       }
@@ -730,7 +893,7 @@ async function loadMemories() {
       const heartColor = isLiked ? "#ef4444" : "#cbd5e1";
 
       const card = `
-        <div class="card memory-card" onclick="window.location.href='/profile/${encodeURIComponent(m.authorName)}?memory=${m._id}'" style="min-height:320px;display:flex;flex-direction:column;justify-content:space-between; cursor: pointer;">
+        <div id="memory-${m._id}" class="card memory-card" onclick="window.location.href='/profile/${encodeURIComponent(m.authorName)}?memory=${m._id}'" style="min-height:320px;display:flex;flex-direction:column;justify-content:space-between; cursor: pointer;">
           <div>
             ${media}
             <h3 style="margin:0.7rem 0 0.3rem 0;">${m.title || "Memory"}</h3>
@@ -742,7 +905,7 @@ async function loadMemories() {
             <button onclick="event.stopPropagation(); toggleLike(this, '${m._id}')" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
                 <i class="${heartClass} fa-heart" style="font-size: 1.1rem; color: ${heartColor};"></i> <span>${likesCount}</span>
             </button>
-            <button onclick="event.stopPropagation(); shareMemory('${m._id}', '${m.authorName || ""}', '${m.title || "Memory"}', this)" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
+            <button onclick="event.stopPropagation(); shareMemory('${m._id}', '${safeAuthor}', '${safeTitle}', this)" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
                 <i class="fas fa-share" style="font-size: 1.1rem;"></i> <span>${sharesCount}</span>
             </button>
           </div>
@@ -750,9 +913,6 @@ async function loadMemories() {
       `;
       container.innerHTML += card;
     });
-  } catch (err) {
-    console.error("Errore caricamento memories", err);
-  }
 }
 
 function openAddMemoryModal() {
@@ -844,11 +1004,24 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function loadLeaderboard() {
+  const podiumContainer = document.querySelector("#classifica .grid-3");
+  const tableBody = document.querySelector("#leaderboard-body");
+  
+  // Cache First
+  const cached = getCache("leaderboard");
+  if (cached) renderLeaderboardUI(cached, podiumContainer, tableBody);
+
   try {
     const res = await fetch("/api/leaderboard");
     const users = await res.json();
+    setCache("leaderboard", users);
+    renderLeaderboardUI(users, podiumContainer, tableBody);
+  } catch (err) {
+    console.error("Errore caricamento classifica", err);
+  }
+}
 
-    const podiumContainer = document.querySelector("#classifica .grid-3");
+function renderLeaderboardUI(users, podiumContainer, tableBody) {
     if (
       podiumContainer &&
       (window.location.pathname === "/" ||
@@ -880,7 +1053,6 @@ async function loadLeaderboard() {
       });
     }
 
-    const tableBody = document.querySelector("#leaderboard-body");
     if (tableBody) {
       tableBody.innerHTML = "";
       users.forEach((u, i) => {
@@ -897,32 +1069,46 @@ async function loadLeaderboard() {
         tableBody.innerHTML += row;
       });
     }
-  } catch (err) {
-    console.error("Errore caricamento classifica", err);
-  }
 }
 
 async function loadStaff() {
+  const container = document.getElementById("staff-grid") || document.querySelector("#staff .grid-3");
+  const container1 = document.getElementById("staff-grid-1");
+  const container2 = document.getElementById("staff-grid-2");
+  const container3 = document.getElementById("staff-grid-3");
+  const container4 = document.getElementById("staff-grid-4");
+
+  if (!container && !container1) return;
+
+  // Cache First
+  const cached = getCache("staff");
+  if (cached) renderStaffList(cached, container, container1, container2, container3, container4);
+
   try {
     const res = await fetch("/api/staff");
     const staff = await res.json();
+    setCache("staff", staff);
+    renderStaffList(staff, container, container1, container2, container3, container4);
+  } catch (err) {
+    console.error("Errore caricamento staff", err);
+  }
+}
 
-    const container =
-      document.getElementById("staff-grid") ||
-      document.querySelector("#staff .grid-3");
+function renderStaffList(staff, container, c1, c2, c3, c4) {
+    if (container) container.innerHTML = "";
+    if (c1) c1.innerHTML = "";
+    if (c2) c2.innerHTML = "";
+    if (c3) c3.innerHTML = "";
+    if (c4) c4.innerHTML = "";
 
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    staff.forEach((s) => {
+    staff.forEach((s, index) => {
       let avatarUrl = "https://cdn.discordapp.com/embed/avatars/0.png";
       if (s.avatar) {
         avatarUrl = `https://cdn.discordapp.com/avatars/${s.discordId}/${s.avatar}.png`;
       }
 
       const card = `
-        <div class="card staff-card" style="text-align: center; padding: 2rem;">
+        <div class="card staff-card" onclick="window.location.href='/profile/${encodeURIComponent(s.username)}'" style="text-align: center; padding: 2rem; cursor: pointer;">
             <div style="width: 100px; height: 100px; margin: 0 auto 1.5rem; border-radius: 50%; overflow: hidden; border: 3px solid ${s.roleColor}; box-shadow: 0 0 15px ${s.roleColor}40;">
                 <img src="${avatarUrl}" alt="${s.username}" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
@@ -934,9 +1120,14 @@ async function loadStaff() {
             </div>
         </div>
       `;
-      container.innerHTML += card;
+
+      if (c1 && c2 && c3 && c4) {
+        if (index === 0) c1.innerHTML += card;
+        else if (index === 1) c2.innerHTML += card;
+        else if (index === 2) c3.innerHTML += card;
+        else if (index === 3) c4.innerHTML += card;
+      } else if (container) {
+        container.innerHTML += card;
+      }
     });
-  } catch (err) {
-    console.error("Errore caricamento staff", err);
-  }
 }

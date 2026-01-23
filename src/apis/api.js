@@ -7,6 +7,9 @@ const User = require("../database/User");
 const jwt = require("jsonwebtoken");
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
+const coralCache = new Map();
+const CORAL_CACHE_TTL = 10 * 60 * 1000; // 10 minuti
+
 const protect = async (req, res, next) => {
   const apiKey = process.env.API_KEY || null;
   const reqApiKey = req.headers['x-api-key'];
@@ -152,6 +155,47 @@ router.put("/me/notification-settings", ensureAuth, async (req, res) => {
   }
 });
 
+router.get("/me/recent-searches", ensureAuth, async (req, res) => {
+  try {
+    const user = await User.findOne({ discordId: req.user.discordId });
+    if (!user) return res.status(404).json({ message: "Utente non trovato" });
+    
+    const recents = user.recentSearches.sort((a, b) => new Date(b.searchedAt) - new Date(a.searchedAt));
+    res.json(recents);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/me/recent-searches", ensureAuth, async (req, res) => {
+  try {
+    const { username, avatar, discordId, minecraftUsername } = req.body;
+    const user = await User.findOne({ discordId: req.user.discordId });
+    if (!user) return res.status(404).json({ message: "Utente non trovato" });
+
+    user.recentSearches = user.recentSearches.filter(s => s.username !== username);
+    user.recentSearches.unshift({ username, avatar, discordId, minecraftUsername, searchedAt: new Date() });
+    
+    if (user.recentSearches.length > 5) {
+      user.recentSearches = user.recentSearches.slice(0, 5);
+    }
+
+    await user.save();
+    res.json(user.recentSearches);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete("/me/recent-searches", ensureAuth, async (req, res) => {
+  try {
+    await User.findOneAndUpdate({ discordId: req.user.discordId }, { $set: { recentSearches: [] } });
+    res.json({ message: "Cronologia cancellata" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get("/users/search", async (req, res) => {
   try {
     const query = req.query.q;
@@ -241,7 +285,7 @@ router.post("/tournaments", protect, async (req, res) => {
       message: `🏆 Nuovo torneo pubblicato: ${tournament.title}!`,
       read: false,
       createdAt: new Date(),
-      data: { link: `/torneo/${tournament._id}` }
+      data: { link: `/torneo?tid=${tournament._id}` }
     };
     await User.collection.updateMany({}, { $push: { notifications: notif } });
 
@@ -279,7 +323,12 @@ router.put("/tournaments/:id", protect, async (req, res) => {
 
           for (const team of tournament.teams) {
             const allAccepted = team.teammates.every(m => m.status === 'accepted');
-            if (allAccepted) {
+            
+            let isComplete = true;
+            if (tournament.format === 'duo' && team.teammates.length < 1) isComplete = false;
+            if (tournament.format === 'trio' && team.teammates.length < 2) isComplete = false;
+
+            if (allAccepted && isComplete) {
               validTeams.push(team);
             } else {
               removedTeams.push(team);
@@ -292,13 +341,13 @@ router.put("/tournaments/:id", protect, async (req, res) => {
           for (const team of removedTeams) {
             // Rimuovi capitano
             tournament.subscribers = tournament.subscribers.filter(s => s.toString() !== team.captain.toString());
-            await sendNotification(req.app.get("io"), team.captain, `Il tuo team è stato escluso dal torneo ${tournament.title} perché incompleto.`, 'system', { link: `/torneo/${tournament._id}` });
+            await sendNotification(req.app.get("io"), team.captain, `Il tuo team è stato escluso dal torneo ${tournament.title} perché incompleto.`, 'system', { link: `/torneo?tid=${tournament._id}` });
 
             // Rimuovi e notifica compagni
             for (const mate of team.teammates) {
               if (mate.userId) {
                 tournament.subscribers = tournament.subscribers.filter(s => s.toString() !== mate.userId.toString());
-                await sendNotification(req.app.get("io"), mate.userId, `Il team per il torneo ${tournament.title} è stato escluso perché incompleto.`, 'system', { link: `/torneo/${tournament._id}` });
+                await sendNotification(req.app.get("io"), mate.userId, `Il team per il torneo ${tournament.title} è stato escluso perché incompleto.`, 'system', { link: `/torneo?tid=${tournament._id}` });
               }
             }
           }
@@ -309,7 +358,7 @@ router.put("/tournaments/:id", protect, async (req, res) => {
         for (const sub of subscribers) {
           const settings = sub.notificationSettings || { tournamentStart: true };
           if (settings.tournamentStart) {
-            await sendNotification(req.app.get("io"), sub._id, `Il torneo ${tournament.title} è iniziato!`, 'info', { link: `/torneo/${tournament._id}` });
+            await sendNotification(req.app.get("io"), sub._id, `Il torneo ${tournament.title} è iniziato!`, 'info', { link: `/torneo?tid=${tournament._id}` });
           }
         }
       }
@@ -319,7 +368,17 @@ router.put("/tournaments/:id", protect, async (req, res) => {
         for (const sub of subscribers) {
           const settings = sub.notificationSettings || { tournamentEnd: true };
           if (settings.tournamentEnd) {
-            await sendNotification(req.app.get("io"), sub._id, `Il torneo ${tournament.title} è terminato.`, 'info', { link: `/torneo/${tournament._id}` });
+            await sendNotification(req.app.get("io"), sub._id, `Il torneo ${tournament.title} è terminato.`, 'info', { link: `/torneo?tid=${tournament._id}` });
+          }
+        }
+      }
+      // LOGICA SOSPENSIONE TORNEO
+      else if (status === "Pausa") {
+        const subscribers = await User.find({ _id: { $in: tournament.subscribers } });
+        for (const sub of subscribers) {
+          const settings = sub.notificationSettings || { tournamentUpdates: true };
+          if (settings.tournamentUpdates) {
+            await sendNotification(req.app.get("io"), sub._id, `Il torneo ${tournament.title} è in pausa.`, 'warning', { link: `/torneo?tid=${tournament._id}` });
           }
         }
       }
@@ -408,6 +467,15 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
       return res
         .status(400)
         .json({ message: "Sei già iscritto a questo torneo" });
+    }
+
+    // Check if already in a team (captain or member)
+    if (tournament.teams && tournament.teams.length > 0) {
+      const isInTeam = tournament.teams.some(t => 
+        t.captain.toString() === user._id.toString() || 
+        t.teammates.some(m => m.userId && m.userId.toString() === user._id.toString())
+      );
+      if (isInTeam) return res.status(400).json({ message: "Sei già in un team per questo torneo" });
     }
 
     const { teammates } = req.body;
@@ -511,7 +579,10 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
       }
     }
 
-    tournament.subscribers.push(user._id);
+    if (tournament.format === "solo") {
+      tournament.subscribers.push(user._id);
+    }
+
     if (tournament.format !== "solo") {
       tournament.teams.push({
         captain: user._id,
@@ -593,11 +664,6 @@ router.post("/notifications/:id/respond", ensureAuth, async (req, res) => {
 
           if (action === 'accept') {
             team.teammates[memberIndex].status = 'accepted';
-            
-            // Add to subscribers list if not already there (for logic consistency)
-            if (!tournament.subscribers.some(s => s.toString() === user._id.toString())) {
-              tournament.subscribers.push(user._id);
-            }
             // Add tournament to user profile
             if (!user.tournaments.some(t => t.toString() === tournament._id.toString())) {
               user.tournaments.push(tournament._id);
@@ -611,12 +677,38 @@ router.post("/notifications/:id/respond", ensureAuth, async (req, res) => {
     }
 
     notif.read = true; // Mark as read after response
-    await Promise.all([tournament.save(), user.save()]);
+    if (!notif.data) notif.data = {};
+    notif.data.response = action;
+    user.markModified('notifications');
+
+    if (action !== 'accept' && captainId) {
+        if (tournament.format === 'duo') {
+            // 2v2: Sciogli il team
+            tournament.teams = tournament.teams.filter(t => t.captain.toString() !== captainId.toString());
+            
+            const captainUser = await User.findById(captainId);
+            if (captainUser) {
+                captainUser.tournaments = captainUser.tournaments.filter(tid => tid.toString() !== tournament._id.toString());
+                await captainUser.save();
+                await sendNotification(req.app.get("io"), captainId, `Il tuo team è stato sciolto perché ${user.username} ha rifiutato l'invito.`, 'error', { link: `/torneo?tid=${tournament._id}` });
+            }
+        } else if (tournament.format === 'trio') {
+            // 3v3: Rimuovi utente, team in sospeso
+            const team = tournament.teams.find(t => t.captain.toString() === captainId.toString());
+            if (team) {
+                team.teammates = team.teammates.filter(m => (m.userId && m.userId.toString() !== user._id.toString()) && m.username !== user.username);
+                await sendNotification(req.app.get("io"), captainId, `${user.username} ha rifiutato l'invito al torneo ${tournament.title}.`, 'warning', { link: `/torneo?tid=${tournament._id}` });
+            }
+        }
+    }
+
+    await tournament.save();
+    await user.save();
 
     // Notifica il capitano della decisione
-    if (captainId) {
+    if (captainId && action === 'accept') {
       const msg = `${user.username} ha ${action === 'accept' ? 'accettato' : 'rifiutato'} il tuo invito per il torneo ${tournament.title}`;
-      await sendNotification(req.app.get("io"), captainId, msg, 'info', { link: `/torneo/${tournament._id}` });
+      await sendNotification(req.app.get("io"), captainId, msg, 'info', { link: `/torneo?tid=${tournament._id}` });
     }
 
     // Aggiorna in tempo reale la pagina del torneo per tutti
@@ -676,11 +768,11 @@ router.post("/tournaments/:id/unsubscribe", ensureAuth, async (req, res) => {
                 mateUser.tournaments = mateUser.tournaments.filter(tid => tid.toString() !== tournament._id.toString());
                 await mateUser.save();
 
-                // 3. Rimuovi compagno da iscritti torneo (se aveva già accettato)
-                tournament.subscribers = tournament.subscribers.filter(s => s.toString() !== mateUser._id.toString());
-
-                // 4. Aggiorna client compagno (rimuove notifica visivamente)
+                // 3. Aggiorna client compagno (rimuove notifica visivamente)
                 req.app.get("io").to(mateUser.discordId).emit("notification", { silent: true });
+                
+                // Notifica scioglimento
+                await sendNotification(req.app.get("io"), mateUser._id, `Il team per il torneo ${tournament.title} è stato sciolto perché il capitano si è disiscritto.`, 'error');
               }
             }
           }
@@ -689,9 +781,26 @@ router.post("/tournaments/:id/unsubscribe", ensureAuth, async (req, res) => {
         tournament.teams.splice(teamIndex, 1);
       } else {
         // Se l'utente non è capitano, rimuovilo da eventuali team come membro
-        tournament.teams.forEach(t => {
-            t.teammates = t.teammates.filter(m => m.userId && m.userId.toString() !== user._id.toString());
-        });
+        const teamMemberIndex = tournament.teams.findIndex(t => t.teammates.some(m => m.userId && m.userId.toString() === user._id.toString()));
+        
+        if (teamMemberIndex !== -1) {
+            const team = tournament.teams[teamMemberIndex];
+            
+            if (tournament.format === 'duo') {
+                // 2v2: Se un membro esce, il team viene sciolto (rimuovi anche capitano)
+                const captainUser = await User.findById(team.captain);
+                if (captainUser) {
+                    captainUser.tournaments = captainUser.tournaments.filter(tid => tid.toString() !== tournament._id.toString());
+                    await captainUser.save();
+                    await sendNotification(req.app.get("io"), team.captain, `Il team per il torneo ${tournament.title} è stato sciolto perché il tuo compagno si è disiscritto.`, 'error');
+                }
+                tournament.teams.splice(teamMemberIndex, 1);
+            } else {
+                // 3v3: Se un membro esce, il team rimane ma incompleto
+                team.teammates = team.teammates.filter(m => m.userId && m.userId.toString() !== user._id.toString());
+                await sendNotification(req.app.get("io"), team.captain, `${user.username} ha lasciato il team per il torneo ${tournament.title}.`, 'info');
+            }
+        }
       }
     }
 
@@ -704,6 +813,93 @@ router.post("/tournaments/:id/unsubscribe", ensureAuth, async (req, res) => {
     });
 
     res.json({ message: "Disiscrizione avvenuta con successo" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete("/tournaments/:id/kick/:userId", protect, async (req, res) => {
+  try {
+    const tournament = await Tournament.findById(req.params.id);
+    if (!tournament) return res.status(404).json({ message: "Torneo non trovato" });
+
+    const targetUserId = req.params.userId;
+    const user = await User.findById(targetUserId);
+    
+    // Rimuovi l'utente dalla lista iscritti principale
+    tournament.subscribers = tournament.subscribers.filter(
+      (sub) => sub.toString() !== targetUserId.toString(),
+    );
+
+    // Rimuovi il torneo dal profilo utente (se esiste)
+    if (user) {
+        user.tournaments = user.tournaments.filter(
+          (tid) => tid.toString() !== tournament._id.toString(),
+        );
+        await user.save();
+        await sendNotification(req.app.get("io"), user._id, `Sei stato rimosso dal torneo ${tournament.title} da un amministratore.`, 'error');
+    }
+
+    // Gestione Team
+    if (tournament.teams) {
+      const teamIndex = tournament.teams.findIndex(t => t.captain.toString() === targetUserId.toString());
+      
+      if (teamIndex !== -1) {
+        // L'utente è un capitano: sciogli il team
+        const team = tournament.teams[teamIndex];
+        
+        if (team.teammates && team.teammates.length > 0) {
+          for (const mate of team.teammates) {
+            if (mate.userId) {
+              const mateUser = await User.findById(mate.userId);
+              if (mateUser) {
+                // Rimuovi torneo dal profilo compagno
+                mateUser.tournaments = mateUser.tournaments.filter(tid => tid.toString() !== tournament._id.toString());
+                await mateUser.save();
+                
+                // Notifica scioglimento
+                await sendNotification(req.app.get("io"), mateUser._id, `Il team per il torneo ${tournament.title} è stato sciolto da un amministratore.`, 'error');
+                
+                // Rimuovi anche dalla lista subscribers globale se presente
+                tournament.subscribers = tournament.subscribers.filter(s => s.toString() !== mateUser._id.toString());
+              }
+            }
+          }
+        }
+        tournament.teams.splice(teamIndex, 1);
+      } else {
+        // L'utente potrebbe essere un membro
+        const teamMemberIndex = tournament.teams.findIndex(t => t.teammates.some(m => m.userId && m.userId.toString() === targetUserId.toString()));
+        
+        if (teamMemberIndex !== -1) {
+            const team = tournament.teams[teamMemberIndex];
+            
+            if (tournament.format === 'duo') {
+                // 2v2: Se rimuovi un membro, sciogli il team
+                const captainUser = await User.findById(team.captain);
+                if (captainUser) {
+                    captainUser.tournaments = captainUser.tournaments.filter(tid => tid.toString() !== tournament._id.toString());
+                    await captainUser.save();
+                    await sendNotification(req.app.get("io"), team.captain, `Il team per il torneo ${tournament.title} è stato sciolto perché un membro è stato espulso.`, 'error');
+                    
+                    // Rimuovi capitano da subscribers
+                    tournament.subscribers = tournament.subscribers.filter(s => s.toString() !== team.captain.toString());
+                }
+                tournament.teams.splice(teamMemberIndex, 1);
+            } else {
+                // 3v3: Rimuovi solo il membro
+                team.teammates = team.teammates.filter(m => m.userId && m.userId.toString() !== targetUserId.toString());
+                await sendNotification(req.app.get("io"), team.captain, `Un membro del tuo team è stato espulso dal torneo ${tournament.title}.`, 'warning');
+            }
+        }
+      }
+    }
+
+    await tournament.save();
+
+    req.app.get("io").emit("subscriptions:update", { type: "leave", tournamentId: tournament._id });
+
+    res.json({ message: "Utente espulso con successo" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -799,6 +995,8 @@ router.post("/memories/:id/like", ensureAuth, async (req, res) => {
     const memory = await Memory.findById(req.params.id);
     if (!memory) return res.status(404).json({ message: "Memory non trovata" });
 
+    if (!memory.likes) memory.likes = [];
+
     const userId = req.user.discordId;
     const index = memory.likes.indexOf(userId);
 
@@ -813,7 +1011,7 @@ router.post("/memories/:id/like", ensureAuth, async (req, res) => {
     req.app.get("io").emit("memory:update", {
       id: memory._id,
       likes: memory.likes.length,
-      shares: memory.shares,
+      shares: (memory.shares || []).length,
     });
 
     res.json({ likes: memory.likes.length, isLiked: index === -1 });
@@ -822,22 +1020,22 @@ router.post("/memories/:id/like", ensureAuth, async (req, res) => {
   }
 });
 
-router.post("/memories/:id/share", async (req, res) => {
+router.post("/memories/:id/share", ensureAuth, async (req, res) => {
   try {
     const memory = await Memory.findByIdAndUpdate(
       req.params.id,
-      { $inc: { shares: 1 } },
+      { $addToSet: { shares: req.user.discordId } },
       { new: true },
     );
     if (!memory) return res.status(404).json({ message: "Memory non trovata" });
 
     req.app.get("io").emit("memory:update", {
       id: memory._id,
-      likes: memory.likes.length,
-      shares: memory.shares,
+      likes: (memory.likes || []).length,
+      shares: (memory.shares || []).length,
     });
 
-    res.json({ shares: memory.shares });
+    res.json({ shares: (memory.shares || []).length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -877,14 +1075,14 @@ router.get("/staff", async (req, res) => {
       role: "GESTORE CUP",
       roleColor: "#ec0606",
       description: "<b>Gestore</b> ufficiale della <b>CUP</b>",
-      icon: "fas fa-gamepad",
+      icon: "fas fa-trophy",
     },
     {
       id: "1357100230247579699",
       role: "FOUNDER",
       roleColor: "#8b5cf6",
       description: "<b>Fondatore</b> ufficiale della <b>CUP</b>",
-      icon: "fas fa-trophy",
+      icon: "fas fa-crown",
     },
     {
       id: "1220788267427823810",
@@ -918,6 +1116,14 @@ router.get("/staff", async (req, res) => {
 router.get("/proxy/coralmc/:username", async (req, res) => {
   try {
     const { username } = req.params;
+
+    const cacheKey = username.toLowerCase();
+    if (coralCache.has(cacheKey)) {
+      const { data, timestamp } = coralCache.get(cacheKey);
+      if (Date.now() - timestamp < CORAL_CACHE_TTL) {
+        return res.json(data);
+      }
+    }
 
     // UUID Mojang
     let uuid = null;
@@ -1038,7 +1244,7 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
     const wlr = losses > 0 ? parseFloat((stats.wins / losses).toFixed(2)) : stats.wins;
     const fkdr = (stats.finalDeaths || 0) > 0 ? parseFloat((stats.finals / stats.finalDeaths).toFixed(2)) : stats.finals;
 
-    res.json({
+    const responseData = {
       uuid,
       username,
       exists: true,
@@ -1057,7 +1263,10 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
       kdr,
       wlr,
       fkdr,
-    });
+    };
+
+    coralCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+    res.json(responseData);
 
   } catch (err) {
     console.error(`Errore endpoint CoralMC per ${req.params.username}:`, err);

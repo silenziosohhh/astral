@@ -110,7 +110,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   try {
-    const response = await fetch("/me");
+    const response = await fetch("/api/me");
     if (response.ok) {
       const user = await response.json();
       updateNavbarUI(user);
@@ -317,12 +317,18 @@ async function loadNotifications() {
             <div class="notif-body">
               <p>${n.message}</p>
               <span class="notif-time">${new Date(n.createdAt).toLocaleDateString()}</span>
-              ${isInvite && !n.read ? `
+              ${isInvite ? (
+                !n.read ? `
                 <div class="notif-actions" style="display: flex; gap: 10px; margin-top: 10px;">
                   <button class="btn-accept" onclick="respondToInvite('${n._id}', 'accept')" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); padding: 6px 12px; border-radius: 6px; cursor: pointer; flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;"><i class="fas fa-check"></i> Accetta</button>
                   <button class="btn-decline" onclick="respondToInvite('${n._id}', 'decline')" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 12px; border-radius: 6px; cursor: pointer; flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;"><i class="fas fa-times"></i> Rifiuta</button>
                 </div>
-              ` : ''}
+                ` : (n.data && n.data.response ? `
+                    <div style="margin-top: 10px; font-size: 0.9rem; font-weight: 600; color: ${n.data.response === 'accept' ? '#4ade80' : '#f87171'}; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-${n.data.response === 'accept' ? 'check-circle' : 'times-circle'}"></i> ${n.data.response === 'accept' ? 'Accettato' : 'Rifiutato'}
+                    </div>
+                ` : '')
+              ) : ''}
             </div>
           `;
           
@@ -412,6 +418,35 @@ function setupNavbarSearch() {
   });
 }
 
+async function getRecentSearches() {
+  if (!document.querySelector(".user-profile")) return [];
+  try {
+    const res = await fetch("/api/me/recent-searches");
+    if (res.ok) return await res.json();
+    return [];
+  } catch (e) {
+    return [];
+  }
+}
+
+async function saveRecentSearch(user) {
+  if (!document.querySelector(".user-profile")) return;
+  try {
+    await fetch("/api/me/recent-searches", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(user)
+    });
+  } catch (e) {}
+}
+
+async function clearRecentSearches() {
+  if (!document.querySelector(".user-profile")) return;
+  try {
+    await fetch("/api/me/recent-searches", { method: "DELETE" });
+  } catch (e) {}
+}
+
 function openSearchModal() {
   if (document.querySelector(".search-modal-overlay")) return;
 
@@ -437,6 +472,57 @@ function openSearchModal() {
 
   setTimeout(() => input.focus(), 50);
 
+  const renderUser = (u, container, isRecent = false) => {
+    let avatar = "https://cdn.discordapp.com/embed/avatars/0.png";
+    if (u.avatar)
+      avatar = `https://cdn.discordapp.com/avatars/${u.discordId}/${u.avatar}.png`;
+
+    const a = document.createElement("a");
+    a.className = "search-result-item";
+    a.href = `/profile/${u.username}`;
+    a.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="${avatar}" alt="${u.username}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-weight:600;">${u.username}</span>
+                ${u.minecraftUsername ? `<span style="font-size:0.75rem; color:#94a3b8;">${u.minecraftUsername}</span>` : ""}
+            </div>
+        </div>
+        ${isRecent ? '<i class="fas fa-history" style="color: #64748b; font-size: 0.8rem;"></i>' : ''}
+    `;
+    a.addEventListener("click", () => {
+      saveRecentSearch(u);
+      closeModal();
+    });
+    container.appendChild(a);
+  };
+
+  const showRecents = async () => {
+    const recents = await getRecentSearches();
+    resultsContainer.innerHTML = "";
+    if (recents.length > 0) {
+      resultsContainer.style.display = "block";
+      
+      const header = document.createElement("div");
+      header.style.cssText = "padding: 8px 12px; font-size: 0.85rem; color: #94a3b8; display: flex; justify-content: space-between; align-items: center;";
+      header.innerHTML = `<span>Recenti</span> <span id="clear-recents" style="cursor: pointer; font-size: 0.75rem; color: #f87171;">Cancella</span>`;
+      resultsContainer.appendChild(header);
+      
+      header.querySelector("#clear-recents").onclick = async (e) => {
+          e.stopPropagation();
+          await clearRecentSearches();
+          showRecents();
+      };
+
+      recents.forEach(u => renderUser(u, resultsContainer, true));
+    } else {
+      resultsContainer.style.display = "none";
+    }
+  };
+
+  // Show recents initially
+  showRecents();
+
   const closeModal = () => {
     overlay.classList.add("closing");
     setTimeout(() => {
@@ -455,6 +541,11 @@ function openSearchModal() {
     debounce(async (e) => {
       const val = e.target.value.trim();
 
+      if (val.length === 0) {
+        showRecents();
+        return;
+      }
+
       if (val.length < 2) {
         resultsContainer.style.display = "none";
         resultsContainer.innerHTML = "";
@@ -469,22 +560,7 @@ function openSearchModal() {
         if (users.length > 0) {
           resultsContainer.style.display = "block";
           users.forEach((u) => {
-            let avatar = "https://cdn.discordapp.com/embed/avatars/0.png";
-            if (u.avatar)
-              avatar = `https://cdn.discordapp.com/avatars/${u.discordId}/${u.avatar}.png`;
-
-            const a = document.createElement("a");
-            a.className = "search-result-item";
-            a.href = `/profile/${u.username}`;
-            a.innerHTML = `
-                            <img src="${avatar}" alt="${u.username}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
-                            <div style="display:flex; flex-direction:column;">
-                                <span style="font-weight:600;">${u.username}</span>
-                                ${u.minecraftUsername ? `<span style="font-size:0.75rem; color:#94a3b8;">${u.minecraftUsername}</span>` : ""}
-                            </div>
-                        `;
-            a.addEventListener("click", closeModal);
-            resultsContainer.appendChild(a);
+            renderUser(u, resultsContainer);
           });
         } else {
           resultsContainer.style.display = "none";

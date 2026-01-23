@@ -32,6 +32,13 @@ const UserSchema = new mongoose.Schema({
     tournamentUpdates: { type: Boolean, default: true },
     tournamentEnd: { type: Boolean, default: true }
   },
+  recentSearches: [{
+    username: String,
+    avatar: String,
+    discordId: String,
+    minecraftUsername: String,
+    searchedAt: { type: Date, default: Date.now }
+  }],
   tournaments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tournament" }],
 });
 

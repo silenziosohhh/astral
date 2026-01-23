@@ -43,11 +43,20 @@ async function loadTournament() {
       ? "status-open"
       : t.status === "In Corso"
         ? "status-live"
+        : t.status === "Pausa"
+        ? "status-suspended"
         : "status-closed";
   const statusLabel = t.status;
 
-  const isSubscribed =
-    user && t.subscribers.some((s) => s.discordId === user.discordId);
+  let isSubscribed = false;
+  if (user) {
+    if (t.format === 'solo') {
+        isSubscribed = t.subscribers.some((s) => s.discordId === user.discordId);
+    } else if (t.teams) {
+        isSubscribed = t.teams.some(team => (team.captain && team.captain.discordId === user.discordId) || (team.teammates && team.teammates.some(m => m.username === user.username)));
+    }
+  }
+
   let actionBtn = "";
 
   if (!user) {
@@ -119,6 +128,50 @@ async function loadTournament() {
       </div>`;
   }
 
+  // Admin Management Section
+  let adminSection = "";
+  if (user && ["gestore", "founder", "developer", "admin"].includes(user.role)) {
+      adminSection = `
+        <style>
+            .admin-action-btn {
+                display: flex; align-items: center; justify-content: center; gap: 8px;
+                font-weight: 600; transition: all 0.2s ease;
+                font-size: 0.9rem; padding: 10px;
+            }
+            .admin-action-btn:hover { transform: translateY(-2px); filter: brightness(1.2); }
+            .admin-action-btn:active { transform: translateY(0); }
+        </style>
+        <div class="t-card" style="padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--primary-2); background: rgba(15, 23, 42, 0.95); box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="color: var(--primary-2); margin: 0; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">
+                    <i class="fas fa-shield-alt"></i> Pannello Admin
+                </h3>
+                <span style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; color: #94a3b8;">${user.role}</span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <button onclick="updateStatus('${t._id}', 'Aperto')" class="btn-visit admin-action-btn" style="background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">
+                    <i class="fas fa-door-open"></i> Aperto
+                </button>
+                <button onclick="updateStatus('${t._id}', 'In Corso')" class="btn-visit admin-action-btn" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
+                    <i class="fas fa-play"></i> Avvia
+                </button>
+                <button onclick="updateStatus('${t._id}', 'Pausa')" class="btn-visit admin-action-btn" style="background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">
+                    <i class="fas fa-pause"></i> Pausa
+                </button>
+                <button onclick="updateStatus('${t._id}', 'Concluso')" class="btn-visit admin-action-btn" style="background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">
+                    <i class="fas fa-flag-checkered"></i> Concludi
+                </button>
+            </div>
+            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.1);">
+                <button onclick="deleteTournament('${t._id}')" class="btn-visit admin-action-btn" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); width: 100%;">
+                    <i class="fas fa-trash-alt"></i> Elimina Torneo
+                </button>
+            </div>
+        </div>
+      `;
+  }
+
   document.getElementById("tournament-details").innerHTML = `
     <style>
         .t-grid { display: grid; grid-template-columns: 1fr 350px; gap: 2rem; align-items: start; }
@@ -131,6 +184,7 @@ async function loadTournament() {
         .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
         .status-open { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
         .status-live { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .status-suspended { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
         .status-closed { background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
         .btn-back { display: block; text-align: center; padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; color: #94a3b8; text-decoration: none; transition: 0.2s; font-weight: 500; }
         .btn-back:hover { background: rgba(255,255,255,0.1); color: #fff; }
@@ -153,6 +207,7 @@ async function loadTournament() {
         </div>
 
         <div class="sidebar-col">
+            ${adminSection}
             <div class="t-card" style="padding: 1.5rem; position: sticky; top: 100px;">
                 <div style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
                     <h3 style="margin: 0; color: var(--primary-2);">Info Evento</h3>
@@ -194,7 +249,9 @@ async function loadTournament() {
     </div>
   `;
   document.getElementById("copy-tournament-link").onclick = () => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
+    const tid = getTournamentId();
+    const link = `${window.location.origin}/torneo?tid=${tid}`;
+    navigator.clipboard.writeText(link).then(() => {
       if (typeof showToast === "function")
         showToast("Link copiato!", "success");
     });
@@ -377,6 +434,42 @@ function showJoinTeamModal(tid, format) {
   };
 }
 
+window.updateStatus = function(id, status) {
+    window.showConfirmModal("Aggiorna Stato", `Sei sicuro di voler impostare lo stato a: <b>${status}</b>?`, async () => {
+        try {
+            const res = await fetch(`/api/tournaments/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ status })
+            });
+            if (res.ok) {
+                if (typeof showToast === "function") showToast(`Stato aggiornato a ${status}`, "success");
+                loadTournament();
+            } else {
+                if (typeof showToast === "function") showToast("Errore aggiornamento", "error");
+            }
+        } catch(e) { if (typeof showToast === "function") showToast("Errore di connessione", "error"); }
+    });
+};
+
+window.deleteTournament = function(id) {
+    window.showConfirmModal("Elimina Torneo", "Sei sicuro di voler eliminare questo torneo? Questa azione è irreversibile.", async () => {
+        try {
+            const res = await fetch(`/api/tournaments/${id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            if (res.ok) {
+                if (typeof showToast === "function") showToast("Torneo eliminato", "success");
+                window.location.href = "/tornei";
+            } else {
+                if (typeof showToast === "function") showToast("Errore eliminazione", "error");
+            }
+        } catch(e) { if (typeof showToast === "function") showToast("Errore di connessione", "error"); }
+    }, "Elimina");
+};
+
 async function openSubscriptionModal(tid) {
   try {
     const existing = document.querySelector('.modal-overlay.subs-modal');
@@ -483,37 +576,7 @@ async function openSubscriptionModal(tid) {
 }
 
 function unsubscribeTournamentCustom(id) {
-  const overlay = document.createElement("div");
-  overlay.className = "modal-overlay confirm-modal";
-  overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;";
-
-  overlay.innerHTML = `
-    <style>
-      .modal-confirm-box { background: #181a20; padding: 2rem; border-radius: 16px; width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-      .btn-confirm-action { padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
-      .btn-confirm-yes { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-      .btn-confirm-yes:hover { background: rgba(239, 68, 68, 0.3); }
-      .btn-confirm-no { background: rgba(255, 255, 255, 0.05); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.1); }
-      .btn-confirm-no:hover { background: rgba(255, 255, 255, 0.1); }
-    </style>
-    <div class="modal-confirm-box">
-        <h3 style="color: #fff; margin-bottom: 1rem; font-size: 1.3rem;">Conferma Disiscrizione</h3>
-        <p style="color: #94a3b8; margin-bottom: 1.5rem; line-height: 1.5;">Sei sicuro di voler annullare l'iscrizione a questo torneo? Questa azione è irreversibile.</p>
-        <div style="display: flex; gap: 12px; justify-content: center;">
-            <button id="btn-cancel-unsub" class="btn-confirm-action btn-confirm-no">Annulla</button>
-            <button id="btn-confirm-unsub" class="btn-confirm-action btn-confirm-yes">Disiscriviti</button>
-        </div>
-    </div>
-  `;
-
-  document.body.appendChild(overlay);
-
-  const close = () => overlay.remove();
-  document.getElementById("btn-cancel-unsub").onclick = close;
-  overlay.onclick = (e) => { if (e.target === overlay) close(); };
-
-  document.getElementById("btn-confirm-unsub").onclick = async () => {
-    close();
+  window.showConfirmModal("Conferma Disiscrizione", "Sei sicuro di voler annullare l'iscrizione a questo torneo? Questa azione è irreversibile.", async () => {
     try {
       const res = await fetch(`/api/tournaments/${id}/unsubscribe`, { method: "POST", credentials: "include" });
       if (res.status === 401) return showToast("Devi effettuare il login per disiscriverti!", "error");
@@ -528,5 +591,5 @@ function unsubscribeTournamentCustom(id) {
     } catch (err) {
       showToast("Errore durante la disiscrizione", "error");
     }
-  };
+  }, "Disiscriviti");
 }

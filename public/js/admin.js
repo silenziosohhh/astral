@@ -80,7 +80,7 @@ async function loadAdminTournaments() {
 
     tbody.innerHTML = "";
     tournaments.forEach((t) => {
-      const link = `${window.location.origin}/torneo/${t._id}`;
+      const link = `${window.location.origin}/torneo?tid=${t._id}`;
       const formatLabel = t.format ? t.format.toUpperCase() : "SOLO";
       const row = `
         <tr>
@@ -106,10 +106,9 @@ async function loadAdminTournaments() {
         const id = row.querySelector(".delete").getAttribute("data-id");
         const currentTitle = row.cells[0].innerText.trim();
         
-        const newStatus = prompt(`Cambia stato per ${currentTitle} (Aperto, In Corso, Concluso):`);
-        if (newStatus && ["Aperto", "In Corso", "Concluso"].includes(newStatus)) {
+        showStatusSelectionModal(currentTitle, (newStatus) => {
             updateTournamentStatus(id, newStatus);
-        }
+        });
       });
     });
 
@@ -117,58 +116,23 @@ async function loadAdminTournaments() {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
         const id = btn.getAttribute("data-id");
-        showDeleteTournamentModal(id);
+        window.showConfirmModal("Elimina Torneo", "Sei sicuro di voler eliminare questo torneo? Questa azione è <b>irreversibile</b>.", async () => {
+            try {
+                const res = await fetch(`/api/tournaments/${id}`, {
+                  method: "DELETE",
+                });
+                if (res.ok) {
+                  showToast("Torneo eliminato!", "success");
+                  loadAdminTournaments();
+                } else {
+                  showToast("Errore durante l'eliminazione", "error");
+                }
+            } catch (err) {
+                showToast("Errore di connessione", "error");
+            }
+        }, "Elimina");
       });
     });
-
-    function showDeleteTournamentModal(tournamentId) {
-      document
-        .querySelectorAll(".modal-overlay.delete-modal")
-        .forEach((m) => m.remove());
-      const modalHTML = `
-    <style>
-      .modal-custom { background: #1e293b; padding: 2rem; border-radius: 16px; width: 90%; max-width: 400px; position: relative; border: 1px solid rgba(255,255,255,0.1); }
-      @media (max-width: 480px) { .modal-custom { padding: 1.5rem; width: 95%; } }
-    </style>
-    <div class="modal-overlay delete-modal active">
-      <div class="modal-custom" style="text-align: center;">
-        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
-        <h2 style="color: var(--primary-2); margin-bottom: 1.2rem;">Conferma eliminazione</h2>
-        <p style="color: #cbd5e1; margin-bottom: 2rem;">Sei sicuro di voler eliminare questo torneo? Questa azione è <b>irreversibile</b>.</p>
-        <div style="display: flex; gap: 1rem; justify-content: center;">
-          <button class="btn-cta" id="confirm-delete-tournament" style="background: #ef4444; border: none;">Elimina</button>
-          <button class="btn-cta" style="background: #64748b; border: none;" onclick="this.closest('.modal-overlay').remove()">Annulla</button>
-        </div>
-      </div>
-    </div>
-  `;
-      document.body.insertAdjacentHTML("beforeend", modalHTML);
-      const overlay = document.querySelector(".modal-overlay.delete-modal");
-      if (overlay) {
-        overlay.addEventListener("click", (e) => {
-          if (e.target === overlay) overlay.remove();
-        });
-      }
-      document.getElementById("confirm-delete-tournament").onclick =
-        async () => {
-          try {
-            const res = await fetch(`/api/tournaments/${tournamentId}`, {
-              method: "DELETE",
-            });
-            if (res.ok) {
-              showToast("Torneo eliminato!", "success");
-              loadAdminTournaments();
-            } else {
-              showToast("Errore durante l'eliminazione", "error");
-            }
-          } catch (err) {
-            showToast("Errore di connessione", "error");
-          }
-          document
-            .querySelectorAll(".modal-overlay.delete-modal")
-            .forEach((m) => m.remove());
-        };
-    }
 
     tbody.querySelectorAll(".btn-icon.copy-link").forEach((btn) => {
       btn.addEventListener("click", (e) => {
@@ -183,6 +147,38 @@ async function loadAdminTournaments() {
     console.error(err);
     showToast("Errore caricamento tornei", "error");
   }
+}
+
+function showStatusSelectionModal(title, onSelect) {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 20000;";
+    
+    overlay.innerHTML = `
+        <div style="background: #181a20; padding: 2rem; border-radius: 16px; width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+            <h3 style="color: #fff; margin-bottom: 1.5rem;">Modifica Stato: ${title}</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="status-btn" data-status="Aperto" style="padding: 12px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); cursor: pointer; font-weight: 600;">Aperto</button>
+                <button class="status-btn" data-status="In Corso" style="padding: 12px; border-radius: 8px; background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); cursor: pointer; font-weight: 600;">In Corso</button>
+                <button class="status-btn" data-status="Pausa" style="padding: 12px; border-radius: 8px; background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); cursor: pointer; font-weight: 600;">Pausa</button>
+                <button class="status-btn" data-status="Concluso" style="padding: 12px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); cursor: pointer; font-weight: 600;">Concluso</button>
+            </div>
+            <button id="close-status-modal" style="margin-top: 1.5rem; background: transparent; border: none; color: #94a3b8; cursor: pointer;">Annulla</button>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    const close = () => overlay.remove();
+    overlay.querySelector("#close-status-modal").onclick = close;
+    overlay.onclick = (e) => { if(e.target === overlay) close(); };
+    
+    overlay.querySelectorAll(".status-btn").forEach(btn => {
+        btn.onclick = () => {
+            close();
+            onSelect(btn.getAttribute("data-status"));
+        };
+    });
 }
 
 async function updateTournamentStatus(id, status) {
@@ -224,6 +220,7 @@ window.showSubscribers = function (id) {
           username: "Utente Eliminato",
           discordId: "0",
           avatar: null,
+          _id: null
         };
         let avatarUrl = "https://cdn.discordapp.com/embed/avatars/0.png";
         if (captain.avatar) {
@@ -236,6 +233,7 @@ window.showSubscribers = function (id) {
             .map(
               (mate) => {
                 const name = mate.username || mate;
+                const userId = mate.userId || '';
                 const statusIcon = typeof mate === 'object' ? 
                     (mate.status === 'accepted' ? '<i class="fas fa-check" style="color: #4ade80; font-size: 0.7rem; margin-left: 5px;" title="Accettato"></i>' : 
                      mate.status === 'rejected' ? '<i class="fas fa-times" style="color: #f87171; font-size: 0.7rem; margin-left: 5px;" title="Rifiutato"></i>' : 
@@ -245,6 +243,7 @@ window.showSubscribers = function (id) {
                 <div style="display: flex; align-items: center; gap: 10px; padding: 4px 0; color: #cbd5e1; font-size: 0.9rem;">
                    <i class="fas fa-user-tag" style="width: 20px; text-align: center; opacity: 0.7;"></i>
                    ${name} ${statusIcon}
+                   ${userId ? `<button onclick="kickUser('${tournament._id}', '${userId}', '${name}')" class="btn-icon delete" style="margin-left: auto; width: 24px; height: 24px; font-size: 0.7rem; background: rgba(239, 68, 68, 0.1); color: #f87171; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(239, 68, 68, 0.2); cursor: pointer;" title="Espelli"><i class="fas fa-times"></i></button>` : ''}
                 </div>
              `;}
             )
@@ -258,6 +257,7 @@ window.showSubscribers = function (id) {
                     <img src="${avatarUrl}" style="width: 24px; height: 24px; border-radius: 50%;">
                     <span style="font-weight: 600; color: #fff;">${captain.username}</span>
                     <span style="font-size: 0.75rem; color: var(--primary-2); border: 1px solid var(--primary-2); padding: 1px 4px; border-radius: 3px;">CAPTAIN</span>
+                    ${captain._id ? `<button onclick="kickUser('${tournament._id}', '${captain._id}', '${captain.username}')" class="btn-icon delete" style="margin-left: auto; width: 24px; height: 24px; font-size: 0.7rem; background: rgba(239, 68, 68, 0.1); color: #f87171; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(239, 68, 68, 0.2); cursor: pointer;" title="Espelli"><i class="fas fa-times"></i></button>` : ''}
                 </div>
                 <div style="padding-left: 10px;">
                     ${membersHtml}
@@ -285,6 +285,7 @@ window.showSubscribers = function (id) {
                 <li style="display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">
                     <img src="${avatarUrl}" style="width: 35px; height: 35px; border-radius: 50%; border: 1px solid var(--primary-2);">
                     <span style="font-weight: 600; color: var(--light);">${s.username}</span>
+                    <button onclick="kickUser('${tournament._id}', '${s._id}', '${s.username}')" class="btn-icon delete" style="margin-left: auto; width: 30px; height: 30px; font-size: 0.8rem; background: rgba(239, 68, 68, 0.1); color: #f87171; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(239, 68, 68, 0.2); cursor: pointer;" title="Espelli"><i class="fas fa-trash"></i></button>
                 </li>
             `;
       });
@@ -317,4 +318,22 @@ window.showSubscribers = function (id) {
       if (e.target === overlay) overlay.remove();
     });
   }
+};
+
+window.kickUser = function(tournamentId, userId, username) {
+    window.showConfirmModal("Espelli Utente", `Sei sicuro di voler espellere <b>${username}</b> dal torneo?`, async () => {
+        try {
+            const res = await fetch(`/api/tournaments/${tournamentId}/kick/${userId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            if (res.ok) {
+                showToast(`Utente ${username} espulso`, "success");
+                await loadAdminTournaments();
+                setTimeout(() => showSubscribers(tournamentId), 100);
+            } else {
+                showToast("Errore durante l'espulsione", "error");
+            }
+        } catch(e) { showToast("Errore di connessione", "error"); }
+    }, "Espelli");
 };

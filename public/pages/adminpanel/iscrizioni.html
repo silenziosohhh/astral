@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"
+    />
+    <title>Gestione Iscrizioni | Astral Admin</title>
+    <link rel="stylesheet" href="/styles/main.css" />
+    <link rel="icon" type="image/x-icon" href="/images/astralcup-logo.png" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="navbar-container">
+        <a href="/" class="navbar-brand">
+          <img src="/images/astralcup.png" alt="Astral Cup Logo" />
+          <span>ASTRAL ADMIN</span>
+        </a>
+
+        <div class="navbar-content">
+          <ul class="navbar-menu">
+            <li><a href="/admin/classifica">Gestione Classifica</a></li>
+            <li><a href="/admin/iscrizioni" class="outline-glow">Gestione Iscrizioni</a></li>
+            <li><a href="/admin/tornei">Gestione Tornei</a></li>
+            <li><a href="/admin/user">Gestione Utenti</a></li>
+          </ul>
+          <div class="navbar-actions">
+            <a href="/discord" class="btn-discord outline-glow"><i class="fab fa-discord"></i> Login</a>
+          </div>
+          <div class="navbar-login"></div>
+        </div>
+
+        <div class="navbar-toggle" id="mobile-menu">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container" style="padding-top: 120px; padding-bottom: 50px">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1 class="section-title" style="margin-bottom: 0;">Gestione Iscrizioni</h1>
+            <a href="/admin" class="btn-visit" style="padding: 0.5rem 1rem; font-size: 0.9rem;"><i class="fas fa-arrow-left"></i> Dashboard</a>
+        </div>
+
+        <div style="background: #1e293b; padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 2rem;">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px; align-items: end;">
+                <div>
+                    <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-size: 0.9rem;">Seleziona Torneo</label>
+                    <div class="custom-select-wrapper">
+                        <div class="custom-select">
+                            <div class="custom-select__trigger">
+                                <span id="selected-tournament-text">Caricamento tornei...</span>
+                                <div class="arrow"></div>
+                            </div>
+                            <div class="custom-options" id="tournament-options"></div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-size: 0.9rem;">Cerca Iscritto</label>
+                    <input type="text" id="search-subscriber" placeholder="Username..." style="width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; color: #fff; border-radius: 8px; outline: none; box-sizing: border-box;">
+                </div>
+            </div>
+        </div>
+
+        <div id="subscribers-container" class="grid-2" style="display: flex; flex-direction: column; gap: 14px;">
+            <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #94a3b8;">
+                Seleziona un torneo per visualizzare gli iscritti.
+            </div>
+        </div>
+    </div>
+
+    <footer>
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h3>Astral Cup</h3>
+            <p>
+              La piattaforma competitiva definitiva per dimostrare il tuo
+              valore. Unisciti alla community, partecipa ai tornei e scala la
+              classifica verso la gloria eterna.
+            </p>
+            <div class="social-links">
+              <a href="#"><i class="fab fa-discord"></i></a>
+              <a href="#"><i class="fab fa-twitter"></i></a>
+              <a href="#"><i class="fab fa-instagram"></i></a>
+              <a href="#"><i class="fab fa-youtube"></i></a>
+            </div>
+          </div>
+          <div class="footer-section">
+            <h3>Navigazione</h3>
+            <ul class="footer-links">
+              <li><a href="/">Home</a></li>
+              <li><a href="/tornei">Tornei</a></li>
+              <li><a href="/classifica">Classifica</a></li>
+              <li><a href="/staff">Staff</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h3>Supporto</h3>
+            <ul class="footer-links">
+              <li><a href="#">Regolamento</a></li>
+              <li><a href="#">FAQ</a></li>
+              <li><a href="#">Contattaci</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2023 Astral Cup. Tutti i diritti riservati.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="/js/navbar.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/socket.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let currentTournament = null;
+        let allTournaments = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadTournamentsList();
+            
+            document.getElementById('search-subscriber').addEventListener('input', (e) => {
+                renderSubscribers(e.target.value.toLowerCase());
+            });
+        });
+
+        async function loadTournamentsList() {
+            try {
+                const res = await fetch('/api/tournaments');
+                allTournaments = await res.json();
+                const optionsContainer = document.getElementById('tournament-options');
+                const triggerText = document.getElementById('selected-tournament-text');
+                
+                optionsContainer.innerHTML = '';
+                
+                if (allTournaments.length === 0) {
+                    triggerText.textContent = "Nessun torneo disponibile";
+                    return;
+                }
+
+                allTournaments.forEach(t => {
+                    const div = document.createElement('div');
+                    div.className = 'custom-option';
+                    div.dataset.value = t._id;
+                    div.textContent = `${t.title} (${t.format.toUpperCase()}) - ${t.status}`;
+                    div.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        selectTournament(t._id);
+                    });
+                    optionsContainer.appendChild(div);
+                });
+
+                // Auto select first tournament
+                if (allTournaments.length > 0) {
+                    selectTournament(allTournaments[0]._id);
+                }
+
+            } catch (e) {
+                console.error(e);
+                showToast("Errore caricamento tornei", "error");
+            }
+        }
+
+        function selectTournament(tid) {
+            currentTournament = allTournaments.find(t => t._id === tid);
+            const triggerText = document.getElementById('selected-tournament-text');
+            const select = document.querySelector('.custom-select');
+            
+            if (currentTournament) {
+                triggerText.textContent = `${currentTournament.title} (${currentTournament.format.toUpperCase()}) - ${currentTournament.status}`;
+            }
+            
+            select.classList.remove('open');
+            
+            document.querySelectorAll('.custom-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.dataset.value === tid);
+            });
+            
+            renderSubscribers();
+        }
+
+        function renderSubscribers(filter = "") {
+            const container = document.getElementById('subscribers-container');
+            if (!currentTournament) {
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #94a3b8;">Seleziona un torneo per visualizzare gli iscritti.</div>';
+                return;
+            }
+
+            const isTeam = currentTournament.format !== 'solo';
+            let html = "";
+            let count = 0;
+
+            if (isTeam) {
+                const teams = currentTournament.teams || [];
+                teams.forEach(team => {
+                    const captain = team.captain || { username: "Unknown" };
+                    const members = team.teammates || [];
+                    const allNames = [captain.username, ...members.map(m => m.username || m)].join(" ").toLowerCase();
+
+                    if (filter && !allNames.includes(filter)) return;
+                    count++;
+
+                    let membersHtml = members.map(m => `
+                        <span style="display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; margin-right: 5px;">
+                            <i class="fas fa-user" style="font-size: 0.8rem;"></i> ${m.username || m}
+                        </span>
+                    `).join("");
+
+                    html += `
+                        <div class="sub-card">
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <img src="https://minotar.net/helm/${captain.minecraftUsername || captain.username}/40.png" style="border-radius: 6px;">
+                                    <div>
+                                        <div style="font-weight: 600; color: #fff;">${captain.username} <span style="color: var(--primary-2); font-size: 0.8rem; border: 1px solid var(--primary-2); padding: 0 4px; border-radius: 4px;">CAP</span></div>
+                                        <div style="font-size: 0.85rem; color: #94a3b8;">Team ID: ${team._id ? team._id.toString().substr(-6) : 'N/A'}</div>
+                                    </div>
+                                </div>
+                                <div class="team-members">${membersHtml}</div>
+                            </div>
+                            <button onclick="kickUser('${currentTournament._id}', '${captain._id || captain}', true)" class="btn-icon delete" style="background: rgba(239, 68, 68, 0.2); color: #f87171; width: 40px; height: 40px;" title="Espelli Team"><i class="fas fa-ban"></i></button>
+                        </div>
+                    `;
+                });
+            } else {
+                const subs = currentTournament.subscribers || [];
+                subs.forEach(sub => {
+                    if (filter && !sub.username.toLowerCase().includes(filter)) return;
+                    count++;
+
+                    html += `
+                        <div class="sub-card">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <img src="https://minotar.net/helm/${sub.minecraftUsername || sub.username}/40.png" style="border-radius: 6px;">
+                                <div>
+                                    <div style="font-weight: 600; color: #fff;">${sub.username}</div>
+                                    <div style="font-size: 0.85rem; color: #94a3b8;">${sub.minecraftUsername || "No MC Nick"}</div>
+                                </div>
+                            </div>
+                            <button onclick="kickUser('${currentTournament._id}', '${sub._id}', false)" class="btn-icon delete" style="background: rgba(239, 68, 68, 0.2); color: #f87171; width: 40px; height: 40px;" title="Espelli Utente"><i class="fas fa-ban"></i></button>
+                        </div>
+                    `;
+                });
+            }
+
+            if (count === 0) html = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #94a3b8;">Nessun iscritto trovato.</div>';
+            container.innerHTML = html;
+        }
+
+        window.kickUser = async function(tid, uid, isTeam) {
+            const msg = isTeam ? "Sei sicuro di voler sciogliere questo team e rimuovere tutti i membri?" : "Sei sicuro di voler espellere questo utente?";
+            if (!confirm(msg)) return;
+
+            try {
+                const res = await fetch(`/api/tournaments/${tid}/kick/${uid}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                if (res.ok) {
+                    showToast("Espulsione completata", "success");
+                    // Ricarica i dati
+                    const tRes = await fetch('/api/tournaments');
+                    allTournaments = await tRes.json();
+                    currentTournament = allTournaments.find(t => t._id === tid);
+                    renderSubscribers(document.getElementById('search-subscriber').value.toLowerCase());
+                } else {
+                    showToast("Errore durante l'espulsione", "error");
+                }
+            } catch (e) {
+                showToast("Errore di connessione", "error");
+            }
+        };
+
+        // Dropdown logic
+        const selectWrapper = document.querySelector('.custom-select');
+        const selectTrigger = document.querySelector('.custom-select__trigger');
+
+        if (selectTrigger) {
+            selectTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectWrapper.classList.toggle('open');
+            });
+        }
+
+        window.addEventListener('click', (e) => {
+            if (selectWrapper && !selectWrapper.contains(e.target)) {
+                selectWrapper.classList.remove('open');
+            }
+        });
+    </script>
+  </body>
+</html>

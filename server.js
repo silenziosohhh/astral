@@ -5,6 +5,7 @@ const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const passport = require("passport");
 const path = require("path");
+const fs = require("fs");
 const jwt = require("jsonwebtoken");
 const User = require("./src/database/User");
 
@@ -29,6 +30,45 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.get("/torneo", async (req, res) => {
+  const tid = req.query.tid;
+  const filePath = path.join(__dirname, "public", "pages", "torneo.html");
+
+  if (tid) {
+    const Tournament = require("./src/database/Tournament");
+    try {
+      const t = await Tournament.findById(tid).populate({
+        path: "subscribers",
+        select: "username avatar discordId",
+      });
+      if (t) {
+        fs.readFile(filePath, "utf8", (err, data) => {
+          if (err) return res.status(500).send("Errore caricamento pagina");
+          
+          const ogImage = `https://res.cloudinary.com/demo/image/upload/l_text:Arial_60_bold:${encodeURIComponent(t.title)},co_rgb:ffffff,g_center,y_-40/l_text:Arial_40:Partecipanti%3A%20${t.subscribers.length},co_rgb:60a5fa,g_center,y_40,w_600/v1690000000/astralcup_bg.png`;
+          
+          let html = data.replace(/<title>.*<\/title>/, `<title>${t.title} | Astral Cup</title>`);
+          const metaTags = `
+            <meta property="og:title" content="${t.title} | Astral Cup" />
+            <meta property="og:description" content="Partecipa a ${t.title} su Astral Cup! Iscritti: ${t.subscribers.length}" />
+            <meta property="og:image" content="${ogImage}" />
+            <meta property="og:type" content="website" />
+            <meta property="og:url" content="${req.protocol}://${req.get("host")}${req.originalUrl}" />
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content="${t.title} | Astral Cup" />
+            <meta name="twitter:description" content="Partecipa a ${t.title} su Astral Cup! Iscritti: ${t.subscribers.length}" />
+            <meta name="twitter:image" content="${ogImage}" />
+          `;
+          html = html.replace("</head>", `${metaTags}</head>`);
+          res.send(html);
+        });
+        return;
+      }
+    } catch (err) { console.error(err); }
+  }
+  res.sendFile(filePath);
+});
 
 app.get("/torneo/:id", async (req, res) => {
   const Tournament = require("./src/database/Tournament");
@@ -59,7 +99,7 @@ app.get("/torneo/:id", async (req, res) => {
         <link rel="icon" type="image/x-icon" href="/images/astralcup-logo.png">
       </head>
       <body>
-        <script>window.location.replace('/pages/torneo.html?tid=${t._id}');</script>
+        <script>window.location.replace('/torneo?tid=${t._id}');</script>
       </body>
       </html>
     `);
@@ -124,9 +164,31 @@ app.get("/admin", async (req, res) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
-    if (user && ["gestore", "founder", "developer"].includes(user.role)) {
+    if (user && ["gestore", "founder", "developer", "admin"].includes(user.role)) {
       return res.sendFile(
         path.join(__dirname, "public", "pages", "admin.html"),
+      );
+    }
+    return res.redirect("/");
+  } catch (err) {
+    return res.redirect("/");
+  }
+});
+
+app.get("/admin/:page", async (req, res) => {
+  const page = req.params.page;
+  const validPages = ["classifica", "iscrizioni", "tornei", "user"];
+  if (!validPages.includes(page)) return res.redirect("/admin");
+
+  const token = req.cookies.token;
+  if (!token) return res.redirect("/");
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (user && ["gestore", "founder", "developer", "admin"].includes(user.role)) {
+      return res.sendFile(
+        path.join(__dirname, "public", "pages", "adminpanel", `${page}.html`),
       );
     }
     return res.redirect("/");

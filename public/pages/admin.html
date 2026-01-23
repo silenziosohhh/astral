@@ -7,31 +7,31 @@
       content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"
     />
     <title>Admin Panel - Astral Cup</title>
-    <link rel="stylesheet" href="../styles/main.css" />
+    <link rel="stylesheet" href="/styles/main.css" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
-    <link rel="icon" type="image/x-icon" href="../images/astralcup-logo.png" />
+    <link rel="icon" type="image/x-icon" href="/images/astralcup-logo.png" />
   </head>
   <body>
     <nav class="navbar">
       <div class="navbar-container">
-        <a href="../index.html" class="navbar-brand">
-          <img src="./images/astralcup.png" alt="Astral Cup Logo" />
+        <a href="/" class="navbar-brand">
+          <img src="/images/astralcup.png" alt="Astral Cup Logo" />
           <span>ASTRAL ADMIN</span>
         </a>
 
         <div class="navbar-content">
           <ul class="navbar-menu">
             <li>
-              <a href="./adminpanel/classifica.html">Gestione Classifica</a>
+              <a href="/admin/classifica">Gestione Classifica</a>
             </li>
             <li>
-              <a href="./adminpanel/iscrizioni.html">Gestione Iscrizioni</a>
+              <a href="/admin/iscrizioni">Gestione Iscrizioni</a>
             </li>
-            <li><a href="./adminpanel/tornei.html">Gestione Tornei</a></li>
-            <li><a href="./adminpanel/user.html">Gestione Utenti</a></li>
+            <li><a href="/admin/tornei">Gestione Tornei</a></li>
+            <li><a href="/admin/user">Gestione Utenti</a></li>
           </ul>
           <div class="navbar-actions">
             <a href="/discord" class="btn-discord outline-glow"
@@ -153,7 +153,7 @@
                 <td><strong>1500</strong></td>
                 <td>
                   <button class="btn-icon save">
-                    <i class="fas fa-save"></i>
+                    <i class="fas fa-check"></i>
                   </button>
                 </td>
               </tr>
@@ -183,10 +183,10 @@
           <div class="footer-section">
             <h3>Navigazione</h3>
             <ul class="footer-links">
-              <li><a href="../index.html">Home</a></li>
-              <li><a href="tornei.html">Tornei</a></li>
-              <li><a href="classifica.html">Classifica</a></li>
-              <li><a href="staff.html">Staff</a></li>
+              <li><a href="/">Home</a></li>
+              <li><a href="/tornei">Tornei</a></li>
+              <li><a href="/classifica">Classifica</a></li>
+              <li><a href="/staff">Staff</a></li>
             </ul>
           </div>
           <div class="footer-section">
@@ -205,8 +205,8 @@
     </footer>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="../js/socket.js"></script>
-    <script src="../js/navbar.js"></script>
-    <script src="../js/admin.js"></script>
+    <script src="/js/socket.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/admin.js"></script>
   </body>
 </html>
