@@ -15,13 +15,10 @@ function handleResponsiveAuth() {
   const actionsContainer = document.querySelector(".navbar-actions");
   const searchTrigger = document.getElementById("nav-search-trigger");
 
-
-
   const notifWrapper = document.querySelector(".notification-wrapper");
   const mobileMenu = document.getElementById("mobile-menu");
   const userProfile = document.querySelector(".user-profile");
   const userChevron = document.querySelector(".user-info .fa-chevron-down");
-
 
   if (!navContent) return;
   const navWrapper = navContent.parentElement;
@@ -44,8 +41,6 @@ function handleResponsiveAuth() {
       searchTrigger.style.margin = "1rem auto";
     }
 
-
-
     if (notifWrapper && mobileMenu && navWrapper) {
       if (notifWrapper.parentElement !== navWrapper) {
         navWrapper.insertBefore(notifWrapper, mobileMenu);
@@ -58,7 +53,6 @@ function handleResponsiveAuth() {
       }
     }
     if (userChevron) userChevron.style.display = "none";
-
   } else {
     if (loginContainer && loginContainer.parentElement === navContent) {
       navWrapper.appendChild(loginContainer);
@@ -85,8 +79,6 @@ function handleResponsiveAuth() {
     if (loginContainer && loginContainer.parentElement === navWrapper)
       navWrapper.appendChild(loginContainer);
 
-
-
     if (notifWrapper && userProfile) {
       if (notifWrapper.parentElement !== userProfile) {
         userProfile.insertBefore(notifWrapper, userProfile.firstChild);
@@ -99,7 +91,6 @@ function handleResponsiveAuth() {
       }
     }
     if (userChevron) userChevron.style.display = "";
-
   }
 }
 
@@ -144,18 +135,6 @@ function updateNavbarUI(user) {
   oldActionsContainer.style.display = "none";
   actionsContainer.style.display = "flex";
 
-  actionsContainer.innerHTML = `
-        <div class="user-profile">
-            <a href="/profile" class="user-info" style="text-decoration: none;">
-                <img src="${avatarUrl}" alt="${user.username}">
-                <span class="navbar-username">${user.username}</span>
-            </a>
-            <a href="/logout" class="btn-icon logout-btn" title="Logout">
-                <i class="fas fa-sign-out-alt"></i>
-                <span class="logout-text">Logout</span>
-            </a>
-        </div>
-    `;
   const existingPanel = document.getElementById("notification-panel");
   if (existingPanel) existingPanel.remove();
 
@@ -395,7 +374,6 @@ window.respondToInvite = async (id, action) => {
 async function markAsRead(id) {
   await fetch(`/api/notifications/${id}/read`, { method: "POST" });
   loadNotifications();
-
 }
 
 window.showToast = function (message, type = "info") {

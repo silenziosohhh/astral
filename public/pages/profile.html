@@ -1,60 +1,5 @@
 <!doctype html>
 <html lang="it">
-<<<<<<< HEAD
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Il Mio Profilo - Astral Cup</title>
-    <link rel="stylesheet" href="/styles/main.css" />
-    <link rel="icon" type="image/x-icon" href="/images/astralcup-logo.png" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-    />
-  </head>
-  <body>
-    <nav class="navbar">
-      <div class="navbar-container">
-        <a href="/" class="navbar-brand">
-          <img src="/images/astralcup.png" alt="Astral Cup Logo" />
-          <span>ASTRAL CUP</span>
-        </a>
-
-        <div class="navbar-content">
-          <ul class="navbar-menu">
-            <li><a href="/staff">Staff</a></li>
-            <li><a href="/classifica">Classifica</a></li>
-            <li><a href="/">Home</a></li>
-            <li><a href="/memories">Memories</a></li>
-            <li><a href="/tornei">Tornei</a></li>
-          </ul>
-          <div class="navbar-search-trigger" id="nav-search-trigger">
-            <i class="fas fa-search"></i>
-          </div>
-          <div class="navbar-actions">
-            <a href="/discord" class="btn-discord outline-glow"
-              ><i class="fab fa-discord"></i> Login</a
-            >
-          </div>
-          <div class="navbar-login"></div>
-        </div>
-
-        <div class="navbar-toggle" id="mobile-menu">
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
-        </div>
-      </div>
-    </nav>
-
-    <div class="container" style="padding-top: 120px; padding-bottom: 50px">
-      <div class="profile-header admin-card">
-        <div class="profile-info-main">
-          <img id="profile-avatar" src="" alt="Avatar" />
-          <div style="display: flex; flex-direction: column; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: center;">
-            <div
-              style="
-=======
 
 <head>
   <meta charset="UTF-8" />
@@ -110,25 +55,10 @@
         <div
           style="display: flex; flex-direction: column; gap: 10px; flex-wrap: wrap; align-items: left; justify-content: center;">
           <div style="
->>>>>>> 568815a (Update v0.0.5)
                 display: flex;
                 flex-direction: row;
                 flex-wrap: wrap;
                 gap: 10px;
-<<<<<<< HEAD
-              "
-            >
-              <h1
-                id="profile-username"
-                style="color: var(--light); font-size: 22px"
-              >
-                Caricamento...
-              </h1>
-              <span id="profile-role" class="role-badge">...</span>
-            </div>
-            <div
-              style="
-=======
               ">
             <h1 id="profile-username" style="color: var(--light); font-size: 22px">
               Caricamento...
@@ -136,119 +66,10 @@
             <span id="profile-role" class="role-badge">...</span>
           </div>
           <div style="
->>>>>>> 568815a (Update v0.0.5)
                 margin-top: 12px;
                 display: flex;
                 align-items: center;
                 gap: 8px;
-<<<<<<< HEAD
-              "
-            >
-              <input
-                type="text"
-                id="minecraft-nick"
-                placeholder="Minecraft Nick (Richiesto)"
-                readonly
-                style="
-                  background: rgba(0, 0, 0, 0.2);
-                  border: 1px solid #334155;
-                  color: #fff;
-                  padding: 5px 10px;
-                  border-radius: 4px;
-                  outline: none;
-                  font-size: 0.9rem;
-                "
-              />
-            </div>
-          </div>
-        </div>
-        <div class="profile-stats">
-          <div class="stat-box">
-            <i class="fas fa-skull" style="color: var(--primary-2); font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
-            <h3 id="stat-kills">0</h3>
-            <p>Uccisioni</p>
-          </div>
-          <div class="stat-box">
-            <i class="fas fa-heart-broken" style="color: var(--primary-2); font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
-            <h3 id="stat-deaths">0</h3>
-            <p>Morti</p>
-          </div>
-          <div class="stat-box">
-            <i class="fas fa-star" style="color: var(--primary-2); font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
-            <h3 id="stat-level">0</h3>
-            <p>Livello</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="admin-card" style="margin-top: 2rem; padding: 0; overflow: hidden; position: relative;">
-        <div id="bw-card-bg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; filter: blur(20px); opacity: 0.2; z-index: 0;"></div>
-
-        <div style="position: relative; z-index: 1; padding: 2rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 10px;">
-            <h2 style="margin: 0; font-size: 1.8rem; color: #fff; display: flex; align-items: center; gap: 10px;">
-              Statistiche BedWars
-            </h2>
-            <div class="bw-level-badge" style="background: linear-gradient(135deg, var(--primary-1), var(--primary-2)); padding: 5px 15px; border-radius: 20px; font-weight: bold; color: var(--light);">
-              Livello <span id="bw-level-display">0</span>
-            </div>
-          </div>
-
-          <div class="bw-stats-layout">
-            <div class="bw-player-render">
-              <img id="bw-skin-render" src="" alt="Skin" style="height: 300px; object-fit: contain; filter: drop-shadow(0 0 15px rgba(255,255,255,0.2));">
-            </div>
-
-            <div class="bw-stats-grid">
-              <div class="bw-stat-item">
-                <div class="bw-stat-label">Vittorie</div>
-                <div class="bw-stat-value" id="bw-wins" style="color: #4ade80;">0</div>
-              </div>
-              <div class="bw-stat-item">
-                <div class="bw-stat-label">Uccisioni</div>
-                <div class="bw-stat-value" id="bw-kills">0</div>
-              </div>
-              <div class="bw-stat-item">
-                <div class="bw-stat-label">Final Kills</div>
-                <div class="bw-stat-value" id="bw-final-kills" style="color: #a855f7;">0</div>
-              </div>
-              <div class="bw-stat-item">
-                <div class="bw-stat-label">Letti Rotti</div>
-                <div class="bw-stat-value" id="bw-beds" style="color: #ef4444;">0</div>
-              </div>
-              <div class="bw-stat-item">
-                <div class="bw-stat-label">Morti</div>
-                <div class="bw-stat-value" id="bw-deaths">0</div>
-              </div>
-              <div class="bw-stat-item">
-                <div class="bw-stat-label">Final Deaths</div>
-                <div class="bw-stat-value" id="bw-final-deaths">0</div>
-              </div>
-              <div class="bw-stat-item">
-                <div class="bw-stat-label">K/D Ratio</div>
-                <div class="bw-stat-value" id="bw-kdr" style="color: #3b82f6;">0</div>
-              </div>
-              <div class="bw-stat-item">
-                <div class="bw-stat-label">FK/D Ratio</div>
-                <div class="bw-stat-value" id="bw-fkdr" style="color: #3b82f6;">0</div>
-              </div>
-              <div class="bw-stat-item">
-                <div class="bw-stat-label">Partite</div>
-                <div class="bw-stat-value" id="bw-games">0</div>
-              </div>
-              <div class="bw-stat-item">
-                <div class="bw-stat-label">W/L Ratio</div>
-                <div class="bw-stat-value" id="bw-wlr" style="color: #fbbf24;">0</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="admin-card" style="margin-top: 2rem">
-        <div
-          style="
-=======
               ">
             <div style="position: relative;">
               <input type="text" id="minecraft-nick" placeholder="Minecraft Nick (Richiesto)" style="
@@ -426,108 +247,12 @@
 
     <div class="admin-card" style="margin-top: 2rem">
       <div style="
->>>>>>> 568815a (Update v0.0.5)
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
             flex-wrap: wrap;
             gap: 10px;
-<<<<<<< HEAD
-          "
-        >
-          <h2 style="margin: 0; font-size: 1.5rem; color: #fff">
-            Minecraft Skills
-          </h2>
-          <button
-            id="edit-skills-btn"
-            class="btn-icon"
-            style="
-              background: var(--primary-2);
-              color: #000;
-              width: 32px;
-              height: 32px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              border-radius: 4px;
-              border: none;
-              cursor: pointer;
-            "
-          >
-            <i class="fas fa-pen"></i>
-          </button>
-        </div>
-        <div
-          id="skills-container"
-          style="display: flex; flex-wrap: wrap; gap: 10px"
-        >
-          <span style="color: #94a3b8; font-style: italic"
-            >Caricamento skills...</span
-          >
-        </div>
-      </div>
-
-
-      <div class="admin-card" style="margin-top: 2rem">
-        <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-            gap: 10px;
-          "
-        >
-          <h2 style="margin: 0; font-size: 1.5rem; color: #fff">
-            Social Media
-          </h2>
-          <button
-            id="edit-socials-btn"
-            class="btn-icon"
-            style="
-              background: var(--primary-2);
-              color: #000;
-              width: 32px;
-              height: 32px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              border-radius: 4px;
-              border: none;
-              cursor: pointer;
-            "
-          >
-            <i class="fas fa-pen"></i>
-          </button>
-        </div>
-
-        <div
-          id="socials-display"
-          style="display: flex; gap: 15px; flex-wrap: wrap"
-        >
-          <span style="color: #94a3b8; font-style: italic"
-            >Nessun social collegato.</span
-          >
-        </div>
-      </div>
-
-      <div class="section-header-flex" style="flex-wrap: wrap; gap: 1rem;">
-        <h2
-          id="memories-title"
-          class="section-title"
-          style="margin-bottom: 0; text-align: left; font-size: 2rem;"
-        >
-          Le Mie Memories
-        </h2>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-          <input
-            type="text"
-            id="search-profile-memories"
-            placeholder="Cerca..."
-            style="
-=======
           ">
         <h2 style="margin: 0; font-size: 1.5rem; color: #fff">
           Minecraft Skills
@@ -621,7 +346,6 @@
       </h2>
       <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
         <input type="text" id="search-profile-memories" placeholder="Cerca..." style="
->>>>>>> 568815a (Update v0.0.5)
               padding: 0.6rem 1rem;
               border-radius: 50px;
               border: 1px solid #334155;
@@ -629,69 +353,6 @@
               color: #fff;
               outline: none;
               transition: border-color 0.3s;
-<<<<<<< HEAD
-            "
-            onfocus="this.style.borderColor='var(--primary-2)'"
-            onblur="this.style.borderColor='#334155'"
-          />
-          <button id="add-memory-btn" class="btn-primary">
-            <i class="fas fa-plus"></i> Nuova Memory
-          </button>
-        </div>
-      </div>
-
-      <div class="grid-3" id="my-memories-grid"></div>
-    </div>
-
-    <footer>
-      <div class="container">
-        <div class="footer-content">
-          <div class="footer-section">
-            <h3>Astral Cup</h3>
-            <p>
-              La piattaforma competitiva definitiva per dimostrare il tuo
-              valore. Unisciti alla community, partecipa ai tornei e scala la
-              classifica verso la gloria eterna.
-            </p>
-            <div class="social-links">
-              <a href="#"><i class="fab fa-discord"></i></a>
-              <a href="#"><i class="fab fa-twitter"></i></a>
-              <a href="#"><i class="fab fa-instagram"></i></a>
-              <a href="#"><i class="fab fa-youtube"></i></a>
-            </div>
-          </div>
-          <div class="footer-section">
-            <h3>Navigazione</h3>
-            <ul class="footer-links">
-              <li><a href="/">Home</a></li>
-              <li><a href="/tornei">Tornei</a></li>
-              <li><a href="/classifica">Classifica</a></li>
-              <li><a href="/staff">Staff</a></li>
-            </ul>
-          </div>
-          <div class="footer-section">
-            <h3>Supporto</h3>
-            <ul class="footer-links">
-              <li><a href="#">Regolamento</a></li>
-              <li><a href="#">FAQ</a></li>
-              <li><a href="#">Contattaci</a></li>
-            </ul>
-          </div>
-        </div>
-        <div class="footer-bottom">
-          <p>&copy; 2023 Astral Cup. Tutti i diritti riservati.</p>
-        </div>
-      </div>
-    </footer>
-
-    <script src="/js/navbar.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/js/socket.js"></script>
-    <script src="/js/app.js"></script>
-    <script src="/js/profile.js"></script>
-  </body>
-</html>
-=======
             " onfocus="this.style.borderColor='var(--primary-2)'" onblur="this.style.borderColor='#334155'" />
         <button id="add-memory-btn" class="btn-primary">
           <i class="fas fa-plus"></i> Nuova Memory
@@ -751,4 +412,3 @@
 </body>
 
 </html>
->>>>>>> 568815a (Update v0.0.5)

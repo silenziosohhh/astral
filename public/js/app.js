@@ -255,13 +255,8 @@ async function loadTournaments() {
         buttonLabel = "Accedi per Iscriverti";
         buttonAction = "login";
       } else if (isSubscribed) {
-<<<<<<< HEAD
-        buttonLabel = "Disiscriviti";
-        buttonAction = "unsubscribe";
-=======
         buttonLabel = "Visualizza Iscrizioni";
         buttonAction = "view_subscription";
->>>>>>> 568815a (Update v0.0.5)
       }
 
       const shareLink = `${window.location.origin}/torneo/${t._id}`;
@@ -322,14 +317,8 @@ async function loadTournaments() {
             } else {
               showJoinTeamModal(tid, format);
             }
-<<<<<<< HEAD
-          } else if (action === "unsubscribe") {
-            btn.disabled = true;
-            await unsubscribeTournament(tid);
-=======
           } else if (action === "view_subscription") {
             openSubscriptionModal(tid);
->>>>>>> 568815a (Update v0.0.5)
           }
           await loadTournaments();
         });
@@ -503,28 +492,6 @@ function showJoinTeamModal(tid, format) {
   };
 }
 
-<<<<<<< HEAD
-async function unsubscribeTournament(id) {
-  try {
-    const res = await fetch(`/api/tournaments/${id}/unsubscribe`, {
-      method: "POST",
-      credentials: "include",
-    });
-    if (res.status === 401) {
-      showToast("Devi effettuare il login per disiscriverti!", "error");
-      return;
-    }
-    const contentType = res.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      showToast(`Errore Server: ${res.status} (Riavvia il backend)`, "error");
-      return;
-    }
-    const data = await res.json();
-    if (data && data.message) showToast(data.message, "success");
-  } catch (err) {
-    showToast("Errore durante la disiscrizione", "error");
-  }
-=======
 async function openSubscriptionModal(tid) {
   try {
     const [resT, resU] = await Promise.all([
@@ -689,7 +656,6 @@ function unsubscribeTournament(id) {
       }
     };
   });
->>>>>>> 568815a (Update v0.0.5)
 }
 
 async function loadMemories() {

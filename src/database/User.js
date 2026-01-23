@@ -20,8 +20,6 @@ const UserSchema = new mongoose.Schema({
     twitch: String,
   },
   createdAt: { type: Date, default: Date.now },
-<<<<<<< HEAD
-=======
   notifications: [{
     type: { type: String },
     message: String,
@@ -34,7 +32,6 @@ const UserSchema = new mongoose.Schema({
     tournamentUpdates: { type: Boolean, default: true },
     tournamentEnd: { type: Boolean, default: true }
   },
->>>>>>> 568815a (Update v0.0.5)
   tournaments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tournament" }],
 });
 

@@ -1208,69 +1208,6 @@ body {
   display: none;
 }
 
-<<<<<<< HEAD
-.bw-stats-layout {
-  display: flex;
-  gap: 2rem;
-  align-items: center;
-}
-
-.bw-player-render {
-  flex: 0 0 150px;
-  display: flex;
-  justify-content: center;
-}
-
-.bw-stat-item {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 15px;
-  border-radius: 12px;
-  text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition:
-    transform 0.2s,
-    background 0.2s;
-}
-
-.bw-stat-item:hover {
-  transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.bw-stat-label {
-  color: #94a3b8;
-  font-size: 0.9rem;
-  margin-bottom: 5px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.bw-stat-value {
-  color: #fff;
-  font-size: 1.6rem;
-  font-weight: 700;
-}
-
-.bw-stats-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 15px;
-}
-
-@media (max-width: 768px) {
-  .bw-stats-layout {
-    flex-direction: column;
-  }
-  .bw-player-render {
-    margin-bottom: 1rem;
-  }
-  .bw-stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-}
-=======
 /* Nuovo stile per Statistiche BedWars - CoralMC Fedele */
 .bedwars-stats-section {
   background: transparent;
@@ -1730,4 +1667,3 @@ input:checked + .slider:before { transform: translateX(22px); }
     margin-top: 1.5rem;
   }
 }
->>>>>>> 568815a (Update v0.0.5)

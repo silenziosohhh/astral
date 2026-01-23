@@ -99,8 +99,6 @@ async function loadAdminTournaments() {
       tbody.innerHTML += row;
     });
 
-<<<<<<< HEAD
-=======
     tbody.querySelectorAll(".btn-icon.edit").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -115,7 +113,6 @@ async function loadAdminTournaments() {
       });
     });
 
->>>>>>> 568815a (Update v0.0.5)
     tbody.querySelectorAll(".btn-icon.delete").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -188,8 +185,6 @@ async function loadAdminTournaments() {
   }
 }
 
-<<<<<<< HEAD
-=======
 async function updateTournamentStatus(id, status) {
     try {
         const res = await fetch(`/api/tournaments/${id}`, {
@@ -206,7 +201,6 @@ async function updateTournamentStatus(id, status) {
     } catch(e) { showToast("Errore di connessione", "error"); }
 }
 
->>>>>>> 568815a (Update v0.0.5)
 window.showSubscribers = function (id) {
   const tournament = adminTournamentsData.find((t) => t._id === id);
   if (!tournament) return;
@@ -240,14 +234,6 @@ window.showSubscribers = function (id) {
         if (team.teammates && team.teammates.length > 0) {
           membersHtml = team.teammates
             .map(
-<<<<<<< HEAD
-              (mate) => `
-                <div style="display: flex; align-items: center; gap: 10px; padding: 4px 0; color: #cbd5e1; font-size: 0.9rem;">
-                   <i class="fas fa-user-tag" style="width: 20px; text-align: center; opacity: 0.7;"></i>
-                   ${mate}
-                </div>
-             `,
-=======
               (mate) => {
                 const name = mate.username || mate;
                 const statusIcon = typeof mate === 'object' ? 
@@ -261,7 +247,6 @@ window.showSubscribers = function (id) {
                    ${name} ${statusIcon}
                 </div>
              `;}
->>>>>>> 568815a (Update v0.0.5)
             )
             .join("");
         }

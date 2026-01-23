@@ -139,6 +139,9 @@ app.use(express.static(path.join(__dirname, "public")));
 
 io.on("connection", (socket) => {
   console.log("New Connection", socket.id);
+  socket.on("join", (room) => {
+    socket.join(room);
+  });
 });
 
 app.set("io", io);

@@ -1,23 +1,4 @@
 const socket = io();
-<<<<<<< HEAD
-
-document.addEventListener("DOMContentLoaded", () => {
-  socket.on("tournaments:update", (data) => {
-    if (typeof loadAdminTournaments === "function") {
-      loadAdminTournaments();
-    }
-  });
-
-  socket.on("subscriptions:update", (data) => {
-    if (typeof loadAdminTournaments === "function") {
-      loadAdminTournaments();
-    }
-  });
-
-  socket.on("leaderboard:update", (data) => {});
-
-  socket.on("memory:update", (data) => {
-=======
 window.socket = socket;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -50,7 +31,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
->>>>>>> 568815a (Update v0.0.5)
     const { id, likes, shares } = data;
 
     const card = document.getElementById(`memory-${id}`);
@@ -77,8 +57,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (shareCount) shareCount.textContent = shares;
     }
   });
-<<<<<<< HEAD
-=======
 
   socket.on("user:update", (data) => {
     if (typeof loadUserProfile === "function") {
@@ -96,5 +74,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (typeof loadNotifications === "function") loadNotifications();
   });
->>>>>>> 568815a (Update v0.0.5)
 });

@@ -53,11 +53,7 @@ async function loadTournament() {
   if (!user) {
     actionBtn = `<button class="btn-discord" onclick="window.location.href='/auth/discord'" style="width: 100%; justify-content: center; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;"><i class="fab fa-discord"></i> Accedi per Iscriverti</button>`;
   } else if (isSubscribed) {
-<<<<<<< HEAD
-    actionBtn = `<button id="btn-unsubscribe" style="width: 100%; padding: 0.8rem; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 12px; background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); transition: 0.2s;">Disiscriviti</button>`;
-=======
     actionBtn = `<button id="btn-view-sub" class="btn-visit" style="width: 100%; justify-content: center; margin-bottom: 12px;">Visualizza Iscrizioni</button>`;
->>>>>>> 568815a (Update v0.0.5)
   } else if (t.status === "Aperto") {
     if (t.format === "solo") {
       actionBtn = `<button id="btn-subscribe" class="btn-visit" style="width: 100%; justify-content: center; margin-bottom: 12px;">Iscriviti Ora</button>`;
@@ -69,29 +65,6 @@ async function loadTournament() {
   }
 
   let subsHtml = "";
-<<<<<<< HEAD
-  if (t.subscribers && t.subscribers.length > 0) {
-    subsHtml = `
-        <div style="margin-top: 3rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 2rem;">
-            <h3 style="color: #fff; margin-bottom: 1.5rem; font-size: 1.4rem;">Partecipanti <span style="font-size: 1rem; color: #94a3b8; font-weight: normal;">(${t.subscribers.length})</span></h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px;">
-                ${t.subscribers
-                  .map((s) => {
-                    const avatar = s.avatar
-                      ? `https://cdn.discordapp.com/avatars/${s.discordId}/${s.avatar}.png`
-                      : "https://cdn.discordapp.com/embed/avatars/0.png";
-                    return `
-                        <div style="background: #0f172a; padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.05);">
-                            <img src="${avatar}" style="width: 32px; height: 32px; border-radius: 50%;">
-                            <div style="font-size: 0.9rem; color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;">${s.username}</div>
-                        </div>
-                    `;
-                  })
-                  .join("")}
-            </div>
-        </div>
-      `;
-=======
   const isTeamFormat = t.format === "duo" || t.format === "trio";
 
   if (isTeamFormat && t.teams && t.teams.length > 0) {
@@ -144,7 +117,6 @@ async function loadTournament() {
               }).join("")}
           </div>
       </div>`;
->>>>>>> 568815a (Update v0.0.5)
   }
 
   document.getElementById("tournament-details").innerHTML = `
@@ -262,30 +234,9 @@ async function loadTournament() {
     };
   }
 
-<<<<<<< HEAD
-  const unsubBtn = document.getElementById("btn-unsubscribe");
-  if (unsubBtn) {
-    unsubBtn.onclick = async () => {
-      if (!confirm("Sei sicuro di voler annullare l'iscrizione?")) return;
-      try {
-        const res = await fetch(`/api/tournaments/${t._id}/unsubscribe`, {
-          method: "POST",
-        });
-        if (res.ok) {
-          showToast("Iscrizione annullata", "success");
-          loadTournament();
-        } else {
-          showToast("Errore durante la disiscrizione", "error");
-        }
-      } catch (e) {
-        showToast("Errore di connessione", "error");
-      }
-    };
-=======
   const viewSubBtn = document.getElementById("btn-view-sub");
   if (viewSubBtn) {
     viewSubBtn.onclick = () => openSubscriptionModal(t._id);
->>>>>>> 568815a (Update v0.0.5)
   }
 }
 
@@ -425,8 +376,6 @@ function showJoinTeamModal(tid, format) {
     }
   };
 }
-<<<<<<< HEAD
-=======
 
 async function openSubscriptionModal(tid) {
   try {
@@ -581,4 +530,3 @@ function unsubscribeTournamentCustom(id) {
     }
   };
 }
->>>>>>> 568815a (Update v0.0.5)
