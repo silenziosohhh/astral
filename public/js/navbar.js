@@ -15,6 +15,14 @@ function handleResponsiveAuth() {
   const actionsContainer = document.querySelector(".navbar-actions");
   const searchTrigger = document.getElementById("nav-search-trigger");
 
+<<<<<<< HEAD
+=======
+  const notifWrapper = document.querySelector(".notification-wrapper");
+  const mobileMenu = document.getElementById("mobile-menu");
+  const userProfile = document.querySelector(".user-profile");
+  const userChevron = document.querySelector(".user-info .fa-chevron-down");
+
+>>>>>>> 568815a (Update v0.0.5)
   if (!navContent) return;
   const navWrapper = navContent.parentElement;
 
@@ -35,6 +43,22 @@ function handleResponsiveAuth() {
       navContent.prepend(searchTrigger);
       searchTrigger.style.margin = "1rem auto";
     }
+<<<<<<< HEAD
+=======
+
+    if (notifWrapper && mobileMenu && navWrapper) {
+      if (notifWrapper.parentElement !== navWrapper) {
+        navWrapper.insertBefore(notifWrapper, mobileMenu);
+        notifWrapper.style.marginRight = "15px";
+        notifWrapper.style.marginLeft = "auto";
+        notifWrapper.style.display = "flex";
+        notifWrapper.style.alignItems = "center";
+        const icon = notifWrapper.querySelector("i");
+        if (icon) icon.style.fontSize = "1.5rem";
+      }
+    }
+    if (userChevron) userChevron.style.display = "none";
+>>>>>>> 568815a (Update v0.0.5)
   } else {
     if (loginContainer && loginContainer.parentElement === navContent) {
       navWrapper.appendChild(loginContainer);
@@ -60,6 +84,22 @@ function handleResponsiveAuth() {
       navWrapper.appendChild(actionsContainer);
     if (loginContainer && loginContainer.parentElement === navWrapper)
       navWrapper.appendChild(loginContainer);
+<<<<<<< HEAD
+=======
+
+    if (notifWrapper && userProfile) {
+      if (notifWrapper.parentElement !== userProfile) {
+        userProfile.insertBefore(notifWrapper, userProfile.firstChild);
+        notifWrapper.style.marginRight = "";
+        notifWrapper.style.marginLeft = "";
+        notifWrapper.style.display = "";
+        notifWrapper.style.alignItems = "";
+        const icon = notifWrapper.querySelector("i");
+        if (icon) icon.style.fontSize = "";
+      }
+    }
+    if (userChevron) userChevron.style.display = "";
+>>>>>>> 568815a (Update v0.0.5)
   }
 }
 
@@ -83,6 +123,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (response.ok) {
       const user = await response.json();
       updateNavbarUI(user);
+<<<<<<< HEAD
+=======
+      loadNotifications(); // Carica le notifiche
+>>>>>>> 568815a (Update v0.0.5)
       handleResponsiveAuth();
     }
   } catch (error) {
@@ -103,6 +147,7 @@ function updateNavbarUI(user) {
   oldActionsContainer.style.display = "none";
   actionsContainer.style.display = "flex";
 
+<<<<<<< HEAD
   actionsContainer.innerHTML = `
         <div class="user-profile">
             <a href="/profile" class="user-info" style="text-decoration: none;">
@@ -115,6 +160,247 @@ function updateNavbarUI(user) {
             </a>
         </div>
     `;
+=======
+  const existingPanel = document.getElementById("notification-panel");
+  if (existingPanel) existingPanel.remove();
+
+  const existingWrapper = document.querySelector(".notification-wrapper");
+  if (existingWrapper) existingWrapper.remove();
+
+  actionsContainer.innerHTML = `
+        <div class="user-profile">
+            <div class="notification-wrapper" style="position: relative;">
+                <button id="nav-notification-btn" class="btn-icon" style="background: transparent; color: #fff; margin-right: 5px; width: 40px; height: 40px; position: relative;">
+                    <i class="fas fa-bell"></i>
+                    <span id="nav-notification-badge" style="display: none; position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></span>
+                </button>
+            </div>
+
+            <div class="user-menu-wrapper" style="position: relative;">
+                <div class="user-info" id="user-menu-trigger" style="cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                    <img src="${avatarUrl}" alt="${user.username}">
+                    <span class="navbar-username">${user.username}</span>
+                    <i class="fas fa-chevron-down" style="font-size: 0.8rem; color: #94a3b8; margin-left: 5px; transition: transform 0.2s;"></i>
+                </div>
+                
+                <div id="user-dropdown" style="display: none; position: absolute; top: 120%; right: 0; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px; min-width: 180px; z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.5); flex-direction: column; gap: 5px;">
+                    <a href="/profile" class="dropdown-item" style="display: flex; align-items: center; padding: 10px 12px; color: #e2e8f0; text-decoration: none; border-radius: 8px; transition: background 0.2s; font-size: 0.95rem;">
+                        <i class="fas fa-user" style="margin-right: 10px; color: var(--primary-2); width: 20px; text-align: center;"></i> Profilo
+                    </a>
+                    <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 4px 0;"></div>
+                    <a href="/logout" class="dropdown-item" style="display: flex; align-items: center; padding: 10px 12px; color: #f87171; text-decoration: none; border-radius: 8px; transition: background 0.2s; font-size: 0.95rem;">
+                        <i class="fas fa-sign-out-alt" style="margin-right: 10px; width: 20px; text-align: center;"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+
+  if (window.socket) {
+    window.socket.emit("join", user.discordId);
+  }
+
+  const panel = document.createElement("div");
+  panel.id = "notification-panel";
+  panel.className = "notification-panel";
+  panel.innerHTML = `
+      <div class="notif-header">
+          <h3>Notifiche</h3>
+          <button id="close-notif-mobile" class="btn-icon" style="background: transparent; color: #fff;"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="notif-content">
+          <div class="notif-loader" style="padding: 20px; text-align: center; color: #94a3b8;">Caricamento...</div>
+      </div>
+  `;
+  document.body.appendChild(panel);
+
+  const notifBtn = document.getElementById("nav-notification-btn");
+  const closeMobile = panel.querySelector("#close-notif-mobile");
+
+  const positionPanel = () => {
+    if (window.innerWidth > 768) {
+      const rect = notifBtn.getBoundingClientRect();
+      panel.style.position = "fixed";
+      panel.style.top = `${rect.bottom + 10}px`;
+      panel.style.left = `${rect.right - 320}px`;
+      panel.style.width = "320px";
+      panel.style.height = "auto";
+      panel.style.borderRadius = "16px";
+    } else {
+      panel.style.position = "fixed";
+      panel.style.top = "0";
+      panel.style.left = "0";
+      panel.style.width = "100%";
+      panel.style.height = "100%";
+      panel.style.borderRadius = "0";
+    }
+  };
+
+  if (notifBtn && panel) {
+    notifBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (panel.classList.contains("active")) {
+        panel.classList.remove("active");
+        document.body.style.overflow = "";
+      } else {
+        positionPanel();
+        panel.classList.add("active");
+        if (window.innerWidth <= 768) {
+          document.body.style.overflow = "hidden";
+        }
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (panel.classList.contains("active")) positionPanel();
+    });
+
+    document.addEventListener("click", (e) => {
+      if (panel.classList.contains("active") && !panel.contains(e.target) && !notifBtn.contains(e.target)) {
+        panel.classList.remove("active");
+        document.body.style.overflow = "";
+      }
+    });
+    if (closeMobile) {
+      closeMobile.addEventListener("click", (e) => {
+        e.stopPropagation();
+        panel.classList.remove("active");
+        document.body.style.overflow = "";
+      });
+    }
+  }
+
+  const userTrigger = document.getElementById("user-menu-trigger");
+  const userDropdown = document.getElementById("user-dropdown");
+
+  if (userTrigger && userDropdown) {
+    userTrigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (window.innerWidth <= 1250) {
+        window.location.href = "/profile";
+        return;
+      }
+      const isVisible = userDropdown.style.display === "flex";
+      userDropdown.style.display = isVisible ? "none" : "flex";
+      const chevron = userTrigger.querySelector(".fa-chevron-down");
+      if(chevron) chevron.style.transform = isVisible ? "rotate(0deg)" : "rotate(180deg)";
+    });
+
+    document.addEventListener("click", (e) => {
+      if (userDropdown.style.display === "flex" && !userDropdown.contains(e.target) && !userTrigger.contains(e.target)) {
+        userDropdown.style.display = "none";
+        const chevron = userTrigger.querySelector(".fa-chevron-down");
+        if(chevron) chevron.style.transform = "rotate(0deg)";
+      }
+    });
+
+    const items = userDropdown.querySelectorAll(".dropdown-item");
+    items.forEach(item => {
+        item.addEventListener("mouseenter", () => item.style.background = "rgba(255,255,255,0.05)");
+        item.addEventListener("mouseleave", () => item.style.background = "transparent");
+    });
+  }
+}
+
+async function loadNotifications() {
+  try {
+    const res = await fetch("/api/notifications");
+    if (!res.ok) return;
+    const notifs = await res.json();
+    
+    const badge = document.getElementById("nav-notification-badge");
+    const content = document.querySelector(".notif-content");
+    
+    const unreadCount = notifs.filter(n => !n.read).length;
+    
+    if (badge) {
+      if (unreadCount > 0) {
+        badge.style.display = "block";
+        // Animazione pulse se ci sono nuove notifiche
+        badge.style.animation = "pulse 2s infinite";
+      } else {
+        badge.style.display = "none";
+        badge.style.animation = "none";
+      }
+    }
+
+    if (content) {
+      if (notifs.length === 0) {
+        content.innerHTML = `
+          <div style="padding: 30px; text-align: center; color: #94a3b8; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+              <i class="far fa-bell-slash" style="font-size: 2rem; opacity: 0.5;"></i>
+              <span>Nessuna nuova notifica</span>
+          </div>`;
+      } else {
+        content.innerHTML = "";
+        notifs.forEach(n => {
+          const isInvite = n.type === 'tournament_invite';
+          const item = document.createElement("div");
+          item.className = `notif-item ${n.read ? 'read' : 'unread'}`;
+          item.style.cursor = "pointer";
+          item.innerHTML = `
+            <div class="notif-icon"><i class="fas ${isInvite ? 'fa-envelope-open-text' : 'fa-info-circle'}"></i></div>
+            <div class="notif-body">
+              <p>${n.message}</p>
+              <span class="notif-time">${new Date(n.createdAt).toLocaleDateString()}</span>
+              ${isInvite && !n.read ? `
+                <div class="notif-actions" style="display: flex; gap: 10px; margin-top: 10px;">
+                  <button class="btn-accept" onclick="respondToInvite('${n._id}', 'accept')" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); padding: 6px 12px; border-radius: 6px; cursor: pointer; flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;"><i class="fas fa-check"></i> Accetta</button>
+                  <button class="btn-decline" onclick="respondToInvite('${n._id}', 'decline')" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 12px; border-radius: 6px; cursor: pointer; flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;"><i class="fas fa-times"></i> Rifiuta</button>
+                </div>
+              ` : ''}
+            </div>
+          `;
+          
+          item.onclick = async (e) => {
+            if (e.target.closest("button")) return; // Ignora click sui pulsanti accetta/rifiuta
+
+            if (!n.read) {
+              try {
+                await fetch(`/api/notifications/${n._id}/read`, { method: "POST" });
+              } catch(err) {}
+            }
+
+            if (n.data && n.data.link) {
+              window.location.href = n.data.link;
+            } else if (n.data && n.data.tournamentId) {
+              window.location.href = `/torneo/${n.data.tournamentId}`;
+            } else {
+              loadNotifications(); // Ricarica solo per aggiornare lo stato visivo se non c'è link
+            }
+          };
+
+          content.appendChild(item);
+        });
+      }
+    }
+  } catch (e) {
+    console.error("Errore notifiche", e);
+  }
+}
+
+window.respondToInvite = async (id, action) => {
+  try {
+    const res = await fetch(`/api/notifications/${id}/respond`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action })
+    });
+    if (res.ok) {
+      showToast(action === 'accept' ? "Invito accettato!" : "Invito rifiutato", action === 'accept' ? "success" : "info");
+      loadNotifications();
+    } else {
+      showToast("Errore nella risposta", "error");
+    }
+  } catch (e) {
+    showToast("Errore di connessione", "error");
+  }
+};
+
+async function markAsRead(id) {
+  await fetch(`/api/notifications/${id}/read`, { method: "POST" });
+  loadNotifications();
+>>>>>>> 568815a (Update v0.0.5)
 }
 
 window.showToast = function (message, type = "info") {

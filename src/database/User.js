@@ -20,6 +20,21 @@ const UserSchema = new mongoose.Schema({
     twitch: String,
   },
   createdAt: { type: Date, default: Date.now },
+<<<<<<< HEAD
+=======
+  notifications: [{
+    type: { type: String },
+    message: String,
+    data: Object,
+    read: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now }
+  }],
+  notificationSettings: {
+    tournamentStart: { type: Boolean, default: true },
+    tournamentUpdates: { type: Boolean, default: true },
+    tournamentEnd: { type: Boolean, default: true }
+  },
+>>>>>>> 568815a (Update v0.0.5)
   tournaments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tournament" }],
 });
 

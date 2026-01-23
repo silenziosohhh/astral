@@ -99,6 +99,23 @@ async function loadAdminTournaments() {
       tbody.innerHTML += row;
     });
 
+<<<<<<< HEAD
+=======
+    tbody.querySelectorAll(".btn-icon.edit").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const row = btn.closest("tr");
+        const id = row.querySelector(".delete").getAttribute("data-id");
+        const currentTitle = row.cells[0].innerText.trim();
+        
+        const newStatus = prompt(`Cambia stato per ${currentTitle} (Aperto, In Corso, Concluso):`);
+        if (newStatus && ["Aperto", "In Corso", "Concluso"].includes(newStatus)) {
+            updateTournamentStatus(id, newStatus);
+        }
+      });
+    });
+
+>>>>>>> 568815a (Update v0.0.5)
     tbody.querySelectorAll(".btn-icon.delete").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -171,6 +188,25 @@ async function loadAdminTournaments() {
   }
 }
 
+<<<<<<< HEAD
+=======
+async function updateTournamentStatus(id, status) {
+    try {
+        const res = await fetch(`/api/tournaments/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        if (res.ok) {
+            showToast("Stato aggiornato!", "success");
+            loadAdminTournaments();
+        } else {
+            showToast("Errore aggiornamento", "error");
+        }
+    } catch(e) { showToast("Errore di connessione", "error"); }
+}
+
+>>>>>>> 568815a (Update v0.0.5)
 window.showSubscribers = function (id) {
   const tournament = adminTournamentsData.find((t) => t._id === id);
   if (!tournament) return;
@@ -204,12 +240,28 @@ window.showSubscribers = function (id) {
         if (team.teammates && team.teammates.length > 0) {
           membersHtml = team.teammates
             .map(
+<<<<<<< HEAD
               (mate) => `
                 <div style="display: flex; align-items: center; gap: 10px; padding: 4px 0; color: #cbd5e1; font-size: 0.9rem;">
                    <i class="fas fa-user-tag" style="width: 20px; text-align: center; opacity: 0.7;"></i>
                    ${mate}
                 </div>
              `,
+=======
+              (mate) => {
+                const name = mate.username || mate;
+                const statusIcon = typeof mate === 'object' ? 
+                    (mate.status === 'accepted' ? '<i class="fas fa-check" style="color: #4ade80; font-size: 0.7rem; margin-left: 5px;" title="Accettato"></i>' : 
+                     mate.status === 'rejected' ? '<i class="fas fa-times" style="color: #f87171; font-size: 0.7rem; margin-left: 5px;" title="Rifiutato"></i>' : 
+                     '<i class="fas fa-clock" style="color: #fbbf24; font-size: 0.7rem; margin-left: 5px;" title="In attesa"></i>') 
+                    : '';
+                return `
+                <div style="display: flex; align-items: center; gap: 10px; padding: 4px 0; color: #cbd5e1; font-size: 0.9rem;">
+                   <i class="fas fa-user-tag" style="width: 20px; text-align: center; opacity: 0.7;"></i>
+                   ${name} ${statusIcon}
+                </div>
+             `;}
+>>>>>>> 568815a (Update v0.0.5)
             )
             .join("");
         }

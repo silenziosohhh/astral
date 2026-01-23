@@ -11,10 +11,33 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadUserProfile(profileUsername);
   loadMemories(profileUsername);
 
+<<<<<<< HEAD
+=======
+  const shareProfileBtn = document.getElementById("btn-share-profile");
+  if (shareProfileBtn) {
+    shareProfileBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        if (typeof showToast === "function") showToast("Link profilo copiato!", "success");
+      });
+    });
+  }
+
+  const logoutProfileBtn = document.getElementById("btn-logout-profile");
+  if (logoutProfileBtn) {
+    logoutProfileBtn.addEventListener("click", () => {
+      window.location.href = "/logout";
+    });
+  }
+
+>>>>>>> 568815a (Update v0.0.5)
   if (profileUsername) {
     document.body.classList.add("viewing-other-profile");
     const addMemoryBtn = document.getElementById("add-memory-btn");
     if (addMemoryBtn) addMemoryBtn.style.display = "none";
+<<<<<<< HEAD
+=======
+    if (logoutProfileBtn) logoutProfileBtn.style.display = "none";
+>>>>>>> 568815a (Update v0.0.5)
     return;
   }
 
@@ -36,6 +59,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     editSocialsBtn.addEventListener("click", openSocialsModal);
   }
 
+<<<<<<< HEAD
+=======
+  const saveNickBtn = document.getElementById("save-mc-nick");
+  if (saveNickBtn) {
+    saveNickBtn.addEventListener("click", async () => {
+      const nickInput = document.getElementById("minecraft-nick");
+      const val = nickInput.value.trim();
+      if (!val) return showToast("Inserisci un nickname valido", "error");
+
+      try {
+        const res = await fetch("/api/me", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ minecraftUsername: val }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast("Nickname salvato!", "success");
+          loadUserProfile();
+        } else {
+          showToast(data.message || "Errore", "error");
+        }
+      } catch (e) {
+        showToast("Errore di connessione", "error");
+      }
+    });
+  }
+
+>>>>>>> 568815a (Update v0.0.5)
   const searchInput = document.getElementById("search-profile-memories");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -46,6 +98,45 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     });
   }
+<<<<<<< HEAD
+=======
+
+  const nickInput = document.getElementById("minecraft-nick");
+  const clearNickBtn = document.getElementById("clear-mc-nick");
+  if (nickInput && clearNickBtn) {
+    nickInput.addEventListener("input", () => {
+      const original = nickInput.dataset.originalValue || "";
+      const val = nickInput.value;
+      clearNickBtn.style.display = (val.length > 0 && val !== original) ? "block" : "none";
+    });
+    clearNickBtn.addEventListener("click", () => {
+      nickInput.value = "";
+      clearNickBtn.style.display = "none";
+      nickInput.focus();
+    });
+  }
+
+  const saveSettingsBtn = document.getElementById("save-notif-settings-btn");
+  if (saveSettingsBtn) {
+    saveSettingsBtn.addEventListener("click", async () => {
+      const data = {
+        tournamentStart: document.getElementById("setting-tournament-start").checked,
+        tournamentUpdates: document.getElementById("setting-tournament-update").checked,
+        tournamentEnd: document.getElementById("setting-tournament-end").checked
+      };
+
+      try {
+        const res = await fetch("/api/me/notification-settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        if (res.ok) showToast("Impostazioni salvate!", "success");
+        else showToast("Errore nel salvataggio", "error");
+      } catch (e) { showToast("Errore di connessione", "error"); }
+    });
+  }
+>>>>>>> 568815a (Update v0.0.5)
 });
 
 async function loadUserProfile(username) {
@@ -71,6 +162,10 @@ async function loadUserProfile(username) {
 
     const nickInput = document.getElementById("minecraft-nick");
     const saveNickBtn = document.getElementById("save-mc-nick");
+<<<<<<< HEAD
+=======
+    const clearNickBtn = document.getElementById("clear-mc-nick");
+>>>>>>> 568815a (Update v0.0.5)
 
     if (username) {
       if (nickInput) {
@@ -83,9 +178,20 @@ async function loadUserProfile(username) {
         nickInput.parentNode.replaceChild(displaySpan, nickInput);
       }
       if (saveNickBtn) saveNickBtn.remove();
+<<<<<<< HEAD
     } else {
       if (nickInput && user.minecraftUsername)
         nickInput.value = user.minecraftUsername;
+=======
+      if (clearNickBtn) clearNickBtn.remove();
+    } else {
+      if (nickInput) {
+        const savedNick = user.minecraftUsername || "";
+        nickInput.value = savedNick;
+        nickInput.dataset.originalValue = savedNick;
+        if (clearNickBtn) clearNickBtn.style.display = "none";
+      }
+>>>>>>> 568815a (Update v0.0.5)
     }
 
     let avatarUrl = "https://cdn.discordapp.com/embed/avatars/0.png";
@@ -99,6 +205,7 @@ async function loadUserProfile(username) {
     const levelEl = document.getElementById("stat-level");
 
     const bwLevelEl = document.getElementById("bw-level-display");
+<<<<<<< HEAD
     const bwWinsEl = document.getElementById("bw-wins");
     const bwKillsEl = document.getElementById("bw-kills");
     const bwDeathsEl = document.getElementById("bw-deaths");
@@ -111,6 +218,28 @@ async function loadUserProfile(username) {
     const bwWlrEl = document.getElementById("bw-wlr");
     const bwSkinRender = document.getElementById("bw-skin-render");
     const bwCardBg = document.getElementById("bw-card-bg");
+=======
+    const bwLevelBadgeEl = document.getElementById("bw-level-badge-value");
+    const bwWinsEl = document.getElementById("bw-wins");
+    const bwLossesEl = document.getElementById("bw-losses");
+    const bwKillsEl = document.getElementById("bw-kills");
+    const bwDeathsEl = document.getElementById("bw-deaths");
+    const bwFinalsEl = document.getElementById("bw-final-kills");
+    const bwBedsEl = document.getElementById("bw-beds");
+    const bwKdrEl = document.getElementById("bw-kdr");
+    const bwBarWinsEl = document.getElementById("bw-bar-wins");
+    const bwBarLossesEl = document.getElementById("bw-bar-losses");
+    const bwWinPctEl = document.getElementById("bw-win-pct");
+    const bwLossPctEl = document.getElementById("bw-loss-pct");
+    const bwWinBar = document.getElementById("bw-win-bar");
+    const bwLossBar = document.getElementById("bw-loss-bar");
+    const bwWinstreakEl = document.getElementById("bw-winstreak");
+    const bwTopWinstreakEl = document.getElementById("bw-top-winstreak");
+    const bwCoinsEl = document.getElementById("bw-coins");
+    const bwSkinRender = document.getElementById("bw-skin-render");
+    const bwCardBg = document.getElementById("bw-card-bg");
+    const coralStatsLink = document.getElementById("coral-stats-link");
+>>>>>>> 568815a (Update v0.0.5)
 
     if (levelEl)
       levelEl.textContent = (user.points || 0).toLocaleString("it-IT");
@@ -120,36 +249,75 @@ async function loadUserProfile(username) {
 
     [
       bwLevelEl,
+<<<<<<< HEAD
       bwWinsEl,
+=======
+      bwLevelBadgeEl,
+      bwWinsEl,
+      bwLossesEl,
+>>>>>>> 568815a (Update v0.0.5)
       bwKillsEl,
       bwDeathsEl,
       bwFinalsEl,
       bwBedsEl,
       bwKdrEl,
+<<<<<<< HEAD
       bwFkdrEl,
       bwFinalDeathsEl,
       bwGamesEl,
       bwWlrEl,
+=======
+      bwBarWinsEl,
+      bwBarLossesEl,
+      bwWinPctEl,
+      bwLossPctEl,
+      bwWinstreakEl,
+      bwTopWinstreakEl,
+      bwCoinsEl
+>>>>>>> 568815a (Update v0.0.5)
     ].forEach((el) => {
       if (el) el.textContent = "0";
     });
 
     if (user.minecraftUsername) {
+<<<<<<< HEAD
+=======
+      if (coralStatsLink) {
+        coralStatsLink.href = `https://coralmc.it/it/stats/player/${user.minecraftUsername}`;
+      }
+
+>>>>>>> 568815a (Update v0.0.5)
       if (killsEl) killsEl.textContent = "...";
       if (deathsEl) deathsEl.textContent = "...";
       if (bwWinsEl)
         [
           bwLevelEl,
+<<<<<<< HEAD
           bwWinsEl,
+=======
+          bwLevelBadgeEl,
+          bwWinsEl,
+          bwLossesEl,
+>>>>>>> 568815a (Update v0.0.5)
           bwKillsEl,
           bwDeathsEl,
           bwFinalsEl,
           bwBedsEl,
           bwKdrEl,
+<<<<<<< HEAD
           bwFkdrEl,
           bwFinalDeathsEl,
           bwGamesEl,
           bwWlrEl,
+=======
+          bwBarWinsEl,
+          bwBarLossesEl,
+          bwWinPctEl,
+          bwLossPctEl,
+          bwWinstreakEl,
+          bwTopWinstreakEl,
+          bwCoinsEl
+>>>>>>> 568815a (Update v0.0.5)
         ].forEach((el) => {
           if (el) el.textContent = "...";
         });
@@ -184,10 +352,24 @@ async function loadUserProfile(username) {
             bwLevelEl.textContent = (coralData.level || 0).toLocaleString(
               "it-IT",
             );
+<<<<<<< HEAD
+=======
+          if (bwLevelBadgeEl)
+            bwLevelBadgeEl.textContent = (coralData.level || 0).toLocaleString(
+              "it-IT",
+            );
+>>>>>>> 568815a (Update v0.0.5)
           if (bwWinsEl)
             bwWinsEl.textContent = (coralData.wins || 0).toLocaleString(
               "it-IT",
             );
+<<<<<<< HEAD
+=======
+          if (bwLossesEl)
+            bwLossesEl.textContent = (coralData.losses || 0).toLocaleString(
+              "it-IT",
+            );
+>>>>>>> 568815a (Update v0.0.5)
           if (bwKillsEl)
             bwKillsEl.textContent = (coralData.kills || 0).toLocaleString(
               "it-IT",
@@ -200,18 +382,24 @@ async function loadUserProfile(username) {
             bwFinalsEl.textContent = (coralData.finals || 0).toLocaleString(
               "it-IT",
             );
+<<<<<<< HEAD
           if (bwFinalDeathsEl)
             bwFinalDeathsEl.textContent = (
               coralData.finalDeaths || 0
             ).toLocaleString("it-IT");
+=======
+>>>>>>> 568815a (Update v0.0.5)
           if (bwBedsEl)
             bwBedsEl.textContent = (coralData.beds || 0).toLocaleString(
               "it-IT",
             );
+<<<<<<< HEAD
           if (bwGamesEl)
             bwGamesEl.textContent = (coralData.games || 0).toLocaleString(
               "it-IT",
             );
+=======
+>>>>>>> 568815a (Update v0.0.5)
 
           if (bwKdrEl) {
             const kdr =
@@ -220,6 +408,7 @@ async function loadUserProfile(username) {
                 : coralData.kills;
             bwKdrEl.textContent = kdr;
           }
+<<<<<<< HEAD
           if (bwFkdrEl) {
             const fd = coralData.finalDeaths || 0;
             const fkdr =
@@ -235,6 +424,41 @@ async function loadUserProfile(username) {
             bwWlrEl.textContent = wlr;
           }
 
+=======
+          
+          if (bwBarWinsEl && bwBarLossesEl && bwWinBar && bwLossBar) {
+            const wins = coralData.wins || 0;
+            const losses = coralData.losses || 0;
+            const total = wins + losses;
+            
+            let winPct = 50;
+            let lossPct = 50;
+            
+            if (total > 0) {
+                winPct = ((wins / total) * 100).toFixed(1);
+                lossPct = ((losses / total) * 100).toFixed(1);
+            }
+            
+            bwBarWinsEl.textContent = wins.toLocaleString("it-IT");
+            bwBarLossesEl.textContent = losses.toLocaleString("it-IT");
+            if (bwWinPctEl) bwWinPctEl.textContent = `${winPct}%`;
+            if (bwLossPctEl) bwLossPctEl.textContent = `${lossPct}%`;
+            
+            bwWinBar.style.width = `${winPct}%`;
+            
+            bwLossBar.style.width = `${lossPct}%`;
+          }
+
+          if (bwWinstreakEl)
+            bwWinstreakEl.textContent = (coralData.winstreak || 0).toLocaleString(
+              "it-IT",
+            );
+          if (bwTopWinstreakEl)
+            bwTopWinstreakEl.textContent = (coralData.topWinstreak || 0).toLocaleString("it-IT");
+          if (bwCoinsEl)
+            bwCoinsEl.textContent = (coralData.coins || 0).toLocaleString("it-IT");
+
+>>>>>>> 568815a (Update v0.0.5)
           if (bwSkinRender) {
             const skinUrl = coralData.uuid
               ? `https://visage.surgeplay.com/full/512/${coralData.uuid}`
@@ -250,15 +474,28 @@ async function loadUserProfile(username) {
             [
               bwLevelEl,
               bwWinsEl,
+<<<<<<< HEAD
+=======
+              bwLossesEl,
+>>>>>>> 568815a (Update v0.0.5)
               bwKillsEl,
               bwDeathsEl,
               bwFinalsEl,
               bwBedsEl,
               bwKdrEl,
+<<<<<<< HEAD
               bwFkdrEl,
               bwFinalDeathsEl,
               bwGamesEl,
               bwWlrEl,
+=======
+              bwBarWinsEl,
+              bwBarLossesEl,
+              bwWinPctEl,
+              bwLossPctEl,
+              bwTopWinstreakEl,
+              bwCoinsEl
+>>>>>>> 568815a (Update v0.0.5)
             ].forEach((el) => {
               if (el) el.textContent = "-";
             });
@@ -275,6 +512,10 @@ async function loadUserProfile(username) {
 
     const editSkillsBtn = document.getElementById("edit-skills-btn");
     const editSocialsBtn = document.getElementById("edit-socials-btn");
+<<<<<<< HEAD
+=======
+    const settingsCard = document.getElementById("settings-card");
+>>>>>>> 568815a (Update v0.0.5)
 
     if (username && editSkillsBtn) {
       editSkillsBtn.style.display = "none";
@@ -282,6 +523,22 @@ async function loadUserProfile(username) {
     if (username && editSocialsBtn) {
       editSocialsBtn.style.display = "none";
     }
+<<<<<<< HEAD
+=======
+    if (username && settingsCard) {
+      settingsCard.style.display = "none";
+    } else if (!username) {
+      // Load settings for own profile
+      const settings = user.notificationSettings || { tournamentStart: true, tournamentUpdates: true, tournamentEnd: true };
+      const startCheck = document.getElementById("setting-tournament-start");
+      const updateCheck = document.getElementById("setting-tournament-update");
+      const endCheck = document.getElementById("setting-tournament-end");
+
+      if (startCheck) startCheck.checked = settings.tournamentStart;
+      if (updateCheck) updateCheck.checked = settings.tournamentUpdates;
+      if (endCheck) endCheck.checked = settings.tournamentEnd;
+    }
+>>>>>>> 568815a (Update v0.0.5)
 
     if (username)
       document.getElementById("memories-title").textContent =
@@ -836,6 +1093,10 @@ async function openSocialsModal() {
       <div style="margin-bottom: 1.5rem;">
         ${fieldsHtml}
       </div>
+<<<<<<< HEAD
+=======
+      <button id="save-socials-btn" class="btn-visit" style="width:100%; justify-content: center;">Salva Modifiche</button>
+>>>>>>> 568815a (Update v0.0.5)
     </div>
   `;
 
@@ -884,6 +1145,7 @@ async function openSocialsModal() {
         body: JSON.stringify(data),
       });
       if (res.ok) {
+<<<<<<< HEAD
         loadUserProfile();
       }
     } catch (e) {}
@@ -894,6 +1156,20 @@ async function openSocialsModal() {
   overlay.querySelectorAll("input[type='text']").forEach((input) => {
     input.addEventListener("input", debouncedSave);
   });
+=======
+        showToast("Social aggiornati!", "success");
+        overlay.remove();
+        loadUserProfile();
+      } else {
+        showToast("Errore nel salvataggio", "error");
+      }
+    } catch (e) {
+      showToast("Errore di connessione", "error");
+    }
+  };
+
+  document.getElementById("save-socials-btn").addEventListener("click", saveSocials);
+>>>>>>> 568815a (Update v0.0.5)
 }
 
 function debounce(func, wait) {

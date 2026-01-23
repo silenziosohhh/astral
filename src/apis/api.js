@@ -1,4 +1,8 @@
 const express = require("express");
+<<<<<<< HEAD
+=======
+const mongoose = require("mongoose");
+>>>>>>> 568815a (Update v0.0.5)
 const router = express.Router();
 const Tournament = require("../database/Tournament");
 const Memory = require("../database/Memory");
@@ -8,8 +12,14 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 
 const protect = async (req, res, next) => {
   const apiKey = process.env.API_KEY || null;
+<<<<<<< HEAD
 
   if (apiKey && apiKey !== null) return next();
+=======
+  const reqApiKey = req.headers['x-api-key'];
+
+  if (apiKey && reqApiKey === apiKey) return next();
+>>>>>>> 568815a (Update v0.0.5)
 
   const token = req.cookies.token;
   if (token) {
@@ -40,6 +50,24 @@ const ensureAuth = (req, res, next) => {
   });
 };
 
+<<<<<<< HEAD
+=======
+const sendNotification = async (io, userId, message, type = 'system', data = null) => {
+  try {
+    const user = await User.findById(userId);
+    if (user) {
+      const notif = { type, message, data, read: false, createdAt: new Date() };
+      user.notifications = user.notifications || [];
+      user.notifications.push(notif);
+      await user.save();
+      if (io) {
+        io.to(user.discordId).emit("notification", notif);
+      }
+    }
+  } catch (e) { console.error("Notification Error:", e); }
+};
+
+>>>>>>> 568815a (Update v0.0.5)
 router.get("/me", ensureAuth, async (req, res) => {
   try {
     const user = await User.findOne({ discordId: req.user.discordId });
@@ -53,6 +81,15 @@ router.get("/me", ensureAuth, async (req, res) => {
       minecraftUsername: user.minecraftUsername,
       skills: user.skills || [],
       socials: user.socials || {},
+<<<<<<< HEAD
+=======
+      notifications: user.notifications || [],
+      notificationSettings: user.notificationSettings || {
+        tournamentStart: true,
+        tournamentUpdates: true,
+        tournamentEnd: true
+      }
+>>>>>>> 568815a (Update v0.0.5)
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -72,6 +109,10 @@ router.put("/me", ensureAuth, async (req, res) => {
 
     user.minecraftUsername = minecraftUsername.trim();
     await user.save();
+<<<<<<< HEAD
+=======
+    req.app.get("io").emit("user:update", { userId: user._id, username: user.username });
+>>>>>>> 568815a (Update v0.0.5)
     res.json({
       message: "Nickname aggiornato con successo",
       minecraftUsername: user.minecraftUsername,
@@ -92,6 +133,10 @@ router.put("/me/skills", ensureAuth, async (req, res) => {
 
     user.skills = skills;
     await user.save();
+<<<<<<< HEAD
+=======
+    req.app.get("io").emit("user:update", { userId: user._id });
+>>>>>>> 568815a (Update v0.0.5)
     res.json({ message: "Skills aggiornate", skills: user.skills });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -106,12 +151,33 @@ router.put("/me/socials", ensureAuth, async (req, res) => {
 
     user.socials = { tiktok, youtube, instagram, discord, twitch };
     await user.save();
+<<<<<<< HEAD
+=======
+    req.app.get("io").emit("user:update", { userId: user._id });
+>>>>>>> 568815a (Update v0.0.5)
     res.json({ message: "Social aggiornati", socials: user.socials });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+<<<<<<< HEAD
+=======
+router.put("/me/notification-settings", ensureAuth, async (req, res) => {
+  try {
+    const { tournamentStart, tournamentUpdates, tournamentEnd } = req.body;
+    const user = await User.findOne({ discordId: req.user.discordId });
+    if (!user) return res.status(404).json({ message: "Utente non trovato" });
+
+    user.notificationSettings = { tournamentStart, tournamentUpdates, tournamentEnd };
+    await user.save();
+    res.json({ message: "Impostazioni aggiornate", notificationSettings: user.notificationSettings });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+>>>>>>> 568815a (Update v0.0.5)
 router.get("/users/search", async (req, res) => {
   try {
     const query = req.query.q;
@@ -177,11 +243,19 @@ router.get("/tournaments", async (req, res) => {
       .sort({ date: 1 })
       .populate({
         path: "subscribers",
+<<<<<<< HEAD
         select: "username avatar discordId",
       })
       .populate({
         path: "teams.captain",
         select: "username avatar discordId",
+=======
+        select: "username avatar discordId minecraftUsername",
+      })
+      .populate({
+        path: "teams.captain",
+        select: "username avatar discordId minecraftUsername",
+>>>>>>> 568815a (Update v0.0.5)
       });
     res.json(tournaments);
   } catch (err) {
@@ -194,6 +268,20 @@ router.post("/tournaments", protect, async (req, res) => {
     const tournament = new Tournament(req.body);
     await tournament.save();
 
+<<<<<<< HEAD
+=======
+    // Crea la notifica per tutti gli utenti nel database
+    const notif = {
+      _id: new mongoose.Types.ObjectId(),
+      type: 'system',
+      message: `🏆 Nuovo torneo pubblicato: ${tournament.title}!`,
+      read: false,
+      createdAt: new Date(),
+      data: { link: `/torneo/${tournament._id}` }
+    };
+    await User.collection.updateMany({}, { $push: { notifications: notif } });
+
+>>>>>>> 568815a (Update v0.0.5)
     req.app
       .get("io")
       .emit("tournaments:update", { type: "create", tournament });
@@ -203,6 +291,91 @@ router.post("/tournaments", protect, async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
+=======
+router.put("/tournaments/:id", protect, async (req, res) => {
+  try {
+    const { status, ...updateData } = req.body;
+    const tournament = await Tournament.findById(req.params.id);
+    if (!tournament) return res.status(404).json({ message: "Torneo non trovato" });
+
+    const oldStatus = tournament.status;
+    
+    // Update fields
+    if (Object.keys(updateData).length > 0) {
+        Object.assign(tournament, updateData);
+    }
+
+    if (status && status !== oldStatus) {
+      tournament.status = status;
+
+      // LOGICA INIZIO TORNEO
+      if (status === "In Corso") {
+        // 1. Escludi team incompleti
+        if (tournament.format !== 'solo' && tournament.teams && tournament.teams.length > 0) {
+          const validTeams = [];
+          const removedTeams = [];
+
+          for (const team of tournament.teams) {
+            const allAccepted = team.teammates.every(m => m.status === 'accepted');
+            if (allAccepted) {
+              validTeams.push(team);
+            } else {
+              removedTeams.push(team);
+            }
+          }
+
+          tournament.teams = validTeams;
+
+          // Notifica ed elimina team rimossi
+          for (const team of removedTeams) {
+            // Rimuovi capitano
+            tournament.subscribers = tournament.subscribers.filter(s => s.toString() !== team.captain.toString());
+            await sendNotification(req.app.get("io"), team.captain, `Il tuo team è stato escluso dal torneo ${tournament.title} perché incompleto.`, 'system', { link: `/torneo/${tournament._id}` });
+
+            // Rimuovi e notifica compagni
+            for (const mate of team.teammates) {
+              if (mate.userId) {
+                tournament.subscribers = tournament.subscribers.filter(s => s.toString() !== mate.userId.toString());
+                await sendNotification(req.app.get("io"), mate.userId, `Il team per il torneo ${tournament.title} è stato escluso perché incompleto.`, 'system', { link: `/torneo/${tournament._id}` });
+              }
+            }
+          }
+        }
+
+        // 2. Notifica Inizio a tutti gli iscritti rimasti
+        const subscribers = await User.find({ _id: { $in: tournament.subscribers } });
+        for (const sub of subscribers) {
+          const settings = sub.notificationSettings || { tournamentStart: true };
+          if (settings.tournamentStart) {
+            await sendNotification(req.app.get("io"), sub._id, `Il torneo ${tournament.title} è iniziato!`, 'info', { link: `/torneo/${tournament._id}` });
+          }
+        }
+      }
+      // LOGICA FINE TORNEO
+      else if (status === "Concluso") {
+        const subscribers = await User.find({ _id: { $in: tournament.subscribers } });
+        for (const sub of subscribers) {
+          const settings = sub.notificationSettings || { tournamentEnd: true };
+          if (settings.tournamentEnd) {
+            await sendNotification(req.app.get("io"), sub._id, `Il torneo ${tournament.title} è terminato.`, 'info', { link: `/torneo/${tournament._id}` });
+          }
+        }
+      }
+    }
+
+    await tournament.save();
+    
+    // Emetti evento socket per aggiornare i client in tempo reale
+    req.app.get("io").emit("tournaments:update", { type: "update", tournament });
+    
+    res.json(tournament);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+>>>>>>> 568815a (Update v0.0.5)
 router.delete("/tournaments/:id", protect, async (req, res) => {
   try {
     const tournament = await Tournament.findByIdAndDelete(req.params.id);
@@ -222,6 +395,35 @@ router.delete("/tournaments/:id", protect, async (req, res) => {
 
 router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
   try {
+<<<<<<< HEAD
+=======
+    // AUTO-MIGRATION: Corregge automaticamente i vecchi team con array di stringhe
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      const rawTournament = await Tournament.collection.findOne({ _id: new mongoose.Types.ObjectId(req.params.id) });
+      if (rawTournament && rawTournament.teams) {
+        let needsMigration = false;
+        const newTeams = rawTournament.teams.map(team => {
+          // Se teammates è un array di stringhe, convertilo in oggetti
+          if (team.teammates && team.teammates.length > 0 && typeof team.teammates[0] === 'string') {
+            needsMigration = true;
+            return {
+              ...team,
+              teammates: team.teammates.map(name => ({ username: name, status: 'accepted' }))
+            };
+          }
+          return team;
+        });
+
+        if (needsMigration) {
+          await Tournament.collection.updateOne(
+            { _id: new mongoose.Types.ObjectId(req.params.id) },
+            { $set: { teams: newTeams } }
+          );
+        }
+      }
+    }
+
+>>>>>>> 568815a (Update v0.0.5)
     const tournament = await Tournament.findById(req.params.id);
     if (!tournament)
       return res.status(404).json({ message: "Torneo non trovato" });
@@ -311,7 +513,11 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
         }
         if (tournament.teams) {
           const isInTeam = tournament.teams.some((t) =>
+<<<<<<< HEAD
             t.teammates.includes(tUser.username),
+=======
+            t.teammates.some(mate => (mate.username || mate) === tUser.username)
+>>>>>>> 568815a (Update v0.0.5)
           );
           if (isInTeam) {
             return res
@@ -322,11 +528,48 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
       }
     }
 
+<<<<<<< HEAD
+=======
+    // Prepare teammates data with status
+    const teamMembers = [];
+    if (teammates && teammates.length > 0) {
+      const foundUsers = await User.find({ username: { $in: teammates } });
+      
+      for (const tUser of foundUsers) {
+        teamMembers.push({
+          userId: tUser._id,
+          username: tUser.username,
+          status: 'pending' // Default status
+        });
+
+        // Send Notification
+        tUser.notifications = tUser.notifications || [];
+        const notif = {
+          type: 'tournament_invite',
+          message: `${user.username} ti ha invitato al torneo ${tournament.title}`,
+          data: {
+            tournamentId: tournament._id,
+            captainName: user.username
+          },
+          read: false,
+          createdAt: new Date()
+        };
+        tUser.notifications.push(notif);
+        req.app.get("io").to(tUser.discordId).emit("notification", notif);
+        await tUser.save();
+      }
+    }
+
+>>>>>>> 568815a (Update v0.0.5)
     tournament.subscribers.push(user._id);
     if (tournament.format !== "solo") {
       tournament.teams.push({
         captain: user._id,
+<<<<<<< HEAD
         teammates: teammates || [],
+=======
+        teammates: teamMembers, // Now storing objects with status
+>>>>>>> 568815a (Update v0.0.5)
       });
     }
     await tournament.save();
@@ -348,6 +591,96 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
 
     res.json({ message: "Iscrizione effettuata con successo", tournament });
   } catch (err) {
+<<<<<<< HEAD
+=======
+    console.error("Errore iscrizione torneo:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Gestione Notifiche
+router.get("/notifications", ensureAuth, async (req, res) => {
+  try {
+    const user = await User.findOne({ discordId: req.user.discordId });
+    if (!user) return res.status(404).json({ message: "Utente non trovato" });
+    
+    // Sort by newest
+    const notifs = user.notifications ? user.notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) : [];
+    res.json(notifs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/notifications/:id/read", ensureAuth, async (req, res) => {
+  try {
+    const user = await User.findOne({ discordId: req.user.discordId });
+    const notif = user.notifications.id(req.params.id);
+    if (notif) {
+      notif.read = true;
+      await user.save();
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/notifications/:id/respond", ensureAuth, async (req, res) => {
+  try {
+    const { action } = req.body; // 'accept' or 'decline'
+    const user = await User.findOne({ discordId: req.user.discordId });
+    const notif = user.notifications.id(req.params.id);
+
+    if (!notif || notif.type !== 'tournament_invite') {
+      return res.status(404).json({ message: "Invito non trovato" });
+    }
+
+    const tournament = await Tournament.findById(notif.data.tournamentId);
+    if (!tournament) return res.status(404).json({ message: "Torneo non trovato o cancellato" });
+
+    let captainId = null;
+
+    if (tournament.teams) {
+      for (const team of tournament.teams) {
+        const memberIndex = team.teammates.findIndex(m => (m.username === user.username) || (m.userId && m.userId.toString() === user._id.toString()));
+        if (memberIndex !== -1) {
+          captainId = team.captain;
+
+          if (action === 'accept') {
+            team.teammates[memberIndex].status = 'accepted';
+            
+            // Add to subscribers list if not already there (for logic consistency)
+            if (!tournament.subscribers.some(s => s.toString() === user._id.toString())) {
+              tournament.subscribers.push(user._id);
+            }
+            // Add tournament to user profile
+            if (!user.tournaments.some(t => t.toString() === tournament._id.toString())) {
+              user.tournaments.push(tournament._id);
+            }
+          } else {
+            team.teammates[memberIndex].status = 'rejected';
+          }
+          break;
+        }
+      }
+    }
+
+    notif.read = true; // Mark as read after response
+    await Promise.all([tournament.save(), user.save()]);
+
+    // Notifica il capitano della decisione
+    if (captainId) {
+      const msg = `${user.username} ha ${action === 'accept' ? 'accettato' : 'rifiutato'} il tuo invito per il torneo ${tournament.title}`;
+      await sendNotification(req.app.get("io"), captainId, msg, 'info', { link: `/torneo/${tournament._id}` });
+    }
+
+    // Aggiorna in tempo reale la pagina del torneo per tutti
+    req.app.get("io").emit("tournaments:update", { type: "update", tournament });
+
+    res.json({ message: `Invito ${action === 'accept' ? 'accettato' : 'rifiutato'}` });
+  } catch (err) {
+>>>>>>> 568815a (Update v0.0.5)
     res.status(500).json({ error: err.message });
   }
 });
@@ -364,11 +697,16 @@ router.post("/tournaments/:id/unsubscribe", ensureAuth, async (req, res) => {
       return res.status(404).json({ message: "Utente non trovato" });
     }
 
+<<<<<<< HEAD
     const before = tournament.subscribers.length;
+=======
+    // Rimuovi l'utente dalla lista iscritti principale
+>>>>>>> 568815a (Update v0.0.5)
     tournament.subscribers = tournament.subscribers.filter(
       (sub) => sub.toString() !== user._id.toString(),
     );
 
+<<<<<<< HEAD
     if (tournament.subscribers.length === before) {
       return res
         .status(400)
@@ -383,11 +721,63 @@ router.post("/tournaments/:id/unsubscribe", ensureAuth, async (req, res) => {
 
     await tournament.save();
 
+=======
+    // Rimuovi il torneo dal profilo utente
+>>>>>>> 568815a (Update v0.0.5)
     user.tournaments = user.tournaments.filter(
       (tid) => tid.toString() !== tournament._id.toString(),
     );
     await user.save();
 
+<<<<<<< HEAD
+=======
+    // Gestione Team: se l'utente è capitano, sciogli il team e pulisci i compagni
+    if (tournament.teams) {
+      const teamIndex = tournament.teams.findIndex(t => t.captain.toString() === user._id.toString());
+      
+      if (teamIndex !== -1) {
+        const team = tournament.teams[teamIndex];
+        
+        // Pulisci i compagni (rimuovi notifiche e iscrizioni pendenti)
+        if (team.teammates && team.teammates.length > 0) {
+          for (const mate of team.teammates) {
+            if (mate.userId) {
+              const mateUser = await User.findById(mate.userId);
+              if (mateUser) {
+                // 1. Rimuovi notifica invito specifica per questo torneo
+                mateUser.notifications = mateUser.notifications.filter(n => {
+                   if (n.type === 'tournament_invite' && n.data && n.data.tournamentId) {
+                     return n.data.tournamentId.toString() !== tournament._id.toString();
+                   }
+                   return true;
+                });
+
+                // 2. Rimuovi torneo dal profilo compagno (se aveva già accettato)
+                mateUser.tournaments = mateUser.tournaments.filter(tid => tid.toString() !== tournament._id.toString());
+                await mateUser.save();
+
+                // 3. Rimuovi compagno da iscritti torneo (se aveva già accettato)
+                tournament.subscribers = tournament.subscribers.filter(s => s.toString() !== mateUser._id.toString());
+
+                // 4. Aggiorna client compagno (rimuove notifica visivamente)
+                req.app.get("io").to(mateUser.discordId).emit("notification", { silent: true });
+              }
+            }
+          }
+        }
+        // Rimuovi il team
+        tournament.teams.splice(teamIndex, 1);
+      } else {
+        // Se l'utente non è capitano, rimuovilo da eventuali team come membro
+        tournament.teams.forEach(t => {
+            t.teammates = t.teammates.filter(m => m.userId && m.userId.toString() !== user._id.toString());
+        });
+      }
+    }
+
+    await tournament.save();
+
+>>>>>>> 568815a (Update v0.0.5)
     req.app.get("io").emit("subscriptions:update", {
       type: "leave",
       tournamentId: tournament._id,
@@ -450,6 +840,10 @@ router.post("/memories", ensureAuth, async (req, res) => {
       authorId: req.user.discordId,
     });
     await memory.save();
+<<<<<<< HEAD
+=======
+    req.app.get("io").emit("memory:update", { type: "create", memory });
+>>>>>>> 568815a (Update v0.0.5)
     res.json(memory);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -477,6 +871,10 @@ router.delete("/memories/:id", ensureAuth, async (req, res) => {
     )
       return res.status(403).json({ message: "Non autorizzato" });
     await Memory.findByIdAndDelete(req.params.id);
+<<<<<<< HEAD
+=======
+    req.app.get("io").emit("memory:update", { type: "delete", id: req.params.id });
+>>>>>>> 568815a (Update v0.0.5)
     res.json({ message: "Memory eliminata" });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -552,6 +950,10 @@ router.put("/leaderboard/:username", protect, async (req, res) => {
       { new: true },
     );
     if (!user) return res.status(404).json({ message: "Utente non trovato" });
+<<<<<<< HEAD
+=======
+    req.app.get("io").emit("leaderboard:update", { username: req.params.username });
+>>>>>>> 568815a (Update v0.0.5)
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -630,6 +1032,7 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
 
     const html = await response.text();
 
+<<<<<<< HEAD
     // Funzione per estrarre le stats dall'HTML
     const getStat = (labels, htmlContent) => {
       for (const label of labels) {
@@ -662,6 +1065,60 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
     // Se HTML non ha trovato nulla → fallback API JSON
     const allNull = Object.values(stats).every((v) => v === null);
     if (allNull) {
+=======
+    // Funzione per estrarre le stats dall'HTML con parser migliorato
+    const getStat = (labels, htmlContent, targetClassPart = null) => {
+      for (const label of labels) {
+        const safeLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        
+        let regexes = [];
+
+        if (targetClassPart) {
+          // Cerca Label ... <tag class="...targetClassPart...">Value</tag>
+          // Usa una parte unica della classe per matchare (es. "font-mono")
+          regexes.push(new RegExp(`>\\s*${safeLabel}\\s*<[\\s\\S]{0,800}?(?:class=["'][^"']*${targetClassPart}[^"']*["'])[^>]*>\\s*([\\d.,]+)\\s*<`, "i"));
+          regexes.push(new RegExp(`${safeLabel}[\\s\\S]{0,800}?(?:class=["'][^"']*${targetClassPart}[^"']*["'])[^>]*>\\s*([\\d.,]+)\\s*<`, "i"));
+        }
+
+        // Fallback patterns
+        regexes.push(new RegExp(`>\\s*${safeLabel}\\s*<[\\s\\S]{0,400}?>\\s*([\\d.,]+)\\s*<`, "i"));
+        regexes.push(new RegExp(`${safeLabel}\\s*[:]?\\s*([\\d.,]+)`, "i"));
+
+        for (const regex of regexes) {
+          const match = htmlContent.match(regex);
+          if (match && match[1]) {
+            let val = match[1].replace(/[.,]/g, "").trim();
+            return parseInt(val) || 0;
+          }
+        }
+      }
+      return 0;
+    };
+
+    // Prova a leggere le stats dall'HTML
+    const mainStatClass = "font-mono"; // Parte unica della classe per stats principali
+    const levelClass = "text-3xl";     // Parte unica per il livello
+    const winLossClass = "text-sm";    // Parte unica per wins/losses
+
+    let stats = {
+      wins: getStat(["Wins", "Vittorie"], html, winLossClass),
+      losses: getStat(["Losses", "Sconfitte"], html, winLossClass),
+      kills: getStat(["Uccisioni", "Kills"], html, mainStatClass),
+      deaths: getStat(["Morti", "Deaths"], html, mainStatClass),
+      beds: getStat(["Letti rotti", "Letti distrutti", "Beds broken"], html, mainStatClass),
+      finals: getStat(["Final kills", "Uccisioni finali", "Finali"], html, mainStatClass),
+      finalDeaths: getStat(["Morti finali", "Final deaths"], html),
+      games: getStat(["Partite giocate", "Games played", "Partite"], html),
+      level: getStat(["Livello Bedwars", "Level", "Livello"], html, levelClass),
+      winstreak: getStat(["Winstreak", "Serie", "Serie attuale", "Current Winstreak", "Streak", "Vittorie consecutive"], html, mainStatClass),
+      topWinstreak: getStat(["Top Winstreak", "Highest Winstreak", "Winstreak migliore", "Best Winstreak", "Miglior serie", "Max Winstreak", "Best Streak", "Record serie"], html, mainStatClass),
+      coins: getStat(["Monete", "Coins", "Denaro", "Soldi", "Bilancio"], html, mainStatClass)
+    };
+
+    // Se HTML non ha trovato nulla → fallback API JSON
+    const allZero = Object.values(stats).every((v) => v === 0);
+    if (allZero) {
+>>>>>>> 568815a (Update v0.0.5)
       try {
         const jsonResponse = await fetch(`https://coralmc.it/api/player/${username}`, {
           headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json" },
@@ -670,6 +1127,7 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
         if (jsonResponse.ok) {
           const data = await jsonResponse.json();
           stats = {
+<<<<<<< HEAD
             wins: data.stats?.wins ?? 0,
             kills: data.stats?.kills ?? 0,
             deaths: data.stats?.deaths ?? 0,
@@ -680,6 +1138,23 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
             level: data.level ?? 0,
           };
           console.log(`Stats di ${username} caricate dal fallback API JSON`);
+=======
+            wins: data.bedwars?.stats?.wins ?? data.wins ?? 0,
+            losses: data.bedwars?.stats?.losses ?? data.losses ?? 0,
+            kills: data.bedwars?.stats?.kills ?? data.kills ?? 0,
+            deaths: data.bedwars?.stats?.deaths ?? data.deaths ?? 0,
+            beds: data.bedwars?.stats?.bedsBroken ?? data.bedsBroken ?? 0,
+            finals: data.bedwars?.stats?.finalKills ?? data.finalKills ?? 0,
+            finalDeaths: data.bedwars?.stats?.finalDeaths ?? data.finalDeaths ?? 0,
+            games: data.bedwars?.stats?.gamesPlayed ?? data.gamesPlayed ?? 0,
+            level: data.bedwars?.level ?? data.level ?? 0,
+            winstreak: data.bedwars?.stats?.winstreak ?? data.winstreak ?? 0,
+            topWinstreak: data.bedwars?.stats?.highestWinstreak ?? data.highestWinstreak ?? 0,
+            coins: data.coins ?? 0
+          };
+          console.log(`Stats di ${username} caricate dal fallback API JSON`);
+          console.log(`Dati grezzi JSON:`, JSON.stringify(data, null, 2));
+>>>>>>> 568815a (Update v0.0.5)
         } else {
           console.warn(`API JSON CoralMC fallita per ${username}, status: ${jsonResponse.status}`);
         }
@@ -690,16 +1165,48 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
       console.log(`Stats di ${username} caricate dall'HTML`);
     }
 
+<<<<<<< HEAD
     // Normalizza eventuali null a 0
     for (const key in stats) {
       if (stats[key] === null || stats[key] === undefined) stats[key] = 0;
     }
 
+=======
+    // Normalizza eventuali valori non numerici a 0
+    for (const key in stats) {
+      stats[key] = parseInt(stats[key]) || 0;
+    }
+
+    // Calcola i ratios
+    const kdr = stats.deaths > 0 ? parseFloat((stats.kills / stats.deaths).toFixed(2)) : stats.kills;
+    const losses = stats.losses > 0 ? stats.losses : ((stats.games || 0) - (stats.wins || 0));
+    const wlr = losses > 0 ? parseFloat((stats.wins / losses).toFixed(2)) : stats.wins;
+    const fkdr = (stats.finalDeaths || 0) > 0 ? parseFloat((stats.finals / stats.finalDeaths).toFixed(2)) : stats.finals;
+
+>>>>>>> 568815a (Update v0.0.5)
     res.json({
       uuid,
       username,
       exists: true,
+<<<<<<< HEAD
       stats,
+=======
+      kills: stats.kills,
+      deaths: stats.deaths,
+      wins: stats.wins,
+      losses: stats.losses,
+      beds: stats.beds,
+      finals: stats.finals,
+      finalDeaths: stats.finalDeaths,
+      games: stats.games,
+      level: stats.level,
+      winstreak: stats.winstreak,
+      topWinstreak: stats.topWinstreak,
+      coins: stats.coins,
+      kdr,
+      wlr,
+      fkdr,
+>>>>>>> 568815a (Update v0.0.5)
     });
 
   } catch (err) {

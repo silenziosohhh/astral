@@ -47,6 +47,14 @@ passport.deserializeUser((id, done) =>
 );
 
 const verifyToken = (req, res, next) => {
+<<<<<<< HEAD
+=======
+  const apiKey = process.env.API_KEY;
+  const reqApiKey = req.headers['x-api-key'];
+
+  if (apiKey && reqApiKey && apiKey === reqApiKey) return next();
+
+>>>>>>> 568815a (Update v0.0.5)
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ message: "Unauthorized" });
 

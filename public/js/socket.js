@@ -1,4 +1,5 @@
 const socket = io();
+<<<<<<< HEAD
 
 document.addEventListener("DOMContentLoaded", () => {
   socket.on("tournaments:update", (data) => {
@@ -16,6 +17,40 @@ document.addEventListener("DOMContentLoaded", () => {
   socket.on("leaderboard:update", (data) => {});
 
   socket.on("memory:update", (data) => {
+=======
+window.socket = socket;
+
+document.addEventListener("DOMContentLoaded", () => {
+  socket.on("tournaments:update", (data) => {
+    if (data.type === "create" && typeof showToast === "function") {
+      showToast(`🏆 Nuovo torneo pubblicato: ${data.tournament.title}!`, "success");
+    }
+    if (typeof loadAdminTournaments === "function") loadAdminTournaments();
+    if (typeof loadTournaments === "function") loadTournaments();
+    if (typeof loadTournament === "function") loadTournament();
+    setTimeout(() => {
+      if (typeof loadNotifications === "function") loadNotifications();
+    }, 500);
+  });
+
+  socket.on("subscriptions:update", (data) => {
+    if (typeof loadAdminTournaments === "function") loadAdminTournaments();
+    if (typeof loadTournaments === "function") loadTournaments();
+    if (typeof loadTournament === "function") loadTournament();
+  });
+
+  socket.on("leaderboard:update", (data) => {
+    if (typeof loadLeaderboard === "function") loadLeaderboard();
+  });
+
+  socket.on("memory:update", (data) => {
+    if (data.type === "create" || data.type === "delete") {
+      if (typeof loadMemories === "function") loadMemories();
+      if (typeof loadMyMemories === "function") loadMyMemories();
+      return;
+    }
+
+>>>>>>> 568815a (Update v0.0.5)
     const { id, likes, shares } = data;
 
     const card = document.getElementById(`memory-${id}`);
@@ -42,4 +77,24 @@ document.addEventListener("DOMContentLoaded", () => {
       if (shareCount) shareCount.textContent = shares;
     }
   });
+<<<<<<< HEAD
+=======
+
+  socket.on("user:update", (data) => {
+    if (typeof loadUserProfile === "function") {
+      const path = window.location.pathname;
+      const viewedUser = document.getElementById("profile-username")?.textContent;
+      if (path.includes("/profile") && (viewedUser === data.username || !viewedUser)) {
+        loadUserProfile(viewedUser === data.username ? data.username : null);
+      }
+    }
+  });
+
+  socket.on("notification", (data) => {
+    if (!data.silent && typeof showToast === "function") {
+      showToast(data.message, "info");
+    }
+    if (typeof loadNotifications === "function") loadNotifications();
+  });
+>>>>>>> 568815a (Update v0.0.5)
 });

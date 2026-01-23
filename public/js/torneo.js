@@ -53,7 +53,11 @@ async function loadTournament() {
   if (!user) {
     actionBtn = `<button class="btn-discord" onclick="window.location.href='/auth/discord'" style="width: 100%; justify-content: center; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;"><i class="fab fa-discord"></i> Accedi per Iscriverti</button>`;
   } else if (isSubscribed) {
+<<<<<<< HEAD
     actionBtn = `<button id="btn-unsubscribe" style="width: 100%; padding: 0.8rem; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 12px; background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); transition: 0.2s;">Disiscriviti</button>`;
+=======
+    actionBtn = `<button id="btn-view-sub" class="btn-visit" style="width: 100%; justify-content: center; margin-bottom: 12px;">Visualizza Iscrizioni</button>`;
+>>>>>>> 568815a (Update v0.0.5)
   } else if (t.status === "Aperto") {
     if (t.format === "solo") {
       actionBtn = `<button id="btn-subscribe" class="btn-visit" style="width: 100%; justify-content: center; margin-bottom: 12px;">Iscriviti Ora</button>`;
@@ -65,6 +69,7 @@ async function loadTournament() {
   }
 
   let subsHtml = "";
+<<<<<<< HEAD
   if (t.subscribers && t.subscribers.length > 0) {
     subsHtml = `
         <div style="margin-top: 3rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 2rem;">
@@ -86,6 +91,60 @@ async function loadTournament() {
             </div>
         </div>
       `;
+=======
+  const isTeamFormat = t.format === "duo" || t.format === "trio";
+
+  if (isTeamFormat && t.teams && t.teams.length > 0) {
+    subsHtml = `
+      <div style="margin-top: 3rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 2rem;">
+          <h3 style="color: #fff; margin-bottom: 1.5rem; font-size: 1.4rem;">Teams Partecipanti <span style="font-size: 1rem; color: #94a3b8; font-weight: normal;">(${t.teams.length})</span></h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 15px;">
+              ${t.teams.map(team => {
+                  const captain = team.captain || { username: "Unknown" };
+                  const capName = captain.minecraftUsername || captain.username;
+                  const capAvatar = `https://minotar.net/helm/${capName}/64.png`;
+                  
+                  let membersHtml = "";
+                  if (team.teammates && team.teammates.length > 0) {
+                      membersHtml = team.teammates.map(mate => {
+                          const mName = mate.username || mate;
+                          return `
+                              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 0.9rem; color: #cbd5e1; padding-left: 42px;">
+                                  <img src="https://minotar.net/helm/${mName}/24.png" style="width: 20px; height: 20px; border-radius: 4px;">
+                                  <span>${mName}</span>
+                              </div>
+                          `;
+                      }).join("");
+                  }
+
+                  return `
+                      <div style="background: #0f172a; padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                          <div style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; margin-bottom: 5px;">
+                              <img src="${capAvatar}" style="width: 32px; height: 32px; border-radius: 4px;">
+                              <div style="font-weight: 600; color: #fff;">${capName} <span style="font-size: 0.7rem; color: var(--primary-2); border: 1px solid var(--primary-2); padding: 1px 4px; border-radius: 3px; margin-left: 5px;">CAP</span></div>
+                          </div>
+                          ${membersHtml}
+                      </div>
+                  `;
+              }).join("")}
+          </div>
+      </div>`;
+  } else if (!isTeamFormat && t.subscribers && t.subscribers.length > 0) {
+    subsHtml = `
+      <div style="margin-top: 3rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 2rem;">
+          <h3 style="color: #fff; margin-bottom: 1.5rem; font-size: 1.4rem;">Partecipanti <span style="font-size: 1rem; color: #94a3b8; font-weight: normal;">(${t.subscribers.length})</span></h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px;">
+              ${t.subscribers.map(s => {
+                  const sName = s.minecraftUsername || s.username;
+                  const avatar = `https://minotar.net/helm/${sName}/64.png`;
+                  return `<div style="background: #0f172a; padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                          <img src="${avatar}" style="width: 32px; height: 32px; border-radius: 4px;">
+                          <div style="font-size: 0.9rem; color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;">${sName}</div>
+                      </div>`;
+              }).join("")}
+          </div>
+      </div>`;
+>>>>>>> 568815a (Update v0.0.5)
   }
 
   document.getElementById("tournament-details").innerHTML = `
@@ -203,6 +262,7 @@ async function loadTournament() {
     };
   }
 
+<<<<<<< HEAD
   const unsubBtn = document.getElementById("btn-unsubscribe");
   if (unsubBtn) {
     unsubBtn.onclick = async () => {
@@ -221,6 +281,11 @@ async function loadTournament() {
         showToast("Errore di connessione", "error");
       }
     };
+=======
+  const viewSubBtn = document.getElementById("btn-view-sub");
+  if (viewSubBtn) {
+    viewSubBtn.onclick = () => openSubscriptionModal(t._id);
+>>>>>>> 568815a (Update v0.0.5)
   }
 }
 
@@ -360,3 +425,160 @@ function showJoinTeamModal(tid, format) {
     }
   };
 }
+<<<<<<< HEAD
+=======
+
+async function openSubscriptionModal(tid) {
+  try {
+    const existing = document.querySelector('.modal-overlay.subs-modal');
+    if (existing) existing.remove();
+
+    const [resT, resU] = await Promise.all([
+      fetch("/api/tournaments"),
+      fetch("/api/me").catch(() => ({ ok: false }))
+    ]);
+    const tournaments = await resT.json();
+    const tournament = tournaments.find(t => t._id === tid);
+    let user = null;
+    if (resU.ok) user = await resU.json();
+
+    if (!tournament) return;
+
+    const isTeamFormat = tournament.format === "duo" || tournament.format === "trio";
+    let contentHtml = "";
+
+    if (isTeamFormat) {
+      const teams = tournament.teams || [];
+      if (teams.length === 0) {
+        contentHtml = "<p style='text-align: center; color: #94a3b8; padding: 1rem;'>Nessun team iscritto.</p>";
+      } else {
+        contentHtml = `<div style="display: flex; flex-direction: column; gap: 10px;">`;
+        teams.forEach((team, idx) => {
+          const captain = team.captain || { username: "Utente Eliminato", discordId: "0", avatar: null };
+          let capName = captain.minecraftUsername || captain.username;
+          let avatarUrl = `https://minotar.net/helm/${capName}/64.png`;
+          
+          let isMyTeam = user && captain.discordId === user.discordId;
+          
+          let membersHtml = "";
+          if (team.teammates && team.teammates.length > 0) {
+            membersHtml = team.teammates.map(mate => `
+              <div style="display: flex; align-items: center; gap: 10px; padding: 4px 0; color: #cbd5e1; font-size: 0.9rem; justify-content: space-between;">
+                 <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="https://minotar.net/helm/${mate.username || mate}/24.png" style="width: 20px; height: 20px; border-radius: 4px;"> 
+                    ${mate.username || mate}
+                 </div>
+                 ${typeof mate === 'object' ? 
+                    (mate.status === 'accepted' ? '<i class="fas fa-check-circle" style="color: #4ade80;" title="Accettato"></i>' : 
+                     mate.status === 'rejected' ? '<i class="fas fa-times-circle" style="color: #f87171;" title="Rifiutato"></i>' : 
+                     '<i class="fas fa-hourglass-half" style="color: #fbbf24;" title="In attesa"></i>') 
+                    : ''}
+              </div>
+            `).join("");
+          }
+
+          contentHtml += `
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid ${isMyTeam ? 'var(--primary-2)' : 'rgba(255,255,255,0.1)'}; border-radius: 8px; padding: 12px;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                      <span style="background: var(--primary-2); color: #000; font-weight: bold; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px;">#${idx + 1}</span>
+                      <img src="${avatarUrl}" style="width: 24px; height: 24px; border-radius: 4px;">
+                      <span style="font-weight: 600; color: #fff;">${capName}</span>
+                  </div>
+                  ${isMyTeam ? `<button onclick="unsubscribeTournamentCustom('${tid}')" class="btn-icon delete" style="background: rgba(239, 68, 68, 0.2); color: #f87171; width: auto; padding: 4px 10px; font-size: 0.8rem; border-radius: 4px;">Disiscriviti</button>` : ''}
+                </div>
+                <div style="padding-left: 10px; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                    ${membersHtml}
+                </div>
+            </div>
+          `;
+        });
+        contentHtml += `</div>`;
+      }
+    } else {
+      const subs = tournament.subscribers || [];
+      if (subs.length === 0) {
+        contentHtml = "<p style='text-align: center; color: #94a3b8; padding: 1rem;'>Nessun iscritto.</p>";
+      } else {
+        contentHtml = `<ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px;">`;
+        subs.forEach(s => {
+          let sName = s.minecraftUsername || s.username;
+          let avatarUrl = `https://minotar.net/helm/${sName}/64.png`;
+          let isMe = user && s.discordId === user.discordId;
+
+          contentHtml += `
+              <li style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid ${isMe ? 'var(--primary-2)' : 'rgba(255,255,255,0.1)'};">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <img src="${avatarUrl}" style="width: 30px; height: 30px; border-radius: 4px;">
+                    <span style="font-weight: 600; color: var(--light);">${sName}</span>
+                  </div>
+                  ${isMe ? `<button onclick="unsubscribeTournamentCustom('${tid}')" class="btn-icon delete" style="background: rgba(239, 68, 68, 0.2); color: #f87171; width: auto; padding: 4px 10px; font-size: 0.8rem; border-radius: 4px;">Disiscriviti</button>` : ''}
+              </li>
+          `;
+        });
+        contentHtml += `</ul>`;
+      }
+    }
+
+    const modalHTML = `
+      <div class="modal-overlay subs-modal active" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+          <div style="background: #0f172a; padding: 2rem; border-radius: 20px; width: 90%; max-width: 500px; position: relative; border: 1px solid var(--primary-2); box-shadow: 0 0 30px rgba(59, 130, 246, 0.3); max-height: 80vh; display: flex; flex-direction: column;">
+              <button onclick="this.closest('.modal-overlay').remove()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">&times;</button>
+              <h2 style="color: var(--primary-2); margin-bottom: 0.5rem; text-align: center;">Iscritti: ${tournament.title}</h2>
+              <div style="overflow-y: auto; padding-right: 5px; margin-top: 1rem;">${contentHtml}</div>
+          </div>
+      </div>`;
+    
+    document.body.insertAdjacentHTML("beforeend", modalHTML);
+  } catch (e) { console.error(e); }
+}
+
+function unsubscribeTournamentCustom(id) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay confirm-modal";
+  overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;";
+
+  overlay.innerHTML = `
+    <style>
+      .modal-confirm-box { background: #181a20; padding: 2rem; border-radius: 16px; width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+      .btn-confirm-action { padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
+      .btn-confirm-yes { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+      .btn-confirm-yes:hover { background: rgba(239, 68, 68, 0.3); }
+      .btn-confirm-no { background: rgba(255, 255, 255, 0.05); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.1); }
+      .btn-confirm-no:hover { background: rgba(255, 255, 255, 0.1); }
+    </style>
+    <div class="modal-confirm-box">
+        <h3 style="color: #fff; margin-bottom: 1rem; font-size: 1.3rem;">Conferma Disiscrizione</h3>
+        <p style="color: #94a3b8; margin-bottom: 1.5rem; line-height: 1.5;">Sei sicuro di voler annullare l'iscrizione a questo torneo? Questa azione è irreversibile.</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button id="btn-cancel-unsub" class="btn-confirm-action btn-confirm-no">Annulla</button>
+            <button id="btn-confirm-unsub" class="btn-confirm-action btn-confirm-yes">Disiscriviti</button>
+        </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  document.getElementById("btn-cancel-unsub").onclick = close;
+  overlay.onclick = (e) => { if (e.target === overlay) close(); };
+
+  document.getElementById("btn-confirm-unsub").onclick = async () => {
+    close();
+    try {
+      const res = await fetch(`/api/tournaments/${id}/unsubscribe`, { method: "POST", credentials: "include" });
+      if (res.status === 401) return showToast("Devi effettuare il login per disiscriverti!", "error");
+      
+      const data = await res.json();
+      if (data && data.message) showToast(data.message, "success");
+      
+      const subsModal = document.querySelector('.modal-overlay.subs-modal');
+      if (subsModal) subsModal.remove();
+      
+      loadTournament();
+    } catch (err) {
+      showToast("Errore durante la disiscrizione", "error");
+    }
+  };
+}
+>>>>>>> 568815a (Update v0.0.5)
