@@ -1,8 +1,5 @@
 const express = require("express");
-<<<<<<< HEAD
-=======
 const mongoose = require("mongoose");
->>>>>>> 568815a (Update v0.0.5)
 const router = express.Router();
 const Tournament = require("../database/Tournament");
 const Memory = require("../database/Memory");
@@ -12,14 +9,9 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 
 const protect = async (req, res, next) => {
   const apiKey = process.env.API_KEY || null;
-<<<<<<< HEAD
-
-  if (apiKey && apiKey !== null) return next();
-=======
   const reqApiKey = req.headers['x-api-key'];
 
   if (apiKey && reqApiKey === apiKey) return next();
->>>>>>> 568815a (Update v0.0.5)
 
   const token = req.cookies.token;
   if (token) {
@@ -50,8 +42,6 @@ const ensureAuth = (req, res, next) => {
   });
 };
 
-<<<<<<< HEAD
-=======
 const sendNotification = async (io, userId, message, type = 'system', data = null) => {
   try {
     const user = await User.findById(userId);
@@ -67,7 +57,6 @@ const sendNotification = async (io, userId, message, type = 'system', data = nul
   } catch (e) { console.error("Notification Error:", e); }
 };
 
->>>>>>> 568815a (Update v0.0.5)
 router.get("/me", ensureAuth, async (req, res) => {
   try {
     const user = await User.findOne({ discordId: req.user.discordId });
@@ -81,15 +70,12 @@ router.get("/me", ensureAuth, async (req, res) => {
       minecraftUsername: user.minecraftUsername,
       skills: user.skills || [],
       socials: user.socials || {},
-<<<<<<< HEAD
-=======
       notifications: user.notifications || [],
       notificationSettings: user.notificationSettings || {
         tournamentStart: true,
         tournamentUpdates: true,
         tournamentEnd: true
       }
->>>>>>> 568815a (Update v0.0.5)
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -109,10 +95,7 @@ router.put("/me", ensureAuth, async (req, res) => {
 
     user.minecraftUsername = minecraftUsername.trim();
     await user.save();
-<<<<<<< HEAD
-=======
     req.app.get("io").emit("user:update", { userId: user._id, username: user.username });
->>>>>>> 568815a (Update v0.0.5)
     res.json({
       message: "Nickname aggiornato con successo",
       minecraftUsername: user.minecraftUsername,
@@ -133,10 +116,7 @@ router.put("/me/skills", ensureAuth, async (req, res) => {
 
     user.skills = skills;
     await user.save();
-<<<<<<< HEAD
-=======
     req.app.get("io").emit("user:update", { userId: user._id });
->>>>>>> 568815a (Update v0.0.5)
     res.json({ message: "Skills aggiornate", skills: user.skills });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -151,18 +131,13 @@ router.put("/me/socials", ensureAuth, async (req, res) => {
 
     user.socials = { tiktok, youtube, instagram, discord, twitch };
     await user.save();
-<<<<<<< HEAD
-=======
     req.app.get("io").emit("user:update", { userId: user._id });
->>>>>>> 568815a (Update v0.0.5)
     res.json({ message: "Social aggiornati", socials: user.socials });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-<<<<<<< HEAD
-=======
 router.put("/me/notification-settings", ensureAuth, async (req, res) => {
   try {
     const { tournamentStart, tournamentUpdates, tournamentEnd } = req.body;
@@ -177,7 +152,6 @@ router.put("/me/notification-settings", ensureAuth, async (req, res) => {
   }
 });
 
->>>>>>> 568815a (Update v0.0.5)
 router.get("/users/search", async (req, res) => {
   try {
     const query = req.query.q;
@@ -243,19 +217,11 @@ router.get("/tournaments", async (req, res) => {
       .sort({ date: 1 })
       .populate({
         path: "subscribers",
-<<<<<<< HEAD
-        select: "username avatar discordId",
-      })
-      .populate({
-        path: "teams.captain",
-        select: "username avatar discordId",
-=======
         select: "username avatar discordId minecraftUsername",
       })
       .populate({
         path: "teams.captain",
         select: "username avatar discordId minecraftUsername",
->>>>>>> 568815a (Update v0.0.5)
       });
     res.json(tournaments);
   } catch (err) {
@@ -268,8 +234,6 @@ router.post("/tournaments", protect, async (req, res) => {
     const tournament = new Tournament(req.body);
     await tournament.save();
 
-<<<<<<< HEAD
-=======
     // Crea la notifica per tutti gli utenti nel database
     const notif = {
       _id: new mongoose.Types.ObjectId(),
@@ -281,7 +245,6 @@ router.post("/tournaments", protect, async (req, res) => {
     };
     await User.collection.updateMany({}, { $push: { notifications: notif } });
 
->>>>>>> 568815a (Update v0.0.5)
     req.app
       .get("io")
       .emit("tournaments:update", { type: "create", tournament });
@@ -291,8 +254,6 @@ router.post("/tournaments", protect, async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
-=======
 router.put("/tournaments/:id", protect, async (req, res) => {
   try {
     const { status, ...updateData } = req.body;
@@ -375,7 +336,6 @@ router.put("/tournaments/:id", protect, async (req, res) => {
   }
 });
 
->>>>>>> 568815a (Update v0.0.5)
 router.delete("/tournaments/:id", protect, async (req, res) => {
   try {
     const tournament = await Tournament.findByIdAndDelete(req.params.id);
@@ -395,8 +355,6 @@ router.delete("/tournaments/:id", protect, async (req, res) => {
 
 router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
   try {
-<<<<<<< HEAD
-=======
     // AUTO-MIGRATION: Corregge automaticamente i vecchi team con array di stringhe
     if (mongoose.Types.ObjectId.isValid(req.params.id)) {
       const rawTournament = await Tournament.collection.findOne({ _id: new mongoose.Types.ObjectId(req.params.id) });
@@ -423,7 +381,6 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
       }
     }
 
->>>>>>> 568815a (Update v0.0.5)
     const tournament = await Tournament.findById(req.params.id);
     if (!tournament)
       return res.status(404).json({ message: "Torneo non trovato" });
@@ -513,11 +470,7 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
         }
         if (tournament.teams) {
           const isInTeam = tournament.teams.some((t) =>
-<<<<<<< HEAD
-            t.teammates.includes(tUser.username),
-=======
             t.teammates.some(mate => (mate.username || mate) === tUser.username)
->>>>>>> 568815a (Update v0.0.5)
           );
           if (isInTeam) {
             return res
@@ -528,8 +481,6 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
       }
     }
 
-<<<<<<< HEAD
-=======
     // Prepare teammates data with status
     const teamMembers = [];
     if (teammates && teammates.length > 0) {
@@ -560,16 +511,11 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
       }
     }
 
->>>>>>> 568815a (Update v0.0.5)
     tournament.subscribers.push(user._id);
     if (tournament.format !== "solo") {
       tournament.teams.push({
         captain: user._id,
-<<<<<<< HEAD
-        teammates: teammates || [],
-=======
         teammates: teamMembers, // Now storing objects with status
->>>>>>> 568815a (Update v0.0.5)
       });
     }
     await tournament.save();
@@ -591,8 +537,6 @@ router.post("/tournaments/:id/join", ensureAuth, async (req, res) => {
 
     res.json({ message: "Iscrizione effettuata con successo", tournament });
   } catch (err) {
-<<<<<<< HEAD
-=======
     console.error("Errore iscrizione torneo:", err);
     res.status(500).json({ error: err.message });
   }
@@ -680,7 +624,6 @@ router.post("/notifications/:id/respond", ensureAuth, async (req, res) => {
 
     res.json({ message: `Invito ${action === 'accept' ? 'accettato' : 'rifiutato'}` });
   } catch (err) {
->>>>>>> 568815a (Update v0.0.5)
     res.status(500).json({ error: err.message });
   }
 });
@@ -697,40 +640,17 @@ router.post("/tournaments/:id/unsubscribe", ensureAuth, async (req, res) => {
       return res.status(404).json({ message: "Utente non trovato" });
     }
 
-<<<<<<< HEAD
-    const before = tournament.subscribers.length;
-=======
     // Rimuovi l'utente dalla lista iscritti principale
->>>>>>> 568815a (Update v0.0.5)
     tournament.subscribers = tournament.subscribers.filter(
       (sub) => sub.toString() !== user._id.toString(),
     );
 
-<<<<<<< HEAD
-    if (tournament.subscribers.length === before) {
-      return res
-        .status(400)
-        .json({ message: "Non sei iscritto a questo torneo" });
-    }
-
-    if (tournament.teams) {
-      tournament.teams = tournament.teams.filter(
-        (t) => t.captain.toString() !== user._id.toString(),
-      );
-    }
-
-    await tournament.save();
-
-=======
     // Rimuovi il torneo dal profilo utente
->>>>>>> 568815a (Update v0.0.5)
     user.tournaments = user.tournaments.filter(
       (tid) => tid.toString() !== tournament._id.toString(),
     );
     await user.save();
 
-<<<<<<< HEAD
-=======
     // Gestione Team: se l'utente è capitano, sciogli il team e pulisci i compagni
     if (tournament.teams) {
       const teamIndex = tournament.teams.findIndex(t => t.captain.toString() === user._id.toString());
@@ -777,7 +697,6 @@ router.post("/tournaments/:id/unsubscribe", ensureAuth, async (req, res) => {
 
     await tournament.save();
 
->>>>>>> 568815a (Update v0.0.5)
     req.app.get("io").emit("subscriptions:update", {
       type: "leave",
       tournamentId: tournament._id,
@@ -840,10 +759,7 @@ router.post("/memories", ensureAuth, async (req, res) => {
       authorId: req.user.discordId,
     });
     await memory.save();
-<<<<<<< HEAD
-=======
     req.app.get("io").emit("memory:update", { type: "create", memory });
->>>>>>> 568815a (Update v0.0.5)
     res.json(memory);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -871,10 +787,7 @@ router.delete("/memories/:id", ensureAuth, async (req, res) => {
     )
       return res.status(403).json({ message: "Non autorizzato" });
     await Memory.findByIdAndDelete(req.params.id);
-<<<<<<< HEAD
-=======
     req.app.get("io").emit("memory:update", { type: "delete", id: req.params.id });
->>>>>>> 568815a (Update v0.0.5)
     res.json({ message: "Memory eliminata" });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -950,10 +863,7 @@ router.put("/leaderboard/:username", protect, async (req, res) => {
       { new: true },
     );
     if (!user) return res.status(404).json({ message: "Utente non trovato" });
-<<<<<<< HEAD
-=======
     req.app.get("io").emit("leaderboard:update", { username: req.params.username });
->>>>>>> 568815a (Update v0.0.5)
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1032,40 +942,6 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
 
     const html = await response.text();
 
-<<<<<<< HEAD
-    // Funzione per estrarre le stats dall'HTML
-    const getStat = (labels, htmlContent) => {
-      for (const label of labels) {
-        const safeLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const regexes = [
-          new RegExp(`>\\s*${safeLabel}\\s*<[\\s\\S]*?>\\s*([\\d\\.]+)\\s*<`, "i"),
-          new RegExp(`${safeLabel}\\s*:\\s*([\\d\\.]+)`, "i"),
-          new RegExp(`${safeLabel}[^\\d]*?([\\d\\.]+)`, "i"),
-        ];
-        for (const regex of regexes) {
-          const match = htmlContent.match(regex);
-          if (match && match[1]) return parseInt(match[1].replace(/\./g, "").trim());
-        }
-      }
-      return null;
-    };
-
-    // Prova a leggere le stats dall'HTML
-    let stats = {
-      wins: getStat(["Vittorie", "Wins"], html),
-      kills: getStat(["Uccisioni", "Kills"], html),
-      deaths: getStat(["Morti", "Deaths"], html),
-      beds: getStat(["Letti rotti", "Letti distrutti", "Beds broken"], html),
-      finals: getStat(["Final kills", "Uccisioni finali", "Finali"], html),
-      finalDeaths: getStat(["Morti finali", "Final deaths"], html),
-      games: getStat(["Partite giocate", "Games played", "Partite"], html),
-      level: getStat(["Livello", "Level"], html),
-    };
-
-    // Se HTML non ha trovato nulla → fallback API JSON
-    const allNull = Object.values(stats).every((v) => v === null);
-    if (allNull) {
-=======
     // Funzione per estrarre le stats dall'HTML con parser migliorato
     const getStat = (labels, htmlContent, targetClassPart = null) => {
       for (const label of labels) {
@@ -1118,7 +994,6 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
     // Se HTML non ha trovato nulla → fallback API JSON
     const allZero = Object.values(stats).every((v) => v === 0);
     if (allZero) {
->>>>>>> 568815a (Update v0.0.5)
       try {
         const jsonResponse = await fetch(`https://coralmc.it/api/player/${username}`, {
           headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json" },
@@ -1127,18 +1002,6 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
         if (jsonResponse.ok) {
           const data = await jsonResponse.json();
           stats = {
-<<<<<<< HEAD
-            wins: data.stats?.wins ?? 0,
-            kills: data.stats?.kills ?? 0,
-            deaths: data.stats?.deaths ?? 0,
-            beds: data.stats?.bedsBroken ?? 0,
-            finals: data.stats?.finalKills ?? 0,
-            finalDeaths: data.stats?.finalDeaths ?? 0,
-            games: data.stats?.gamesPlayed ?? 0,
-            level: data.level ?? 0,
-          };
-          console.log(`Stats di ${username} caricate dal fallback API JSON`);
-=======
             wins: data.bedwars?.stats?.wins ?? data.wins ?? 0,
             losses: data.bedwars?.stats?.losses ?? data.losses ?? 0,
             kills: data.bedwars?.stats?.kills ?? data.kills ?? 0,
@@ -1154,7 +1017,6 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
           };
           console.log(`Stats di ${username} caricate dal fallback API JSON`);
           console.log(`Dati grezzi JSON:`, JSON.stringify(data, null, 2));
->>>>>>> 568815a (Update v0.0.5)
         } else {
           console.warn(`API JSON CoralMC fallita per ${username}, status: ${jsonResponse.status}`);
         }
@@ -1165,13 +1027,6 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
       console.log(`Stats di ${username} caricate dall'HTML`);
     }
 
-<<<<<<< HEAD
-    // Normalizza eventuali null a 0
-    for (const key in stats) {
-      if (stats[key] === null || stats[key] === undefined) stats[key] = 0;
-    }
-
-=======
     // Normalizza eventuali valori non numerici a 0
     for (const key in stats) {
       stats[key] = parseInt(stats[key]) || 0;
@@ -1183,14 +1038,10 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
     const wlr = losses > 0 ? parseFloat((stats.wins / losses).toFixed(2)) : stats.wins;
     const fkdr = (stats.finalDeaths || 0) > 0 ? parseFloat((stats.finals / stats.finalDeaths).toFixed(2)) : stats.finals;
 
->>>>>>> 568815a (Update v0.0.5)
     res.json({
       uuid,
       username,
       exists: true,
-<<<<<<< HEAD
-      stats,
-=======
       kills: stats.kills,
       deaths: stats.deaths,
       wins: stats.wins,
@@ -1206,7 +1057,6 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
       kdr,
       wlr,
       fkdr,
->>>>>>> 568815a (Update v0.0.5)
     });
 
   } catch (err) {

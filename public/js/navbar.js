@@ -15,14 +15,14 @@ function handleResponsiveAuth() {
   const actionsContainer = document.querySelector(".navbar-actions");
   const searchTrigger = document.getElementById("nav-search-trigger");
 
-<<<<<<< HEAD
-=======
+
+
   const notifWrapper = document.querySelector(".notification-wrapper");
   const mobileMenu = document.getElementById("mobile-menu");
   const userProfile = document.querySelector(".user-profile");
   const userChevron = document.querySelector(".user-info .fa-chevron-down");
 
->>>>>>> 568815a (Update v0.0.5)
+
   if (!navContent) return;
   const navWrapper = navContent.parentElement;
 
@@ -43,8 +43,8 @@ function handleResponsiveAuth() {
       navContent.prepend(searchTrigger);
       searchTrigger.style.margin = "1rem auto";
     }
-<<<<<<< HEAD
-=======
+
+
 
     if (notifWrapper && mobileMenu && navWrapper) {
       if (notifWrapper.parentElement !== navWrapper) {
@@ -58,7 +58,7 @@ function handleResponsiveAuth() {
       }
     }
     if (userChevron) userChevron.style.display = "none";
->>>>>>> 568815a (Update v0.0.5)
+
   } else {
     if (loginContainer && loginContainer.parentElement === navContent) {
       navWrapper.appendChild(loginContainer);
@@ -84,8 +84,8 @@ function handleResponsiveAuth() {
       navWrapper.appendChild(actionsContainer);
     if (loginContainer && loginContainer.parentElement === navWrapper)
       navWrapper.appendChild(loginContainer);
-<<<<<<< HEAD
-=======
+
+
 
     if (notifWrapper && userProfile) {
       if (notifWrapper.parentElement !== userProfile) {
@@ -99,7 +99,7 @@ function handleResponsiveAuth() {
       }
     }
     if (userChevron) userChevron.style.display = "";
->>>>>>> 568815a (Update v0.0.5)
+
   }
 }
 
@@ -123,10 +123,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (response.ok) {
       const user = await response.json();
       updateNavbarUI(user);
-<<<<<<< HEAD
-=======
       loadNotifications(); // Carica le notifiche
->>>>>>> 568815a (Update v0.0.5)
       handleResponsiveAuth();
     }
   } catch (error) {
@@ -147,7 +144,6 @@ function updateNavbarUI(user) {
   oldActionsContainer.style.display = "none";
   actionsContainer.style.display = "flex";
 
-<<<<<<< HEAD
   actionsContainer.innerHTML = `
         <div class="user-profile">
             <a href="/profile" class="user-info" style="text-decoration: none;">
@@ -160,7 +156,6 @@ function updateNavbarUI(user) {
             </a>
         </div>
     `;
-=======
   const existingPanel = document.getElementById("notification-panel");
   if (existingPanel) existingPanel.remove();
 
@@ -400,7 +395,7 @@ window.respondToInvite = async (id, action) => {
 async function markAsRead(id) {
   await fetch(`/api/notifications/${id}/read`, { method: "POST" });
   loadNotifications();
->>>>>>> 568815a (Update v0.0.5)
+
 }
 
 window.showToast = function (message, type = "info") {
