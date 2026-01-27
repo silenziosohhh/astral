@@ -427,10 +427,6 @@ async function renderUserProfile(user, username) {
             ].forEach((el) => {
               if (el) el.textContent = "-";
             });
-          if (typeof showToast === "function")
-            showToast(
-              `Player ${user.minecraftUsername} non trovato su Minecraft.`,
-            );
         }
       } catch (e) {
         console.error("Errore fetch CoralMC", e);

@@ -153,10 +153,10 @@ router.get("/me", ensureAuth, async (req, res) => {
 router.put("/me", ensureAuth, async (req, res) => {
   try {
     const { minecraftUsername } = req.body;
-    if (!minecraftUsername || minecraftUsername.trim().length < 3) {
+    if (!minecraftUsername || minecraftUsername.trim().length === 0) {
       return res
         .status(400)
-        .json({ message: "Nickname non valido (min 3 caratteri)" });
+        .json({ message: "Nickname non valido" });
     }
     const user = await User.findOne({ discordId: req.user.discordId });
     if (!user) return res.status(404).json({ message: "Utente non trovato" });
