@@ -11,13 +11,13 @@ async function loadTournament() {
 
   const [resT, resU] = await Promise.all([
     fetch(`/api/tournaments`),
-    fetch(`/api/me`).catch(() => ({ ok: false })),
+    fetch(`/api/session`).catch(() => ({ ok: false })),
   ]);
 
   const tournaments = await resT.json();
   const t = tournaments.find((t) => t._id === id);
   let user = null;
-  if (resU.ok) user = await resU.json();
+  if (resU.ok) user = (await resU.json()).user;
 
   if (!t) {
     document.getElementById("tournament-details").innerHTML =
@@ -172,6 +172,13 @@ async function loadTournament() {
       `;
   }
 
+  let participantsLabel = "Iscritti";
+  let participantsCount = t.subscribers.length;
+  if (isTeamFormat) {
+      participantsLabel = "Teams";
+      participantsCount = t.teams ? t.teams.length : 0;
+  }
+
   document.getElementById("tournament-details").innerHTML = `
     <style>
         .t-grid { display: grid; grid-template-columns: 1fr 350px; gap: 2rem; align-items: start; }
@@ -194,7 +201,7 @@ async function loadTournament() {
         <div class="main-col">
             <div class="t-card" style="margin-bottom: 2rem;">
                 <div style="height: 300px; width: 100%; overflow: hidden;">
-                    <img src="${t.image || "../images/astralcup-logo.png"}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <img src="${t.image || "../images/torneo_thumb.png"}" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
                 <div style="padding: 2rem;">
                     <h1 style="font-size: 2.2rem; margin-bottom: 1rem; color: #fff; line-height: 1.2;">${t.title}</h1>
@@ -231,8 +238,8 @@ async function loadTournament() {
                     <span class="t-info-val" style="text-transform: uppercase;">${t.format || "SOLO"}</span>
                 </div>
                 <div class="t-info-row">
-                    <span class="t-info-label"><i class="fas fa-users"></i> Iscritti</span>
-                    <span class="t-info-val">${t.subscribers.length}</span>
+                    <span class="t-info-label"><i class="fas fa-users"></i> ${participantsLabel}</span>
+                    <span class="t-info-val">${participantsCount}</span>
                 </div>
 
                 <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 12px;">
@@ -295,6 +302,8 @@ async function loadTournament() {
   if (viewSubBtn) {
     viewSubBtn.onclick = () => openSubscriptionModal(t._id);
   }
+
+  if (typeof window.enablePageInteractions === 'function') window.enablePageInteractions();
 }
 
 window.addEventListener("DOMContentLoaded", loadTournament);
@@ -477,12 +486,12 @@ async function openSubscriptionModal(tid) {
 
     const [resT, resU] = await Promise.all([
       fetch("/api/tournaments"),
-      fetch("/api/me").catch(() => ({ ok: false }))
+      fetch("/api/session").catch(() => ({ ok: false }))
     ]);
     const tournaments = await resT.json();
     const tournament = tournaments.find(t => t._id === tid);
     let user = null;
-    if (resU.ok) user = await resU.json();
+    if (resU.ok) user = (await resU.json()).user;
 
     if (!tournament) return;
 

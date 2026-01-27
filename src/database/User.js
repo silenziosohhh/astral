@@ -30,7 +30,14 @@ const UserSchema = new mongoose.Schema({
   notificationSettings: {
     tournamentStart: { type: Boolean, default: true },
     tournamentUpdates: { type: Boolean, default: true },
-    tournamentEnd: { type: Boolean, default: true }
+    tournamentEnd: { type: Boolean, default: true },
+    newTournament: { type: Boolean, default: true }
+  },
+  privacySettings: {
+    showBedwarsStats: { type: Boolean, default: true },
+    showSocials: { type: Boolean, default: true },
+    showSkills: { type: Boolean, default: true },
+    showMemories: { type: Boolean, default: true }
   },
   recentSearches: [{
     username: String,

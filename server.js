@@ -46,18 +46,22 @@ app.get("/torneo", async (req, res) => {
         fs.readFile(filePath, "utf8", (err, data) => {
           if (err) return res.status(500).send("Errore caricamento pagina");
           
-          const ogImage = `https://res.cloudinary.com/demo/image/upload/l_text:Arial_60_bold:${encodeURIComponent(t.title)},co_rgb:ffffff,g_center,y_-40/l_text:Arial_40:Partecipanti%3A%20${t.subscribers.length},co_rgb:60a5fa,g_center,y_40,w_600/v1690000000/astralcup_bg.png`;
+          let ogImage = t.image;
+          if (!ogImage) {
+             ogImage = `https://res.cloudinary.com/demo/image/upload/l_text:Arial_60_bold:${encodeURIComponent(t.title)},co_rgb:ffffff,g_center,y_-40/l_text:Arial_40:Partecipanti%3A%20${t.subscribers.length},co_rgb:60a5fa,g_center,y_40,w_600/v1690000000/astralcup_bg.png`;
+          }
+          const description = t.description || `Partecipa a ${t.title} su Astral Cup! Iscritti: ${t.subscribers.length}`;
           
           let html = data.replace(/<title>.*<\/title>/, `<title>${t.title} | Astral Cup</title>`);
           const metaTags = `
             <meta property="og:title" content="${t.title} | Astral Cup" />
-            <meta property="og:description" content="Partecipa a ${t.title} su Astral Cup! Iscritti: ${t.subscribers.length}" />
+            <meta property="og:description" content="${description}" />
             <meta property="og:image" content="${ogImage}" />
             <meta property="og:type" content="website" />
             <meta property="og:url" content="${req.protocol}://${req.get("host")}${req.originalUrl}" />
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:title" content="${t.title} | Astral Cup" />
-            <meta name="twitter:description" content="Partecipa a ${t.title} su Astral Cup! Iscritti: ${t.subscribers.length}" />
+            <meta name="twitter:description" content="${description}" />
             <meta name="twitter:image" content="${ogImage}" />
           `;
           html = html.replace("</head>", `${metaTags}</head>`);
@@ -71,41 +75,45 @@ app.get("/torneo", async (req, res) => {
 });
 
 app.get("/torneo/:id", async (req, res) => {
-  const Tournament = require("./src/database/Tournament");
-  try {
-    const t = await Tournament.findById(req.params.id).populate({
-      path: "subscribers",
-      select: "username avatar discordId",
-    });
-    if (!t) return res.status(404).send("Torneo non trovato");
-    const ogImage = `https://res.cloudinary.com/demo/image/upload/l_text:Arial_60_bold:${encodeURIComponent(t.title)},co_rgb:ffffff,g_center,y_-40/l_text:Arial_40:Partecipanti%3A%20${t.subscribers.length},co_rgb:60a5fa,g_center,y_40,w_600/v1690000000/astralcup_bg.png`;
-    res.send(`
-      <!DOCTYPE html>
-      <html lang="it">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>${t.title} | Astral Cup</title>
+  const { id } = req.params;
+  const filePath = path.join(__dirname, "public", "pages", "torneo.html");
+
+  fs.readFile(filePath, "utf8", async (err, data) => {
+    if (err) return res.status(500).send("Errore caricamento pagina");
+
+    const Tournament = require("./src/database/Tournament");
+    try {
+      const t = await Tournament.findById(id).populate({
+        path: "subscribers",
+        select: "username avatar discordId",
+      });
+      if (!t) return res.status(404).send("Torneo non trovato");
+
+      let ogImage = t.image;
+      if (!ogImage) {
+         ogImage = `https://res.cloudinary.com/demo/image/upload/l_text:Arial_60_bold:${encodeURIComponent(t.title)},co_rgb:ffffff,g_center,y_-40/l_text:Arial_40:Partecipanti%3A%20${t.subscribers.length},co_rgb:60a5fa,g_center,y_40,w_600/v1690000000/astralcup_bg.png`;
+      }
+      const description = t.description || `Partecipa a ${t.title} su Astral Cup! Iscritti: ${t.subscribers.length}`;
+      const url = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
+
+      let html = data.replace(/<title>.*<\/title>/, `<title>${t.title} | Astral Cup</title>`);
+      const metaTags = `
         <meta property="og:title" content="${t.title} | Astral Cup" />
-        <meta property="og:description" content="Partecipa a ${t.title} su Astral Cup! Iscritti: ${t.subscribers.length}" />
+        <meta property="og:description" content="${description}" />
         <meta property="og:image" content="${ogImage}" />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="${req.protocol}://${req.get("host")}${req.originalUrl}" />
+        <meta property="og:url" content="${url}" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="${t.title} | Astral Cup" />
-        <meta name="twitter:description" content="Partecipa a ${t.title} su Astral Cup! Iscritti: ${t.subscribers.length}" />
+        <meta name="twitter:description" content="${description}" />
         <meta name="twitter:image" content="${ogImage}" />
-        <link rel="stylesheet" href="/styles/main.css" />
-        <link rel="icon" type="image/x-icon" href="/images/astralcup-logo.png">
-      </head>
-      <body>
-        <script>window.location.replace('/torneo?tid=${t._id}');</script>
-      </body>
-      </html>
-    `);
-  } catch (err) {
-    res.status(500).send("Errore caricamento torneo");
-  }
+      `;
+      html = html.replace("</head>", `${metaTags}</head>`);
+      res.send(html);
+    } catch (err) {
+      res.status(500).send("Errore caricamento torneo");
+    }
+  });
 });
 
 mongoose
@@ -152,7 +160,65 @@ app.get("/profile", (req, res) => {
 });
 
 app.get("/profile/:username", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "pages", "profile.html"));
+  const { username } = req.params;
+  const { memory: memoryId } = req.query;
+  const filePath = path.join(__dirname, "public", "pages", "profile.html");
+
+  fs.readFile(filePath, "utf8", async (err, data) => {
+    if (err) return res.status(500).send("Errore caricamento pagina");
+
+    let title = `${username} | Astral Cup`;
+    let description = `Guarda il profilo di ${username} su Astral Cup!`;
+    let image = `${req.protocol}://${req.get("host")}/images/astralcup-logo.png`;
+    const url = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
+
+    try {
+      const User = require("./src/database/User");
+      const usernameRegex = new RegExp(`^${username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
+      const user = await User.findOne({ username: { $regex: usernameRegex } }).lean();
+
+      if (user) {
+        if (memoryId) {
+           const Memory = require("./src/database/Memory");
+           const memory = await Memory.findById(memoryId);
+           if (memory) {
+             title = `${memory.title} | Memory di ${user.username}`;
+             description = memory.description || `Guarda questa clip epica di ${user.username}!`;
+             
+             if (memory.videoUrl) {
+                if (memory.videoUrl.includes("youtube") || memory.videoUrl.includes("youtu.be")) {
+                    const match = memory.videoUrl.match(/[?&]v=([^&#]+)/) || memory.videoUrl.match(/youtu\.be\/([^?&#]+)/);
+                    if (match && match[1]) image = `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
+                } else if (/\.(jpg|jpeg|png|webp|gif)$/i.test(memory.videoUrl)) {
+                    image = memory.videoUrl;
+                }
+             }
+           }
+        } else {
+           title = `${user.username} | Profilo Astral Cup`;
+           description = `Livello: ${user.points || 0} • Wins: ${user.wins || 0} • Kills: ${user.kills || 0}`;
+           image = `${req.protocol}://${req.get("host")}/api/users/${encodeURIComponent(user.username)}/preview-image?v=${Date.now()}`;
+        }
+      }
+    } catch (e) {
+      console.error("Error generating OG tags:", e);
+    }
+
+    let html = data.replace(/<title>.*<\/title>/, `<title>${title}</title>`);
+    const metaTags = `
+      <meta property="og:title" content="${title}" />
+      <meta property="og:description" content="${description}" />
+      <meta property="og:image" content="${image}" />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content="${url}" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="${title}" />
+      <meta name="twitter:description" content="${description}" />
+      <meta name="twitter:image" content="${image}" />
+    `;
+    html = html.replace("</head>", `${metaTags}</head>`);
+    res.send(html);
+  });
 });
 
 app.get("/pages/admin.html", (req, res) => res.redirect("/admin"));

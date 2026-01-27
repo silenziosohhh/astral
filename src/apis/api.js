@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const path = require("path");
 const router = express.Router();
 const Tournament = require("../database/Tournament");
 const Memory = require("../database/Memory");
@@ -60,9 +61,60 @@ const sendNotification = async (io, userId, message, type = 'system', data = nul
   } catch (e) { console.error("Notification Error:", e); }
 };
 
+const sendStatusNotification = async (io, userId, message, tournamentId) => {
+  try {
+    const user = await User.findById(userId);
+    if (user) {
+      user.notifications = user.notifications || [];
+      
+      // Cerca se esiste già una notifica di stato per questo torneo
+      const existing = user.notifications.find(n => 
+        n.type === 'tournament_status' && 
+        n.data && n.data.tournamentId && n.data.tournamentId.toString() === tournamentId.toString()
+      );
+
+      if (existing) {
+        // Aggiorna la notifica esistente
+        existing.message = message;
+        existing.read = false; // Segna come non letta per notificare l'utente
+        existing.createdAt = new Date(); // Aggiorna la data per portarla in cima
+      } else {
+        // Crea una nuova notifica se non esiste
+        user.notifications.push({
+          type: 'tournament_status',
+          message,
+          data: { tournamentId, link: `/torneo?tid=${tournamentId}` },
+          read: false,
+          createdAt: new Date()
+        });
+      }
+      
+      await user.save();
+      if (io) {
+        const notifToSend = existing || user.notifications[user.notifications.length - 1];
+        io.to(user.discordId).emit("notification", notifToSend);
+      }
+    }
+  } catch (e) { console.error("Status Notification Error:", e); }
+};
+
+router.get("/session", async (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.json({ user: null });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findOne({ discordId: decoded.discordId }).select("discordId username avatar role");
+    res.json({ user });
+  } catch (err) {
+    res.json({ user: null });
+  }
+});
+
 router.get("/me", ensureAuth, async (req, res) => {
   try {
-    const user = await User.findOne({ discordId: req.user.discordId });
+    res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+    const user = await User.findOne({ discordId: req.user.discordId }).lean();
     if (!user) return res.status(404).json({ message: "Utente non trovato" });
 
     res.json({
@@ -74,11 +126,23 @@ router.get("/me", ensureAuth, async (req, res) => {
       skills: user.skills || [],
       socials: user.socials || {},
       notifications: user.notifications || [],
-      notificationSettings: user.notificationSettings || {
+      notificationSettings: {
         tournamentStart: true,
         tournamentUpdates: true,
-        tournamentEnd: true
-      }
+        tournamentEnd: true,
+        newTournament: true,
+        ...(user.notificationSettings || {})
+      },
+      privacySettings: {
+        showBedwarsStats: true,
+        showSocials: true,
+        showSkills: true,
+        showMemories: true,
+        ...(user.privacySettings || {})
+      },
+      profileLikesCount: user.profileLikes ? user.profileLikes.length : 0,
+      isProfileLiked: user.profileLikes ? user.profileLikes.includes(user.discordId) : false,
+      isSelf: true
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -143,13 +207,42 @@ router.put("/me/socials", ensureAuth, async (req, res) => {
 
 router.put("/me/notification-settings", ensureAuth, async (req, res) => {
   try {
-    const { tournamentStart, tournamentUpdates, tournamentEnd } = req.body;
+    const { tournamentStart, tournamentUpdates, tournamentEnd, newTournament } = req.body;
     const user = await User.findOne({ discordId: req.user.discordId });
     if (!user) return res.status(404).json({ message: "Utente non trovato" });
 
-    user.notificationSettings = { tournamentStart, tournamentUpdates, tournamentEnd };
+    const current = user.notificationSettings || {};
+    user.notificationSettings = {
+        tournamentStart: tournamentStart !== undefined ? tournamentStart : current.tournamentStart,
+        tournamentUpdates: tournamentUpdates !== undefined ? tournamentUpdates : current.tournamentUpdates,
+        tournamentEnd: tournamentEnd !== undefined ? tournamentEnd : current.tournamentEnd,
+        newTournament: newTournament !== undefined ? newTournament : current.newTournament
+    };
+    user.markModified('notificationSettings');
     await user.save();
     res.json({ message: "Impostazioni aggiornate", notificationSettings: user.notificationSettings });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put("/me/privacy-settings", ensureAuth, async (req, res) => {
+  try {
+    const { showBedwarsStats, showSocials, showSkills, showMemories } = req.body;
+    const user = await User.findOne({ discordId: req.user.discordId });
+    if (!user) return res.status(404).json({ message: "Utente non trovato" });
+
+    // Merge con le impostazioni esistenti per evitare di sovrascrivere con undefined
+    const current = user.privacySettings || {};
+    user.privacySettings = {
+        showBedwarsStats: showBedwarsStats !== undefined ? showBedwarsStats : current.showBedwarsStats,
+        showSocials: showSocials !== undefined ? showSocials : current.showSocials,
+        showSkills: showSkills !== undefined ? showSkills : current.showSkills,
+        showMemories: showMemories !== undefined ? showMemories : current.showMemories
+    };
+    user.markModified('privacySettings');
+    await user.save();
+    res.json({ message: "Impostazioni privacy aggiornate", privacySettings: user.privacySettings });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -201,7 +294,10 @@ router.get("/users/search", async (req, res) => {
     const query = req.query.q;
     if (!query || query.length < 2) return res.json([]);
     const users = await User.find({
-      username: { $regex: query, $options: "i" },
+      $or: [
+        { username: { $regex: query, $options: "i" } },
+        { minecraftUsername: { $regex: query, $options: "i" } }
+      ]
     })
       .limit(5)
       .select("username avatar discordId minecraftUsername");
@@ -213,12 +309,38 @@ router.get("/users/search", async (req, res) => {
 
 router.get("/users/:username", async (req, res) => {
   try {
+    res.header("Cache-Control", "no-cache, no-store, must-revalidate");
     const usernameRegex = new RegExp(
       `^${req.params.username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
       "i",
     );
-    const user = await User.findOne({ username: { $regex: usernameRegex } });
+    const user = await User.findOne({
+      $or: [
+        { username: { $regex: usernameRegex } },
+        { minecraftUsername: { $regex: usernameRegex } }
+      ]
+    }).lean();
     if (!user) return res.status(404).json({ message: "Utente non trovato" });
+
+    // Check if liked by requester
+    let isLiked = false;
+    let isSelf = false;
+    const token = req.cookies ? req.cookies.token : null;
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            if (user.profileLikes && user.profileLikes.includes(decoded.discordId)) {
+                isLiked = true;
+            }
+            if (decoded.discordId === user.discordId) isSelf = true;
+        } catch (e) {}
+    }
+
+    const privacy = user.privacySettings || {};
+    const showSocials = isSelf || privacy.showSocials !== false;
+    const showSkills = isSelf || privacy.showSkills !== false;
+    const showBedwarsStats = isSelf || privacy.showBedwarsStats !== false;
+    const showMemories = isSelf || privacy.showMemories !== false;
 
     res.json({
       username: user.username,
@@ -229,9 +351,150 @@ router.get("/users/:username", async (req, res) => {
       wins: user.wins,
       kills: user.kills,
       points: user.points,
-      skills: user.skills || [],
-      socials: user.socials || {},
+      skills: showSkills ? (user.skills || []) : [],
+      socials: showSocials ? (user.socials || {}) : {},
+      profileLikesCount: user.profileLikes ? user.profileLikes.length : 0,
+      isProfileLiked: isLiked,
+      showBedwarsStats,
+      showSocials,
+      showSkills,
+      showMemories,
+      isSelf
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/users/:username/preview-image", async (req, res) => {
+  try {
+    const { username } = req.params;
+    
+    const usernameRegex = new RegExp(`^${username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
+    const user = await User.findOne({
+      $or: [
+        { username: { $regex: usernameRegex } },
+        { minecraftUsername: { $regex: usernameRegex } }
+      ]
+    }).lean();
+
+    if (!user) return res.status(404).send("User not found");
+
+    let Canvas;
+    try {
+        Canvas = require('canvas');
+    } catch (e) {
+        console.error("Canvas non installato. Esegui: npm install canvas");
+        return res.status(500).send("Server configuration error: Canvas missing");
+    }
+
+    const width = 1200;
+    const height = 630;
+    const canvas = Canvas.createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+
+    const templatePath = path.join(__dirname, '../../public/images/user-embedded.png');
+    try {
+        const background = await Canvas.loadImage(templatePath);
+        ctx.drawImage(background, 0, 0, width, height);
+    } catch (e) {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, width, height);
+    }
+
+    let avatarUrl = "https://cdn.discordapp.com/embed/avatars/0.png";
+    if (user.avatar) {
+        avatarUrl = `https://cdn.discordapp.com/avatars/${user.discordId}/${user.avatar}.png`;
+    }
+
+    try {
+        const avatar = await Canvas.loadImage(avatarUrl);
+        const avatarSize = 250;
+        const avatarX = 100;
+        const avatarY = (height - avatarSize) / 2;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(avatar, avatarX, avatarY, avatarSize, avatarSize);
+        ctx.restore();
+        
+        ctx.beginPath();
+        ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2, true);
+        ctx.lineWidth = 8;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+    } catch (e) { console.error("Errore avatar canvas:", e); }
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 80px sans-serif';
+    ctx.shadowColor = "rgba(0,0,0,0.8)";
+    ctx.shadowBlur = 10;
+    ctx.fillText(user.username, 400, 250);
+
+    ctx.font = '40px sans-serif';
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillText(`Wins: ${user.wins || 0}  •  Kills: ${user.kills || 0}`, 400, 330);
+    
+    if (user.minecraftUsername) {
+        ctx.font = '30px sans-serif';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`MC: ${user.minecraftUsername}`, 400, 380);
+    }
+
+    const buffer = canvas.toBuffer('image/png');
+    res.set('Content-Type', 'image/png');
+    res.send(buffer);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error generating image");
+  }
+});
+
+router.post("/users/:username/like", ensureAuth, async (req, res) => {
+  try {
+    const usernameRegex = new RegExp(
+      `^${req.params.username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+      "i",
+    );
+    const user = await User.findOne({
+      $or: [
+        { username: { $regex: usernameRegex } },
+        { minecraftUsername: { $regex: usernameRegex } }
+      ]
+    }).lean();
+    if (!user) return res.status(404).json({ message: "Utente non trovato" });
+
+    let profileLikes = user.profileLikes || [];
+    
+    const likerId = req.user.discordId;
+    const index = profileLikes.indexOf(likerId);
+    let liked = false;
+
+    if (index === -1) {
+      await User.collection.updateOne({ _id: user._id }, { $addToSet: { profileLikes: likerId } });
+      profileLikes.push(likerId);
+      liked = true;
+      
+      if (likerId !== user.discordId) {
+         const liker = await User.findOne({ discordId: likerId }).lean();
+         const likerName = liker ? liker.username : "Un utente";
+         await sendNotification(req.app.get("io"), user._id, `A ${likerName} piace il tuo profilo`, 'info', { link: `/profile/${likerName}` });
+      }
+    } else {
+      await User.collection.updateOne({ _id: user._id }, { $pull: { profileLikes: likerId } });
+      profileLikes = profileLikes.filter(id => id !== likerId);
+    }
+
+    req.app.get("io").emit("profile:update", {
+      username: user.username,
+      profileLikesCount: profileLikes.length
+    });
+
+    res.json({ liked, count: profileLikes.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -243,8 +506,25 @@ router.get("/users/:username/memories", async (req, res) => {
       `^${req.params.username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
       "i",
     );
-    const user = await User.findOne({ username: { $regex: usernameRegex } });
+    const user = await User.findOne({
+      $or: [
+        { username: { $regex: usernameRegex } },
+        { minecraftUsername: { $regex: usernameRegex } }
+      ]
+    });
     if (!user) return res.status(404).json({ message: "Utente non trovato" });
+
+    let isSelf = false;
+    const token = req.cookies.token;
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            if (decoded.discordId === user.discordId) isSelf = true;
+        } catch (e) {}
+    }
+
+    const privacy = user.privacySettings || {};
+    if (!isSelf && privacy.showMemories === false) return res.json([]);
 
     const memories = await Memory.find({ authorId: user.discordId }).sort({
       createdAt: -1,
@@ -278,7 +558,7 @@ router.post("/tournaments", protect, async (req, res) => {
     const tournament = new Tournament(req.body);
     await tournament.save();
 
-    // Crea la notifica per tutti gli utenti nel database
+    // Crea la notifica per gli utenti che hanno l'impostazione attiva (o default)
     const notif = {
       _id: new mongoose.Types.ObjectId(),
       type: 'system',
@@ -287,7 +567,12 @@ router.post("/tournaments", protect, async (req, res) => {
       createdAt: new Date(),
       data: { link: `/torneo?tid=${tournament._id}` }
     };
-    await User.collection.updateMany({}, { $push: { notifications: notif } });
+    await User.collection.updateMany({
+      $or: [
+        { "notificationSettings.newTournament": true },
+        { "notificationSettings.newTournament": { $exists: false } }
+      ]
+    }, { $push: { notifications: notif } });
 
     req.app
       .get("io")
@@ -358,7 +643,7 @@ router.put("/tournaments/:id", protect, async (req, res) => {
         for (const sub of subscribers) {
           const settings = sub.notificationSettings || { tournamentStart: true };
           if (settings.tournamentStart) {
-            await sendNotification(req.app.get("io"), sub._id, `Il torneo ${tournament.title} è iniziato!`, 'info', { link: `/torneo?tid=${tournament._id}` });
+            await sendStatusNotification(req.app.get("io"), sub._id, `Il torneo ${tournament.title} è iniziato!`, tournament._id);
           }
         }
       }
@@ -368,7 +653,7 @@ router.put("/tournaments/:id", protect, async (req, res) => {
         for (const sub of subscribers) {
           const settings = sub.notificationSettings || { tournamentEnd: true };
           if (settings.tournamentEnd) {
-            await sendNotification(req.app.get("io"), sub._id, `Il torneo ${tournament.title} è terminato.`, 'info', { link: `/torneo?tid=${tournament._id}` });
+            await sendStatusNotification(req.app.get("io"), sub._id, `Il torneo ${tournament.title} è terminato.`, tournament._id);
           }
         }
       }
@@ -378,7 +663,17 @@ router.put("/tournaments/:id", protect, async (req, res) => {
         for (const sub of subscribers) {
           const settings = sub.notificationSettings || { tournamentUpdates: true };
           if (settings.tournamentUpdates) {
-            await sendNotification(req.app.get("io"), sub._id, `Il torneo ${tournament.title} è in pausa.`, 'warning', { link: `/torneo?tid=${tournament._id}` });
+            await sendStatusNotification(req.app.get("io"), sub._id, `Il torneo ${tournament.title} è in pausa.`, tournament._id);
+          }
+        }
+      }
+      // LOGICA RIAPERTURA TORNEO
+      else if (status === "Aperto") {
+        const subscribers = await User.find({ _id: { $in: tournament.subscribers } });
+        for (const sub of subscribers) {
+          const settings = sub.notificationSettings || { tournamentUpdates: true };
+          if (settings.tournamentUpdates) {
+            await sendStatusNotification(req.app.get("io"), sub._id, `Il torneo ${tournament.title} è stato riaperto.`, tournament._id);
           }
         }
       }
@@ -387,7 +682,7 @@ router.put("/tournaments/:id", protect, async (req, res) => {
     await tournament.save();
     
     // Emetti evento socket per aggiornare i client in tempo reale
-    req.app.get("io").emit("tournaments:update", { type: "update", tournament });
+    req.app.get("io").emit("tournaments:update", { type: "update", action: "status_change", tournament });
     
     res.json(tournament);
   } catch (err) {
@@ -1137,6 +1432,7 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
       console.warn(`UUID non trovato per ${username}: ${e.message}`);
     }
 
+    /*
     // Fetch HTML della pagina CoralMC
     const response = await fetch(`https://coralmc.it/it/stats/player/${username}`, {
       headers: { "User-Agent": "Mozilla/5.0" },
@@ -1231,6 +1527,38 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
       }
     } else {
       console.log(`Stats di ${username} caricate dall'HTML`);
+    }
+    */
+
+    let stats = {
+      wins: 0, losses: 0, kills: 0, deaths: 0, beds: 0, finals: 0, finalDeaths: 0,
+      games: 0, level: 0, winstreak: 0, topWinstreak: 0, coins: 0
+    };
+
+    try {
+      const response = await fetch(`https://api.spacevalley.eu/bedwars/users/${username}/stats`);
+      if (response.status === 404) {
+        return res.status(404).json({ exists: false, message: "Player non trovato" });
+      }
+      if (response.ok) {
+        const data = await response.json();
+        stats = {
+            wins: data.wins || 0,
+            losses: data.looses || data.losses || 0,
+            kills: data.kills || 0,
+            deaths: data.deaths || 0,
+            beds: data.beds_destroyed || data.beds_broken || data.beds || 0,
+            finals: data.final_kills || data.finals || 0,
+            finalDeaths: data.final_deaths || data.finalDeaths || 0,
+            games: data.games_played || data.games || 0,
+            level: data.level || 0,
+            winstreak: data.currentStreak || data.winstreak || 0,
+            topWinstreak: data.maxStreak || data.highest_winstreak || data.topWinstreak || 0,
+            coins: data.coins || 0
+        };
+      }
+    } catch (e) {
+      console.error(`Errore API SpaceValley per ${username}:`, e);
     }
 
     // Normalizza eventuali valori non numerici a 0

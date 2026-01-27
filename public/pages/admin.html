@@ -13,6 +13,83 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
     <link rel="icon" type="image/x-icon" href="/images/astralcup-logo.png" />
+    <style>
+        .admin-card-modern {
+            background: #1e293b;
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            height: 100%;
+            width: 100%;
+            max-width: 800px;
+            overflow: visible;
+        }
+        .input-modern-group {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            transition: border-color 0.2s;
+            max-width: 100%;
+            overflow: visible;
+        }
+        .input-modern-group:focus-within {
+            border-color: var(--primary-2);
+        }
+        .input-modern {
+            background: transparent;
+            border: none;
+            color: #fff;
+            padding: 12px 0;
+            width: auto;
+            flex: 1;
+            outline: none;
+            min-width: 0;
+            max-width: 100%;
+        }
+        .admin-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .admin-form-grid {
+                grid-template-columns: 1fr;
+            }
+            .admin-card-modern {
+                padding: 1rem;
+            }
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .admin-table th {
+            text-align: left;
+            padding: 15px;
+            color: #94a3b8;
+            font-weight: 600;
+            background: #0f172a;
+            white-space: nowrap;
+        }
+        .admin-table td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: #e2e8f0;
+            white-space: nowrap;
+        }
+        .admin-table tr:last-child td {
+            border-bottom: none;
+        }
+        /* Override for admin form integration */
+        .admin-form .custom-select__trigger {
+            background: transparent;
+            border: none;
+            padding: 12px 0;
+        }
+    </style>
   </head>
   <body>
     <nav class="navbar">
@@ -25,13 +102,11 @@
         <div class="navbar-content">
           <ul class="navbar-menu">
             <li>
-              <a href="/admin/classifica">Gestione Classifica</a>
+              <a href="/admin/iscrizioni">Iscrizioni</a>
             </li>
             <li>
-              <a href="/admin/iscrizioni">Gestione Iscrizioni</a>
+              <a href="/admin/tornei">Tornei</a>
             </li>
-            <li><a href="/admin/tornei">Gestione Tornei</a></li>
-            <li><a href="/admin/user">Gestione Utenti</a></li>
           </ul>
           <div class="navbar-actions">
             <a href="/discord" class="btn-discord outline-glow"
@@ -49,118 +124,147 @@
       </div>
     </nav>
 
-    <div class="container" style="padding-top: 120px; padding-bottom: 50px">
-      <h1 class="section-title">Dashboard Amministrazione</h1>
+    <div class="container" style="padding-top: 120px; padding-bottom: 50px; max-width: 100vw; overflow-x: hidden; padding-left: 15px; padding-right: 15px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h1 class="section-title" style="margin-bottom: 0.5rem; text-align: left;">Dashboard Amministrazione</h1>
+            <p style="color: #94a3b8; margin: 0;">Gestisci tornei, utenti e classifiche.</p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+             <a href="/admin/iscrizioni" class="btn-visit" style="font-size: 0.9rem; padding: 12px 16px; justify-content: center; align-items: center; text-align: center;"><i class="fas fa-users"></i> Iscrizioni</a>
+             <a href="/admin/tornei" class="btn-visit" style="font-size: 0.9rem; padding: 12px 16px; justify-content: center; align-items: center; text-align: center;"><i class="fas fa-trophy"></i> Tornei</a>
+          </div>
+      </div>
 
-      <section class="admin-card">
-        <h2><i class="fas fa-plus-circle"></i> Crea Nuovo Torneo</h2>
-        <form class="admin-form">
-          <div class="form-group">
-            <label>Titolo Torneo</label>
-            <div class="input-group">
-              <i class="fas fa-trophy"></i>
-              <input type="text" placeholder="Es. Astral Weekly #45" required />
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Formato</label>
-            <div class="input-group">
-              <i class="fas fa-users"></i>
-              <select id="tournament-format" style="width: 100%; background: transparent; border: none; color: #fff; outline: none; padding: 5px;">
-                <option value="solo" style="background: #1e293b;">Solo (1v1)</option>
-                <option value="duo" style="background: #1e293b;">Duo (2v2)</option>
-                <option value="trio" style="background: #1e293b;">Trio (3v3)</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Data e Ora</label>
-              <div class="input-group">
-                <i class="fas fa-calendar-alt"></i>
-                <input type="datetime-local" required />
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Montepremi</label>
-              <div class="input-group">
-                <i class="fas fa-euro-sign"></i>
-                <input type="text" placeholder="Es. 50€" />
-              </div>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>URL Immagine</label>
-            <div class="input-group">
-              <i class="fas fa-image"></i>
-              <input type="url" placeholder="https://..." />
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Descrizione</label>
-            <div class="input-group">
-              <i
-                class="fas fa-align-left"
-                style="top: 20px; transform: none"
-              ></i>
-              <textarea
-                rows="4"
-                placeholder="Dettagli del torneo..."
-              ></textarea>
-            </div>
-          </div>
-          <button
-            type="submit"
-            class="btn-cta"
-            style="width: 100%; border: none; cursor: pointer"
-          >
-            Pubblica Torneo
-          </button>
-        </form>
-      </section>
+      <div style="display: flex; flex-direction: column; gap: 2rem; justify-content: center; align-items: center;">
+        <section class="admin-card-modern">
+            <h2 style="color: #fff; margin-bottom: 1.5rem; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span style="background: rgba(16, 185, 129, 0.1); color: #34d399; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 1.2rem; flex-shrink: 0;"><i class="fas fa-plus"></i></span>
+                Crea Nuovo Torneo
+            </h2>
+            <form class="admin-form admin-form-grid">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-weight: 500;">Titolo Torneo</label>
+                    <div class="input-modern-group">
+                        <i class="fas fa-id" style="color: #64748b; margin-right: 10px;"></i>
+                        <input type="text" class="input-modern" placeholder="Es. Astral Weekly #45" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-weight: 500;">Formato</label>
+                    <div class="input-modern-group" style="position: relative; z-index: 0;">
+                        <i class="fas fa-users" style="color: #64748b; margin-right: 10px;"></i>
+                        <div class="custom-select" id="format-select-wrapper" style="flex: 1;">
+                            <div class="custom-select__trigger">
+                                <span id="format-selected-text">Solo (1v1)</span>
+                                <i class="fas fa-chevron-down" style="font-size: 0.8rem; color: #94a3b8; transition: transform 0.2s;"></i>
+                            </div>
+                            <div class="custom-options">
+                                <div class="custom-option selected" data-value="solo"><i class="fas fa-user" style="margin-right: 8px; width: 20px; text-align: center;"></i>Solo (1v1)</div>
+                                <div class="custom-option" data-value="duo"><i class="fas fa-user-friends" style="margin-right: 8px; width: 20px; text-align: center;"></i>Duo (2v2)</div>
+                                <div class="custom-option" data-value="trio"><i class="fas fa-users" style="margin-right: 8px; width: 20px; text-align: center;"></i>Trio (3v3)</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="tournament-format" value="solo">
+                    </div>
+                </div>
 
-      <section class="admin-card">
-        <h2><i class="fas fa-list"></i> Lista Tornei</h2>
-        <div class="table-responsive">
-          <table class="admin-table">
-            <tbody id="admin-tournaments-body"></tbody>
-          </table>
-        </div>
-      </section>
+                <div class="form-group">
+                    <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-weight: 500;">Data e Ora</label>
+                    <div class="input-modern-group">
+                        <input type="datetime-local" class="input-modern" required style="color-scheme: dark;">
+                    </div>
+                </div>
 
-      <section class="admin-card">
-        <h2><i class="fas fa-trophy"></i> Gestione Classifica</h2>
-        <div class="table-responsive">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Utente</th>
-                <th>Wins</th>
-                <th>Final Kills</th>
-                <th>Bed Broken</th>
-                <th>Punti</th>
-                <th>Azioni</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <input type="text" value="ProPlayer99" class="input-sm" />
-                </td>
-                <td><input type="number" value="10" class="input-sm" /></td>
-                <td><input type="number" value="50" class="input-sm" /></td>
-                <td><input type="number" value="20" class="input-sm" /></td>
-                <td><strong>1500</strong></td>
-                <td>
-                  <button class="btn-icon save">
-                    <i class="fas fa-check"></i>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+                <div class="form-group">
+                    <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-weight: 500;">Montepremi</label>
+                    <div class="input-modern-group">
+                        <i class="fas fa-trophy" style="color: #64748b; margin-right: 10px;"></i>
+                        <input type="text" class="input-modern" placeholder="Es. 50€">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-weight: 500;">URL Immagine</label>
+                    <div class="input-modern-group">
+                        <i class="fas fa-image" style="color: #64748b; margin-right: 10px;"></i>
+                        <input type="url" class="input-modern" placeholder="https://...">
+                    </div>
+                </div>
+
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-weight: 500;">Descrizione</label>
+                        <textarea rows="4" class="input-modern" placeholder="Dettagli del torneo..." style="resize: vertical; font-family: inherit;"></textarea>
+                </div>
+
+                <div style="grid-column: 1 / -1;">
+                    <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <i class="fas fa-paper-plane"></i> Pubblica Torneo
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Lista Tornei -->
+        <section class="admin-card-modern">
+            <h2 style="color: #fff; margin-bottom: 1.5rem; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span style="background: rgba(59, 130, 246, 0.1); color: #60a5fa; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 1.2rem; flex-shrink: 0;"><i class="fas fa-list"></i></span>
+                Lista Tornei
+            </h2>
+            <div class="table-responsive" style="border-radius: 12px; overflow-x: auto; border: 1px solid rgba(255,255,255,0.05);">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Titolo</th>
+                            <th>Data</th>
+                            <th>Premio</th>
+                            <th style="text-align: right;">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-tournaments-body">
+                        <!-- Popolato da JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Classifica -->
+        <section class="admin-card-modern">
+            <h2 style="color: #fff; margin-bottom: 1.5rem; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span style="background: rgba(245, 158, 11, 0.1); color: #fbbf24; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 1.2rem; flex-shrink: 0;"><i class="fas fa-trophy"></i></span>
+                Gestione Classifica
+            </h2>
+            <div class="table-responsive" style="border-radius: 12px; overflow-x: auto; border: 1px solid rgba(255,255,255,0.05);">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Utente</th>
+                            <th>Wins</th>
+                            <th>Final Kills</th>
+                            <th>Bed Broken</th>
+                            <th>Punti</th>
+                            <th style="text-align: right;">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" value="ProPlayer99" class="input-modern" style="background: #0f172a; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; width: 100%; max-width: 150px;"></td>
+                            <td><input type="number" value="10" class="input-modern" style="background: #0f172a; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; width: 80px;"></td>
+                            <td><input type="number" value="50" class="input-modern" style="background: #0f172a; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; width: 80px;"></td>
+                            <td><input type="number" value="20" class="input-modern" style="background: #0f172a; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; width: 80px;"></td>
+                            <td><strong style="color: #fbbf24;">1500</strong></td>
+                            <td style="text-align: right;">
+                                <button class="btn-icon save" style="background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+      </div>
     </div>
 
     <footer>
@@ -207,6 +311,8 @@
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="/js/socket.js"></script>
     <script src="/js/navbar.js"></script>
+    <script src="/js/app.js"></script>
     <script src="/js/admin.js"></script>
+    <script src="/js/safe-load.js"></script>
   </body>
 </html>

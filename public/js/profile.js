@@ -8,8 +8,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (profileUsername === "profile.html") profileUsername = null;
 
-  loadUserProfile(profileUsername);
-  loadMemories(profileUsername);
+  const p1 = loadUserProfile(profileUsername);
+  const p2 = loadMemories(profileUsername);
 
   const shareProfileBtn = document.getElementById("btn-share-profile");
   if (shareProfileBtn) {
@@ -30,8 +30,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (profileUsername) {
     document.body.classList.add("viewing-other-profile");
     const addMemoryBtn = document.getElementById("add-memory-btn");
+    const editSkillsBtn = document.getElementById("edit-skills-btn");
+    const editSocialsBtn = document.getElementById("edit-socials-btn");
     if (addMemoryBtn) addMemoryBtn.style.display = "none";
     if (logoutProfileBtn) logoutProfileBtn.style.display = "none";
+    if (editSkillsBtn) editSkillsBtn.style.display = "none";
+    if (editSocialsBtn) editSocialsBtn.style.display = "none";
+    
+    await Promise.all([p1, p2]);
+    if (typeof window.enablePageInteractions === 'function') window.enablePageInteractions();
     return;
   }
 
@@ -105,26 +112,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  const saveSettingsBtn = document.getElementById("save-notif-settings-btn");
-  if (saveSettingsBtn) {
-    saveSettingsBtn.addEventListener("click", async () => {
-      const data = {
-        tournamentStart: document.getElementById("setting-tournament-start").checked,
-        tournamentUpdates: document.getElementById("setting-tournament-update").checked,
-        tournamentEnd: document.getElementById("setting-tournament-end").checked
-      };
-
-      try {
-        const res = await fetch("/api/me/notification-settings", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
-        if (res.ok) showToast("Impostazioni salvate!", "success");
-        else showToast("Errore nel salvataggio", "error");
-      } catch (e) { showToast("Errore di connessione", "error"); }
-    });
-  }
+  await Promise.all([p1, p2]);
+  if (typeof window.enablePageInteractions === 'function') window.enablePageInteractions();
 });
 
 async function loadUserProfile(username) {
@@ -144,8 +133,17 @@ async function loadUserProfile(username) {
     if (!res.ok) {
       // Mostra errore solo se non abbiamo cache da mostrare
       if (username && (!typeof getCache === 'function' || !getCache(cacheKey))) {
-        document.querySelector(".container").innerHTML =
-          "<h2 style='text-align:center; margin-top: 50px;'>Utente non trovato</h2>";
+        const notFoundEl = document.getElementById('user-not-found');
+        const mainContentEl = document.getElementById('profile-main-content');
+        const loadingEl = document.getElementById('profile-loading');
+
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (notFoundEl && mainContentEl) {
+            mainContentEl.style.display = 'none';
+            notFoundEl.style.display = 'flex';
+        } else {
+            document.querySelector(".container").innerHTML = "<h2 style='text-align:center; margin-top: 50px;'>Utente non trovato</h2>";
+        }
       } else if (!username) {
         window.location.href = "/";
       }
@@ -154,6 +152,15 @@ async function loadUserProfile(username) {
     const user = await res.json();
     
     if (typeof setCache === 'function') setCache(cacheKey, user);
+
+    const notFoundEl = document.getElementById('user-not-found');
+    const mainContentEl = document.getElementById('profile-main-content');
+    const loadingEl = document.getElementById('profile-loading');
+
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (notFoundEl) notFoundEl.style.display = 'none';
+    if (mainContentEl) mainContentEl.style.display = 'block';
+
     renderUserProfile(user, username);
   } catch (err) {
     console.error("Errore caricamento profilo", err);
@@ -161,6 +168,13 @@ async function loadUserProfile(username) {
 }
 
 async function renderUserProfile(user, username) {
+    // Gestione pulsanti modifica (Spostato all'inizio per evitare flash durante il caricamento async)
+    const editSkillsBtn = document.getElementById("edit-skills-btn");
+    const editSocialsBtn = document.getElementById("edit-socials-btn");
+
+    if (editSkillsBtn) editSkillsBtn.style.display = user.isSelf ? "flex" : "none";
+    if (editSocialsBtn) editSocialsBtn.style.display = user.isSelf ? "flex" : "none";
+
     document.getElementById("profile-username").textContent = user.username;
     document.getElementById("profile-role").textContent =
       user.role.toUpperCase();
@@ -208,14 +222,14 @@ async function renderUserProfile(user, username) {
     const deathsEl = document.getElementById("stat-deaths");
     const levelEl = document.getElementById("stat-level");
 
-    const bwLevelEl = document.getElementById("bw-level-display");
-    const bwLevelBadgeEl = document.getElementById("bw-level-badge-value");
     const bwWinsEl = document.getElementById("bw-wins");
     const bwLossesEl = document.getElementById("bw-losses");
     const bwKillsEl = document.getElementById("bw-kills");
     const bwDeathsEl = document.getElementById("bw-deaths");
     const bwFinalsEl = document.getElementById("bw-final-kills");
     const bwBedsEl = document.getElementById("bw-beds");
+    const bwLevelEl = document.getElementById("bw-level");
+    const bwXpEl = document.getElementById("bw-xp");
     const bwKdrEl = document.getElementById("bw-kdr");
     const bwBarWinsEl = document.getElementById("bw-bar-wins");
     const bwBarLossesEl = document.getElementById("bw-bar-losses");
@@ -225,7 +239,6 @@ async function renderUserProfile(user, username) {
     const bwLossBar = document.getElementById("bw-loss-bar");
     const bwWinstreakEl = document.getElementById("bw-winstreak");
     const bwTopWinstreakEl = document.getElementById("bw-top-winstreak");
-    const bwCoinsEl = document.getElementById("bw-coins");
     const bwSkinRender = document.getElementById("bw-skin-render");
     const bwCardBg = document.getElementById("bw-card-bg");
     const coralStatsLink = document.getElementById("coral-stats-link");
@@ -233,7 +246,7 @@ async function renderUserProfile(user, username) {
     if (bwCardBg) {
       const statsCard = bwCardBg.closest(".admin-card");
       if (statsCard) {
-        statsCard.style.display = user.minecraftUsername ? "block" : "none";
+        statsCard.style.display = (user.minecraftUsername && user.showBedwarsStats !== false) ? "block" : "none";
       }
     }
 
@@ -244,27 +257,26 @@ async function renderUserProfile(user, username) {
     if (deathsEl) deathsEl.textContent = "0";
 
     [
-      bwLevelEl,
-      bwLevelBadgeEl,
       bwWinsEl,
       bwLossesEl,
       bwKillsEl,
       bwDeathsEl,
       bwFinalsEl,
       bwBedsEl,
+      bwLevelEl,
+      bwXpEl,
       bwKdrEl,
       bwBarWinsEl,
       bwBarLossesEl,
       bwWinPctEl,
       bwLossPctEl,
       bwWinstreakEl,
-      bwTopWinstreakEl,
-      bwCoinsEl
+      bwTopWinstreakEl
     ].forEach((el) => {
       if (el) el.textContent = "0";
     });
 
-    if (user.minecraftUsername) {
+    if (user.minecraftUsername && user.showBedwarsStats !== false) {
       if (coralStatsLink) {
         coralStatsLink.href = `https://coralmc.it/it/stats/player/${user.minecraftUsername}`;
       }
@@ -273,22 +285,21 @@ async function renderUserProfile(user, username) {
       if (deathsEl) deathsEl.textContent = "...";
       if (bwWinsEl)
         [
-          bwLevelEl,
-          bwLevelBadgeEl,
           bwWinsEl,
           bwLossesEl,
           bwKillsEl,
           bwDeathsEl,
           bwFinalsEl,
           bwBedsEl,
+          bwLevelEl,
+          bwXpEl,
           bwKdrEl,
           bwBarWinsEl,
           bwBarLossesEl,
           bwWinPctEl,
           bwLossPctEl,
           bwWinstreakEl,
-          bwTopWinstreakEl,
-          bwCoinsEl
+          bwTopWinstreakEl
         ].forEach((el) => {
           if (el) el.textContent = "...";
         });
@@ -319,20 +330,12 @@ async function renderUserProfile(user, username) {
                 'Morti <small style="color:var(--primary-2)">(CoralMC)</small>';
           }
 
-          if (bwLevelEl)
-            bwLevelEl.textContent = (coralData.level || 0).toLocaleString(
-              "it-IT",
-            );
-          if (bwLevelBadgeEl)
-            bwLevelBadgeEl.textContent = (coralData.level || 0).toLocaleString(
-              "it-IT",
-            );
           if (bwWinsEl)
             bwWinsEl.textContent = (coralData.wins || 0).toLocaleString(
               "it-IT",
             );
           if (bwLossesEl)
-            bwLossesEl.textContent = (coralData.losses || 0).toLocaleString(
+            bwLossesEl.textContent = (coralData.looses || 0).toLocaleString(
               "it-IT",
             );
           if (bwKillsEl)
@@ -344,13 +347,17 @@ async function renderUserProfile(user, username) {
               "it-IT",
             );
           if (bwFinalsEl)
-            bwFinalsEl.textContent = (coralData.finals || 0).toLocaleString(
+            bwFinalsEl.textContent = (coralData.final_kills || 0).toLocaleString(
               "it-IT",
             );
           if (bwBedsEl)
-            bwBedsEl.textContent = (coralData.beds || 0).toLocaleString(
+            bwBedsEl.textContent = (coralData.beds_destroyed || 0).toLocaleString(
               "it-IT",
             );
+          if (bwLevelEl)
+            bwLevelEl.textContent = (coralData.level || 0).toLocaleString("it-IT");
+          if (bwXpEl)
+            bwXpEl.textContent = (coralData.xp || 0).toLocaleString("it-IT");
 
           if (bwKdrEl) {
             const kdr =
@@ -362,7 +369,7 @@ async function renderUserProfile(user, username) {
           
           if (bwBarWinsEl && bwBarLossesEl && bwWinBar && bwLossBar) {
             const wins = coralData.wins || 0;
-            const losses = coralData.losses || 0;
+            const losses = coralData.looses || 0;
             const total = wins + losses;
             
             let winPct = 50;
@@ -384,13 +391,11 @@ async function renderUserProfile(user, username) {
           }
 
           if (bwWinstreakEl)
-            bwWinstreakEl.textContent = (coralData.winstreak || 0).toLocaleString(
+            bwWinstreakEl.textContent = (coralData.currentStreak || 0).toLocaleString(
               "it-IT",
             );
           if (bwTopWinstreakEl)
-            bwTopWinstreakEl.textContent = (coralData.topWinstreak || 0).toLocaleString("it-IT");
-          if (bwCoinsEl)
-            bwCoinsEl.textContent = (coralData.coins || 0).toLocaleString("it-IT");
+            bwTopWinstreakEl.textContent = (coralData.maxStreak || 0).toLocaleString("it-IT");
 
           if (bwSkinRender) {
             const skinUrl = coralData.uuid
@@ -405,27 +410,26 @@ async function renderUserProfile(user, username) {
           if (deathsEl) deathsEl.textContent = "Non trovato";
           if (bwWinsEl)
             [
-              bwLevelEl,
               bwWinsEl,
               bwLossesEl,
               bwKillsEl,
               bwDeathsEl,
               bwFinalsEl,
               bwBedsEl,
+              bwLevelEl,
+              bwXpEl,
               bwKdrEl,
               bwBarWinsEl,
               bwBarLossesEl,
               bwWinPctEl,
               bwLossPctEl,
-              bwTopWinstreakEl,
-              bwCoinsEl
+              bwTopWinstreakEl
             ].forEach((el) => {
               if (el) el.textContent = "-";
             });
           if (typeof showToast === "function")
             showToast(
-              `Player ${user.minecraftUsername} non trovato su CoralMC`,
-              "error",
+              `Player ${user.minecraftUsername} non trovato su Minecraft.`,
             );
         }
       } catch (e) {
@@ -433,38 +437,28 @@ async function renderUserProfile(user, username) {
       }
     }
 
-    const editSkillsBtn = document.getElementById("edit-skills-btn");
-    const editSocialsBtn = document.getElementById("edit-socials-btn");
-    const settingsCard = document.getElementById("settings-card");
-
-    if (username && editSkillsBtn) {
-      editSkillsBtn.style.display = "none";
-    }
-    if (username && editSocialsBtn) {
-      editSocialsBtn.style.display = "none";
-    }
-    if (username && settingsCard) {
-      settingsCard.style.display = "none";
-    } else if (!username) {
-      // Load settings for own profile
-      const settings = user.notificationSettings || { tournamentStart: true, tournamentUpdates: true, tournamentEnd: true };
-      const startCheck = document.getElementById("setting-tournament-start");
-      const updateCheck = document.getElementById("setting-tournament-update");
-      const endCheck = document.getElementById("setting-tournament-end");
-
-      if (startCheck) startCheck.checked = settings.tournamentStart;
-      if (updateCheck) updateCheck.checked = settings.tournamentUpdates;
-      if (endCheck) endCheck.checked = settings.tournamentEnd;
-    }
-
     if (username)
       document.getElementById("memories-title").textContent =
         `Memories di ${user.username}`;
 
+    // Privacy Check for Memories (UI Section)
+    const memoriesHeader = document.getElementById("memories-title")?.closest(".section-header-flex");
+    const memoriesGrid = document.getElementById("my-memories-grid");
+    
+    if (!user.isSelf && user.showMemories === false) {
+        if (memoriesHeader) memoriesHeader.style.display = "none";
+        if (memoriesGrid) memoriesGrid.style.display = "none";
+    }
+
     const skillsContainer = document.getElementById("skills-container");
     if (skillsContainer) {
+      const skillsCard = skillsContainer.closest(".admin-card");
       skillsContainer.innerHTML = "";
-      if (user.skills && user.skills.length > 0) {
+
+      const showSkills = user.isSelf || user.showSkills !== false;
+
+      if (showSkills && user.skills && user.skills.length > 0) {
+        if (skillsCard) skillsCard.style.display = "block";
         user.skills.forEach((skill) => {
           const badge = document.createElement("span");
           badge.style.cssText =
@@ -473,117 +467,235 @@ async function renderUserProfile(user, username) {
           skillsContainer.appendChild(badge);
         });
       } else {
-        skillsContainer.innerHTML =
-          '<span style="color: #94a3b8; font-style: italic;">Nessuna skill selezionata.</span>';
+        if (!user.isSelf || !showSkills) {
+            if (skillsCard) skillsCard.style.display = "none";
+        } else {
+            if (skillsCard) skillsCard.style.display = "block";
+            skillsContainer.innerHTML = '<span style="color: #94a3b8; font-style: italic;">Nessuna skill selezionata.</span>';
+        }
       }
     }
 
     const socialsContainer = document.getElementById("header-socials-container");
     if (socialsContainer) {
       socialsContainer.innerHTML = "";
-      const socials = user.socials || {};
-      const links = [
-        { key: "twitch", icon: "fab fa-twitch", color: "#9146FF" },
-        { key: "youtube", icon: "fab fa-youtube", color: "#ff0000" },
-        { key: "tiktok", icon: "fab fa-tiktok", color: "#fff" },
-        { key: "instagram", icon: "fab fa-instagram", color: "#e1306c" },
-        { key: "discord", icon: "fab fa-discord", color: "#5865F2" },
-      ];
+      
+      if (user.isSelf || user.showSocials !== false) {
+          const socials = user.socials || {};
+          const links = [
+            { key: "twitch", icon: "fab fa-twitch", color: "#9146FF" },
+            { key: "youtube", icon: "fab fa-youtube", color: "#ff0000" },
+            { key: "tiktok", icon: "fab fa-tiktok", color: "#fff" },
+            { key: "instagram", icon: "fab fa-instagram", color: "#e1306c" },
+            { key: "discord", icon: "fab fa-discord", color: "#5865F2" },
+          ];
 
-      links.forEach((l) => {
-        let handle = socials[l.key];
-        if (handle && handle.trim() !== "") {
-          handle = handle.trim();
+          links.forEach((l) => {
+            let handle = socials[l.key];
+            if (handle && handle.trim() !== "") {
+              handle = handle.trim();
 
-          let cleanHandle = handle;
-          let displayText = handle;
+              let cleanHandle = handle;
+              let displayText = handle;
 
-          if (l.key !== "discord") {
-            cleanHandle = handle
-              .replace(/^@/, "")
-              .replace(/^(https?:\/\/)?(www\.)?/, "")
-              .replace(
-                /^(tiktok\.com\/@|youtube\.com\/@|instagram\.com\/|twitch\.tv\/)/,
-                "",
-              )
-              .replace(/\/$/, "");
-            displayText = `@${cleanHandle}`;
+              if (l.key !== "discord") {
+                cleanHandle = handle
+                  .replace(/^@/, "")
+                  .replace(/^(https?:\/\/)?(www\.)?/, "")
+                  .replace(
+                    /^(tiktok\.com\/@|youtube\.com\/@|instagram\.com\/|twitch\.tv\/)/,
+                    "",
+                  )
+                  .replace(/\/$/, "");
+                displayText = `@${cleanHandle}`;
+              } else {
+                displayText = "Discord Server";
+              }
+
+              const a = document.createElement("a");
+              a.className = "social-pill";
+              a.innerHTML = `<i class="${l.icon}" style="color: ${l.color}; font-size: 1rem;"></i> <span>${displayText}</span>`;
+              a.title = displayText;
+
+              a.onmouseover = () => {
+                a.style.transform = "translateY(-2px)";
+                a.style.borderColor = l.color;
+                a.style.background = "rgba(255,255,255,0.05)";
+                a.style.boxShadow = `0 4px 12px ${l.color}20`;
+                a.style.color = "#fff";
+              };
+              a.onmouseout = () => {
+                a.style.transform = "translateY(0)";
+                a.style.borderColor = "rgba(255,255,255,0.1)";
+                a.style.background = "rgba(0,0,0,0.3)";
+                a.style.boxShadow = "none";
+                a.style.color = "#e2e8f0";
+              };
+
+              if (l.key === "discord") {
+                a.target = "_blank";
+                let inviteCode = handle;
+
+                if (handle.startsWith("http")) {
+                  a.href = handle;
+                  const match = handle.match(
+                    /(?:discord\.gg\/|discord\.com\/invite\/)([^/]+)/,
+                  );
+                  if (match) inviteCode = match[1];
+                } else if (
+                  handle.includes("discord.gg") ||
+                  handle.includes("discord.com/invite")
+                ) {
+                  a.href = `https://${handle}`;
+                  const match = handle.match(
+                    /(?:discord\.gg\/|discord\.com\/invite\/)([^/]+)/,
+                  );
+                  if (match) inviteCode = match[1];
+                } else {
+                  a.href = `https://discord.gg/${handle}`;
+                  inviteCode = handle;
+                }
+
+                if (inviteCode) {
+                  fetch(`https://discord.com/api/v9/invites/${inviteCode}`)
+                    .then((r) => r.json())
+                    .then((d) => {
+                      if (d.guild && d.guild.name) {
+                        a.title = `Discord: ${d.guild.name}`;
+                        const span = a.querySelector("span");
+                        if (span) span.textContent = d.guild.name;
+                      }
+                    })
+                    .catch(() => {});
+                }
+              } else {
+                a.target = "_blank";
+                if (l.key === "tiktok") {
+                  a.href = `https://www.tiktok.com/@${cleanHandle}`;
+                } else if (l.key === "youtube") {
+                  a.href = `https://www.youtube.com/@${cleanHandle}`;
+                } else if (l.key === "instagram") {
+                  a.href = `https://www.instagram.com/${cleanHandle}`;
+                } else if (l.key === "twitch") {
+                  a.href = `https://www.twitch.tv/${cleanHandle}`;
+                }
+              }
+
+              socialsContainer.appendChild(a);
+            }
+          });
+      }
+
+      // Hide wrapper if empty and not self
+      const wrapper = socialsContainer.closest('.socials-wrapper');
+      if (wrapper) {
+          if (!user.isSelf && socialsContainer.children.length === 0) {
+              wrapper.style.display = 'none';
           } else {
-            displayText = "Discord Server";
+              wrapper.style.display = 'flex';
           }
+      }
+    }
 
-          const a = document.createElement("a");
-          a.className = "social-pill";
-          a.innerHTML = `<i class="${l.icon}" style="color: ${l.color}; font-size: 1rem;"></i> <span>${displayText}</span>`;
-          a.title = displayText;
+    // Gestione Like Profilo e Share
+    const likeBtn = document.getElementById('btn-like-profile');
+    if (likeBtn) {
+        const newLikeBtn = likeBtn.cloneNode(true);
+        likeBtn.parentNode.replaceChild(newLikeBtn, likeBtn);
+        
+        const likeCountSpan = newLikeBtn.querySelector('#profile-likes-count');
+        const likeIcon = newLikeBtn.querySelector('i');
+        const likeLabel = newLikeBtn.querySelector('#profile-likes-label');
+        
+        newLikeBtn.style.display = 'flex';
+        newLikeBtn.style.alignItems = 'center';
+        newLikeBtn.style.justifyContent = 'center';
+        newLikeBtn.style.gap = '5px';
+        
+        if (likeCountSpan) likeCountSpan.textContent = user.profileLikesCount || 0;
 
-          a.onmouseover = () => {
-            a.style.transform = "translateY(-2px)";
-            a.style.borderColor = l.color;
-            a.style.background = "rgba(255,255,255,0.05)";
-            a.style.boxShadow = `0 4px 12px ${l.color}20`;
-            a.style.color = "#fff";
-          };
-          a.onmouseout = () => {
-            a.style.transform = "translateY(0)";
-            a.style.borderColor = "rgba(255,255,255,0.1)";
-            a.style.background = "rgba(0,0,0,0.3)";
-            a.style.boxShadow = "none";
-            a.style.color = "#e2e8f0";
-          };
-
-          if (l.key === "discord") {
-            a.target = "_blank";
-            let inviteCode = handle;
-
-            if (handle.startsWith("http")) {
-              a.href = handle;
-              const match = handle.match(
-                /(?:discord\.gg\/|discord\.com\/invite\/)([^/]+)/,
-              );
-              if (match) inviteCode = match[1];
-            } else if (
-              handle.includes("discord.gg") ||
-              handle.includes("discord.com/invite")
-            ) {
-              a.href = `https://${handle}`;
-              const match = handle.match(
-                /(?:discord\.gg\/|discord\.com\/invite\/)([^/]+)/,
-              );
-              if (match) inviteCode = match[1];
-            } else {
-              a.href = `https://discord.gg/${handle}`;
-              inviteCode = handle;
+        if (user.isSelf) {
+            newLikeBtn.className = '';
+            newLikeBtn.style.cssText = 'background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); padding: 0 15px; height: 42px; border-radius: 6px; color: #fff; cursor: default; display: flex; align-items: center; justify-content: center; gap: 5px;';
+            
+            if (likeIcon) {
+                likeIcon.className = 'fas fa-heart';
+                likeIcon.style.color = '#f87171';
             }
-
-            if (inviteCode) {
-              fetch(`https://discord.com/api/v9/invites/${inviteCode}`)
-                .then((r) => r.json())
-                .then((d) => {
-                  if (d.guild && d.guild.name) {
-                    a.title = `Discord: ${d.guild.name}`;
-                    const span = a.querySelector("span");
-                    if (span) span.textContent = d.guild.name;
-                  }
-                })
-                .catch(() => {});
+            if (likeLabel) likeLabel.textContent = 'Likes';
+            
+            if (likeCountSpan) {
+                likeCountSpan.style.background = 'transparent';
+                likeCountSpan.style.padding = '0';
+                likeCountSpan.style.marginLeft = '5px';
+                likeCountSpan.style.fontSize = '1rem';
             }
-          } else {
-            a.target = "_blank";
-            if (l.key === "tiktok") {
-              a.href = `https://www.tiktok.com/@${cleanHandle}`;
-            } else if (l.key === "youtube") {
-              a.href = `https://www.youtube.com/@${cleanHandle}`;
-            } else if (l.key === "instagram") {
-              a.href = `https://www.instagram.com/${cleanHandle}`;
-            } else if (l.key === "twitch") {
-              a.href = `https://www.twitch.tv/${cleanHandle}`;
-            }
-          }
+        } else {
+             newLikeBtn.className = 'btn-visit';
+             newLikeBtn.style.cssText = 'background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); display: flex;';
+             
+             const updateBtnState = (isLiked) => {
+                if (isLiked) {
+                    if (likeIcon) {
+                        likeIcon.classList.remove('far');
+                        likeIcon.classList.add('fas');
+                    }
+                    newLikeBtn.style.background = 'rgba(239, 68, 68, 0.2)';
+                    if (likeLabel) likeLabel.textContent = 'Liked';
+                } else {
+                    if (likeIcon) {
+                        likeIcon.classList.remove('fas');
+                        likeIcon.classList.add('far');
+                    }
+                    newLikeBtn.style.background = 'rgba(239, 68, 68, 0.1)';
+                    if (likeLabel) likeLabel.textContent = 'Like';
+                }
+            };
 
-          socialsContainer.appendChild(a);
+            updateBtnState(user.isProfileLiked);
+
+            newLikeBtn.onclick = async () => {
+                if (newLikeBtn.disabled) return;
+                newLikeBtn.disabled = true;
+
+                try {
+                    const postRes = await fetch(`/api/users/${user.username}/like`, { method: 'POST' });
+                    if (postRes.status === 401) {
+                        if (typeof showToast === 'function') showToast('Accedi per mettere like!', 'error');
+                        return;
+                    }
+                    
+                    const postData = await postRes.json();
+                    if (likeCountSpan) likeCountSpan.textContent = postData.count;
+                    updateBtnState(postData.liked);
+                    if (postData.liked && likeIcon) likeIcon.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.4)' }, { transform: 'scale(1)' }], { duration: 300 });
+                } catch (e) { console.error(e); } finally {
+                    newLikeBtn.disabled = false;
+                }
+            };
         }
-      });
+    }
+
+    const shareBtn = document.getElementById('btn-share-profile');
+    if (shareBtn) {
+        const newShareBtn = shareBtn.cloneNode(true);
+        shareBtn.parentNode.replaceChild(newShareBtn, shareBtn);
+        newShareBtn.addEventListener('click', () => {
+            const link = `${window.location.origin}/profile/${user.username}`;
+            navigator.clipboard.writeText(link).then(() => {
+                if (typeof showToast === 'function') showToast('Link profilo copiato!', 'success');
+            });
+        });
+    }
+
+    if (typeof socket !== 'undefined') {
+        socket.off('profile:update');
+        socket.on('profile:update', (evt) => {
+            if (evt.username === user.username) {
+                const countSpan = document.getElementById('profile-likes-count');
+                if (countSpan) countSpan.textContent = evt.profileLikesCount;
+            }
+        });
     }
 }
 
@@ -609,9 +721,9 @@ async function loadMemories(username) {
 
     // Aggiorna currentUser dalla rete
     try {
-      const meRes = await fetch("/api/me");
-      if (meRes.ok) {
-        currentUser = await meRes.json();
+      const sessionRes = await fetch("/api/session");
+      if (sessionRes.ok) {
+        currentUser = (await sessionRes.json()).user;
         if (typeof setCache === 'function') setCache('user_me', currentUser);
       }
     } catch (e) {}
@@ -633,17 +745,32 @@ async function loadMemories(username) {
 
 function renderProfileMemories(memories, username, currentUser, container) {
     let currentAuthorName = username || (currentUser ? currentUser.username : "Utente");
+    const memoriesHeader = document.getElementById("memories-title")?.closest(".section-header-flex");
     
+    const isOwner = !username || (currentUser && currentUser.username === username);
+
     if (!Array.isArray(memories) || memories.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-            <i class="fas fa-film"></i>
-            <h3>Nessuna Memory</h3>
-            <p>${username ? "Questo utente non ha ancora caricato clip." : "Non hai ancora caricato nessuna clip."}</p>
-        </div>`;
+      if (!isOwner) {
+          // Visitatore: nascondi la sezione se non ci sono memories (o sono private)
+          container.innerHTML = "";
+          container.style.display = "none";
+          if (memoriesHeader) memoriesHeader.style.display = "none";
+      } else {
+          // Proprietario: mostra stato vuoto
+          if (memoriesHeader) memoriesHeader.style.display = "flex";
+          container.style.display = "grid";
+          container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-film"></i>
+                <h3>Nessuna Memory</h3>
+                <p>Non hai ancora caricato nessuna clip.</p>
+            </div>`;
+      }
       return;
     }
 
+    if (memoriesHeader) memoriesHeader.style.display = "flex";
+    container.style.display = "grid";
     container.innerHTML = "";
     memories.forEach((m) => {
       const likesCount = m.likes ? m.likes.length : 0;

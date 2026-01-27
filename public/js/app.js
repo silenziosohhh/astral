@@ -46,11 +46,12 @@ window.openTournamentPage = function(tid, e) {
     window.location.href = `/torneo/${tid}`;
 };
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const path = window.location.pathname;
+  const loadPromises = [];
 
   if (path.includes("tornei") || path === "/" || path.includes("index.html")) {
-    loadTournaments();
+    loadPromises.push(loadTournaments());
   }
 
   if (
@@ -58,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
     path === "/" ||
     path.includes("index.html")
   ) {
-    loadLeaderboard();
+    loadPromises.push(loadLeaderboard());
   }
 
   if (
@@ -66,11 +67,11 @@ document.addEventListener("DOMContentLoaded", () => {
     path === "/" ||
     path.includes("index.html")
   ) {
-    loadMemories();
+    loadPromises.push(loadMemories());
   }
 
   if (path.includes("staff") || path === "/" || path.includes("index.html")) {
-    loadStaff();
+    loadPromises.push(loadStaff());
   }
 
   const searchInput = document.getElementById("search-memories");
@@ -83,6 +84,9 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   }
+
+  await Promise.all(loadPromises);
+  if (typeof window.enablePageInteractions === 'function') window.enablePageInteractions();
 });
 
 window.openMediaModal = function (
@@ -259,8 +263,8 @@ async function loadTournaments() {
 
   let user = null;
   try {
-    const userRes = await fetch("/api/me", { credentials: "include" });
-    if (userRes.ok) user = await userRes.json();
+    const sessionRes = await fetch("/api/session", { credentials: "include" });
+    if (sessionRes.ok) user = (await sessionRes.json()).user;
   } catch {}
 
   // 1. Cache First (Render immediately)
@@ -815,8 +819,8 @@ async function loadMemories() {
 
   let currentUser = null;
   try {
-    const meRes = await fetch("/api/me");
-    if (meRes.ok) currentUser = await meRes.json();
+    const sessionRes = await fetch("/api/session");
+    if (sessionRes.ok) currentUser = (await sessionRes.json()).user;
   } catch (e) {}
 
   // Cache First

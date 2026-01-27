@@ -3,6 +3,7 @@ const passport = require("passport");
 const DiscordStrategy = require("passport-discord").Strategy;
 const jwt = require("jsonwebtoken");
 const User = require("../database/User");
+const path = require("path");
 
 const router = express.Router();
 
@@ -101,6 +102,10 @@ router.get(
 router.get("/logout", (req, res) => {
   res.clearCookie("token");
   res.redirect("/");
+});
+
+router.get("/settings", (req, res) => {
+  res.sendFile(path.join(__dirname, "../../public/pages/settings.html"));
 });
 
 module.exports = router;

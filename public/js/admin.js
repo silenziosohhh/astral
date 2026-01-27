@@ -1,12 +1,53 @@
 document.addEventListener("DOMContentLoaded", () => {
   loadAdminTournaments();
 
+  // Custom Dropdown Logic
+  const formatWrapper = document.getElementById('format-select-wrapper');
+  if (formatWrapper) {
+      const trigger = formatWrapper.querySelector('.custom-select__trigger');
+      const options = formatWrapper.querySelector('.custom-options');
+      const hiddenInput = document.getElementById('tournament-format');
+      const selectedText = document.getElementById('format-selected-text');
+      const chevron = trigger.querySelector('.fa-chevron-down');
+
+      trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          formatWrapper.classList.toggle('open');
+          const isOpen = formatWrapper.classList.contains('open');
+          if (chevron) chevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+      });
+
+      formatWrapper.querySelectorAll('.custom-option').forEach(opt => {
+          opt.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const val = opt.getAttribute('data-value');
+              const htmlContent = opt.innerHTML;
+              
+              hiddenInput.value = val;
+              selectedText.innerHTML = htmlContent;
+              
+              formatWrapper.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+              opt.classList.add('selected');
+              
+              formatWrapper.classList.remove('open');
+              if (chevron) chevron.style.transform = 'rotate(0deg)';
+          });
+      });
+
+      document.addEventListener('click', (e) => {
+          if (!formatWrapper.contains(e.target)) {
+              formatWrapper.classList.remove('open');
+              if (chevron) chevron.style.transform = 'rotate(0deg)';
+          }
+      });
+  }
+
   const tournamentForm = document.querySelector(".admin-form");
   if (tournamentForm) {
     tournamentForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const inputs = tournamentForm.querySelectorAll("input, textarea");
+      const inputs = tournamentForm.querySelectorAll("input:not([type='hidden']), textarea");
       const formatSelect = document.getElementById("tournament-format");
       const data = {
         title: inputs[0].value,
@@ -89,10 +130,10 @@ async function loadAdminTournaments() {
           </td>
           <td>${new Date(t.date).toLocaleDateString()} <span style="font-size: 0.8em; background: #334155; padding: 2px 6px; border-radius: 4px;">${formatLabel}</span></td>
           <td>${t.prize}</td>
-          <td style="display: flex; gap: 6px;">
-            <button class="btn-icon edit" title="Modifica"><i class="fas fa-edit"></i></button>
-            <button class="btn-icon delete" title="Elimina" data-id="${t._id}"><i class="fas fa-trash"></i></button>
-            <button class="btn-icon copy-link" title="Copia link" data-link="${link}"><i class="fas fa-link"></i></button>
+          <td style="display: flex; gap: 6px; justify-content: flex-end;">
+            <button class="btn-icon edit" title="Modifica" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-edit"></i></button>
+            <button class="btn-icon delete" title="Elimina" data-id="${t._id}" style="background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-trash"></i></button>
+            <button class="btn-icon copy-link" title="Copia link" data-link="${link}" style="background: rgba(255, 255, 255, 0.05); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.1); width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-link"></i></button>
           </td>
         </tr>
       `;
@@ -143,9 +184,11 @@ async function loadAdminTournaments() {
         });
       });
     });
+    if (typeof window.enablePageInteractions === 'function') window.enablePageInteractions();
   } catch (err) {
     console.error(err);
     showToast("Errore caricamento tornei", "error");
+    if (typeof window.enablePageInteractions === 'function') window.enablePageInteractions();
   }
 }
 

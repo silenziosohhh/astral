@@ -1,10 +1,37 @@
 const socket = io();
 window.socket = socket;
-
 document.addEventListener("DOMContentLoaded", () => {
   socket.on("tournaments:update", (data) => {
     if (data.type === "create" && typeof showToast === "function") {
-      showToast(`🏆 Nuovo torneo pubblicato: ${data.tournament.title}!`, "success");
+      const settings = window.currentUser?.notificationSettings;
+      if (!settings || settings.newTournament !== false) {
+        showToast(`🏆 Nuovo torneo pubblicato: ${data.tournament.title}!`, "success");
+      }
+    }
+    if (data.type === "update" && data.action === "status_change" && typeof showToast === "function") {
+      const t = data.tournament;
+      const user = window.currentUser;
+      const settings = user?.notificationSettings;
+      const isSubscribed = user?.tournaments?.includes(t._id);
+      if (!isSubscribed) {
+        if (t.status === "In Corso") {
+          if (!settings || settings.tournamentStart !== false) {
+            showToast(`Il torneo ${t.title} è iniziato!`, "info");
+          }
+        } else if (t.status === "Concluso") {
+          if (!settings || settings.tournamentEnd !== false) {
+            showToast(`Il torneo ${t.title} si è concluso.`, "info");
+          }
+        } else if (t.status === "Pausa") {
+          if (!settings || settings.tournamentUpdates !== false) {
+            showToast(`Le iscrizioni al torneo ${t.title} sono in pausa.`, "warning");
+          }
+        } else if (t.status === "Aperto") {
+          if (!settings || settings.tournamentUpdates !== false) {
+            showToast(`Le iscrizioni al torneo ${t.title} son state riaperte!`, "success");
+          }
+        }
+      }
     }
     if (typeof loadAdminTournaments === "function") loadAdminTournaments();
     if (typeof loadTournaments === "function") loadTournaments();
@@ -13,26 +40,21 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typeof loadNotifications === "function") loadNotifications();
     }, 500);
   });
-
   socket.on("subscriptions:update", (data) => {
     if (typeof loadAdminTournaments === "function") loadAdminTournaments();
     if (typeof loadTournaments === "function") loadTournaments();
     if (typeof loadTournament === "function") loadTournament();
   });
-
   socket.on("leaderboard:update", (data) => {
     if (typeof loadLeaderboard === "function") loadLeaderboard();
   });
-
   socket.on("memory:update", (data) => {
     if (data.type === "create" || data.type === "delete") {
       if (typeof loadMemories === "function") loadMemories();
       if (typeof loadMyMemories === "function") loadMyMemories();
       return;
     }
-
     const { id, likes, shares } = data;
-
     const card = document.getElementById(`memory-${id}`);
     if (card) {
       const likeBtn = card.querySelector(".fa-heart").closest("button");
@@ -46,7 +68,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (span) span.textContent = ` ${shares}`;
       }
     }
-
     const modal = document.querySelector(
       `.media-modal-overlay[data-memory-id="${id}"]`,
     );
@@ -57,7 +78,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (shareCount) shareCount.textContent = shares;
     }
   });
-
   socket.on("user:update", (data) => {
     if (typeof loadUserProfile === "function") {
       const path = window.location.pathname;
@@ -67,7 +87,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
-
   socket.on("notification", (data) => {
     if (!data.silent && typeof showToast === "function") {
       showToast(data.message, "info");

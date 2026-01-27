@@ -19,6 +19,7 @@ function handleResponsiveAuth() {
   const mobileMenu = document.getElementById("mobile-menu");
   const userProfile = document.querySelector(".user-profile");
   const userChevron = document.querySelector(".user-info .fa-chevron-down");
+  const mobileLinks = document.getElementById("mobile-user-links");
 
   if (!navContent) return;
   const navWrapper = navContent.parentElement;
@@ -53,6 +54,12 @@ function handleResponsiveAuth() {
       }
     }
     if (userChevron) userChevron.style.display = "none";
+    if (mobileLinks) mobileLinks.style.display = "flex";
+    if (userProfile) {
+        userProfile.style.flexDirection = "column";
+        userProfile.style.alignItems = "center";
+        userProfile.style.width = "100%";
+    }
   } else {
     if (loginContainer && loginContainer.parentElement === navContent) {
       navWrapper.appendChild(loginContainer);
@@ -91,6 +98,12 @@ function handleResponsiveAuth() {
       }
     }
     if (userChevron) userChevron.style.display = "";
+    if (mobileLinks) mobileLinks.style.display = "none";
+    if (userProfile) {
+        userProfile.style.flexDirection = "row";
+        userProfile.style.alignItems = "center";
+        userProfile.style.width = "auto";
+    }
   }
 }
 
@@ -113,6 +126,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const response = await fetch("/api/me");
     if (response.ok) {
       const user = await response.json();
+      window.currentUser = user; // Espone l'utente globalmente per socket.js
       updateNavbarUI(user);
       loadNotifications(); // Carica le notifiche
       handleResponsiveAuth();
@@ -120,6 +134,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (error) {
     console.log("Utente non loggato");
   }
+
+  if (typeof window.enablePageInteractions === 'function') window.enablePageInteractions();
 });
 
 function updateNavbarUI(user) {
@@ -161,11 +177,19 @@ function updateNavbarUI(user) {
                     <a href="/profile" class="dropdown-item" style="display: flex; align-items: center; padding: 10px 12px; color: #e2e8f0; text-decoration: none; border-radius: 8px; transition: background 0.2s; font-size: 0.95rem;">
                         <i class="fas fa-user" style="margin-right: 10px; color: var(--primary-2); width: 20px; text-align: center;"></i> Profilo
                     </a>
+                    <a href="/settings" class="dropdown-item" style="display: flex; align-items: center; padding: 10px 12px; color: #e2e8f0; text-decoration: none; border-radius: 8px; transition: background 0.2s; font-size: 0.95rem;">
+                        <i class="fas fa-cog" style="margin-right: 10px; color: var(--primary-2); width: 20px; text-align: center;"></i> Impostazioni
+                    </a>
                     <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 4px 0;"></div>
                     <a href="/logout" class="dropdown-item" style="display: flex; align-items: center; padding: 10px 12px; color: #f87171; text-decoration: none; border-radius: 8px; transition: background 0.2s; font-size: 0.95rem;">
                         <i class="fas fa-sign-out-alt" style="margin-right: 10px; width: 20px; text-align: center;"></i> Logout
                     </a>
                 </div>
+            </div>
+
+            <div id="mobile-user-links" style="display: none; width: 100%; flex-direction: column; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                 <a href="/settings" class="btn-visit" style="padding: 8px 12px; width: 100%; text-align: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);"><i class="fas fa-cog" style="margin-right: 4px;"></i> Impostazioni</a>
+                 <a href="/logout" class="btn-visit" style="padding: 8px 12px; width: 100%; text-align: center; justify-content: center; background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2);"><i class="fas fa-sign-out-alt" style="margin-right: 4px;"></i> Logout</a>
             </div>
         </div>
     `;
@@ -183,7 +207,27 @@ function updateNavbarUI(user) {
           <button id="close-notif-mobile" class="btn-icon" style="background: transparent; color: #fff;"><i class="fas fa-times"></i></button>
       </div>
       <div class="notif-content">
-          <div class="notif-loader" style="padding: 20px; text-align: center; color: #94a3b8;">Caricamento...</div>
+          <div class="notif-item" style="pointer-events: none; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; padding: 15px; gap: 15px;">
+              <div class="skeleton skeleton-circle" style="width: 35px; height: 35px; flex-shrink: 0;"></div>
+              <div style="flex: 1;">
+                  <div class="skeleton" style="width: 90%; height: 14px; margin-bottom: 8px; border-radius: 4px;"></div>
+                  <div class="skeleton" style="width: 40%; height: 10px; border-radius: 4px;"></div>
+              </div>
+          </div>
+          <div class="notif-item" style="pointer-events: none; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; padding: 15px; gap: 15px;">
+              <div class="skeleton skeleton-circle" style="width: 35px; height: 35px; flex-shrink: 0;"></div>
+              <div style="flex: 1;">
+                  <div class="skeleton" style="width: 80%; height: 14px; margin-bottom: 8px; border-radius: 4px;"></div>
+                  <div class="skeleton" style="width: 30%; height: 10px; border-radius: 4px;"></div>
+              </div>
+          </div>
+          <div class="notif-item" style="pointer-events: none; display: flex; padding: 15px; gap: 15px;">
+              <div class="skeleton skeleton-circle" style="width: 35px; height: 35px; flex-shrink: 0;"></div>
+              <div style="flex: 1;">
+                  <div class="skeleton" style="width: 85%; height: 14px; margin-bottom: 8px; border-radius: 4px;"></div>
+                  <div class="skeleton" style="width: 35%; height: 10px; border-radius: 4px;"></div>
+              </div>
+          </div>
       </div>
   `;
   document.body.appendChild(panel);
@@ -498,6 +542,19 @@ function openSearchModal() {
   };
 
   const showRecents = async () => {
+    resultsContainer.style.display = "block";
+    resultsContainer.innerHTML = `
+        <div style="padding: 8px 12px; font-size: 0.85rem; color: #94a3b8;">Recenti</div>
+        ${Array(3).fill(0).map(() => `
+        <div class="search-result-item" style="pointer-events: none; display: flex; align-items: center; gap: 10px;">
+            <div class="skeleton skeleton-circle" style="width: 32px; height: 32px; flex-shrink: 0;"></div>
+            <div style="display:flex; flex-direction:column; gap: 6px; flex: 1;">
+                <div class="skeleton" style="width: 100px; height: 12px; border-radius: 4px;"></div>
+                <div class="skeleton" style="width: 60px; height: 10px; border-radius: 4px;"></div>
+            </div>
+        </div>`).join('')}
+    `;
+
     const recents = await getRecentSearches();
     resultsContainer.innerHTML = "";
     if (recents.length > 0) {

@@ -2,8 +2,9 @@
 @import url("../styles/variables.css");
 @import url("./components/navbar.css");
 @import url("./components/footer.css");
+@import url("./components/skeleton.css");
 
-* {
+*, *::before, *::after  {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -33,6 +34,10 @@ body {
   background-attachment: fixed;
   color: var(--light);
   height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 .container {
@@ -47,6 +52,7 @@ body {
 
 .section-title {
   text-align: center;
+  align-content: center;
   font-size: 2.5rem;
   margin-bottom: 3rem;
   color: var(--light);
@@ -130,6 +136,8 @@ body {
   border-top: 1px solid rgba(255, 255, 255, 0.15);
   padding: 2.5rem 2rem;
   border-radius: 20px;
+  max-width: 600px;
+  width: 100%;
   text-align: center;
   backdrop-filter: blur(20px);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
@@ -1827,7 +1835,7 @@ input:checked+.slider:before {
   background: #0f172a;
   transition: all 0.2s;
   opacity: 0;
-  visibility: hidden;
+  visibility: visible;
   pointer-events: none;
   z-index: 100;
   margin-top: 5px;
