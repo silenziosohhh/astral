@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const MemorySchema = new mongoose.Schema({
   title: { type: String, required: true },
   videoUrl: { type: String },
+  image: { type: String },
   description: { type: String },
   authorId: { type: String },
   likes: { type: [String], default: [] },

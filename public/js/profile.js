@@ -796,7 +796,7 @@ function renderProfileMemories(memories, username, currentUser, container) {
         m.videoUrl &&
         /\.(jpg|jpeg|png|webp|gif|bmp)(\?.*)?$/i.test(m.videoUrl)
       ) {
-        media = `<img src="${m.videoUrl}" alt="Memory" onclick="event.stopPropagation(); openMediaModal('${m.videoUrl}', 'image', '${m._id}', '${safeAuthor}', ${likesCount}, ${sharesCount}, ${isLiked})" style="width:100%;height:180px;object-fit:cover;border-radius:10px; cursor: zoom-in;">`;
+        media = `<img src="${m.videoUrl}" alt="Memory" onerror="this.onerror=null;this.src='/images/astralcup_404.png';" onclick="event.stopPropagation(); openMediaModal(this.src, 'image', '${m._id}', '${safeAuthor}', ${likesCount}, ${sharesCount}, ${isLiked})" style="width:100%;height:180px;object-fit:cover;border-radius:10px; cursor: zoom-in;">`;
       } else if (m.videoUrl) {
         media = `<a href="${m.videoUrl}" target="_blank" onclick="event.stopPropagation()" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${m.videoUrl}</a>`;
       }

@@ -1,3 +1,5 @@
+// npm i axios canvas cheerio cookie-parser dotenv express express-session git github jsonwebtoken mongoose node-fetch passport passport-discord path puppeteer-core session socket.io websocket
+
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
@@ -46,10 +48,7 @@ app.get("/torneo", async (req, res) => {
         fs.readFile(filePath, "utf8", (err, data) => {
           if (err) return res.status(500).send("Errore caricamento pagina");
           
-          let ogImage = t.image;
-          if (!ogImage) {
-             ogImage = `https://res.cloudinary.com/demo/image/upload/l_text:Arial_60_bold:${encodeURIComponent(t.title)},co_rgb:ffffff,g_center,y_-40/l_text:Arial_40:Partecipanti%3A%20${t.subscribers.length},co_rgb:60a5fa,g_center,y_40,w_600/v1690000000/astralcup_bg.png`;
-          }
+          const ogImage = `${req.protocol}://${req.get("host")}/api/tournaments/${t._id}/preview-image?v=${Date.now()}`;
           const description = t.description || `Partecipa a ${t.title} su Astral Cup! Iscritti: ${t.subscribers.length}`;
           
           let html = data.replace(/<title>.*<\/title>/, `<title>${t.title} | Astral Cup</title>`);
@@ -89,10 +88,7 @@ app.get("/torneo/:id", async (req, res) => {
       });
       if (!t) return res.status(404).send("Torneo non trovato");
 
-      let ogImage = t.image;
-      if (!ogImage) {
-         ogImage = `https://res.cloudinary.com/demo/image/upload/l_text:Arial_60_bold:${encodeURIComponent(t.title)},co_rgb:ffffff,g_center,y_-40/l_text:Arial_40:Partecipanti%3A%20${t.subscribers.length},co_rgb:60a5fa,g_center,y_40,w_600/v1690000000/astralcup_bg.png`;
-      }
+      const ogImage = `${req.protocol}://${req.get("host")}/api/tournaments/${t._id}/preview-image?v=${Date.now()}`;
       const description = t.description || `Partecipa a ${t.title} su Astral Cup! Iscritti: ${t.subscribers.length}`;
       const url = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
 
@@ -184,15 +180,7 @@ app.get("/profile/:username", (req, res) => {
            if (memory) {
              title = `${memory.title} | Memory di ${user.username}`;
              description = memory.description || `Guarda questa clip epica di ${user.username}!`;
-             
-             if (memory.videoUrl) {
-                if (memory.videoUrl.includes("youtube") || memory.videoUrl.includes("youtu.be")) {
-                    const match = memory.videoUrl.match(/[?&]v=([^&#]+)/) || memory.videoUrl.match(/youtu\.be\/([^?&#]+)/);
-                    if (match && match[1]) image = `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
-                } else if (/\.(jpg|jpeg|png|webp|gif)$/i.test(memory.videoUrl)) {
-                    image = memory.videoUrl;
-                }
-             }
+             image = `${req.protocol}://${req.get("host")}/api/memories/${memory._id}/preview-image?v=${Date.now()}`;
            }
         } else {
            title = `${user.username} | Profilo Astral Cup`;
@@ -264,6 +252,7 @@ app.get("/admin/:page", async (req, res) => {
 });
 
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/fontawesome", express.static(path.join(__dirname, "node_modules", "@fortawesome", "fontawesome-free")));
 
 io.on("connection", (socket) => {
   console.log("New Connection", socket.id);

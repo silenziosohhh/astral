@@ -138,6 +138,7 @@ router.get("/me", ensureAuth, async (req, res) => {
         showSocials: true,
         showSkills: true,
         showMemories: true,
+        allowSkinDownload: true,
         ...(user.privacySettings || {})
       },
       profileLikesCount: user.profileLikes ? user.profileLikes.length : 0,
@@ -228,7 +229,7 @@ router.put("/me/notification-settings", ensureAuth, async (req, res) => {
 
 router.put("/me/privacy-settings", ensureAuth, async (req, res) => {
   try {
-    const { showBedwarsStats, showSocials, showSkills, showMemories } = req.body;
+    const { showBedwarsStats, showSocials, showSkills, showMemories, allowSkinDownload } = req.body;
     const user = await User.findOne({ discordId: req.user.discordId });
     if (!user) return res.status(404).json({ message: "Utente non trovato" });
 
@@ -238,7 +239,8 @@ router.put("/me/privacy-settings", ensureAuth, async (req, res) => {
         showBedwarsStats: showBedwarsStats !== undefined ? showBedwarsStats : current.showBedwarsStats,
         showSocials: showSocials !== undefined ? showSocials : current.showSocials,
         showSkills: showSkills !== undefined ? showSkills : current.showSkills,
-        showMemories: showMemories !== undefined ? showMemories : current.showMemories
+        showMemories: showMemories !== undefined ? showMemories : current.showMemories,
+        allowSkinDownload: allowSkinDownload !== undefined ? allowSkinDownload : current.allowSkinDownload
     };
     user.markModified('privacySettings');
     await user.save();
@@ -341,6 +343,7 @@ router.get("/users/:username", async (req, res) => {
     const showSkills = isSelf || privacy.showSkills !== false;
     const showBedwarsStats = isSelf || privacy.showBedwarsStats !== false;
     const showMemories = isSelf || privacy.showMemories !== false;
+    const allowSkinDownload = isSelf || privacy.allowSkinDownload !== false;
 
     res.json({
       username: user.username,
@@ -359,6 +362,7 @@ router.get("/users/:username", async (req, res) => {
       showSocials,
       showSkills,
       showMemories,
+      allowSkinDownload,
       isSelf
     });
   } catch (err) {
@@ -409,8 +413,8 @@ router.get("/users/:username/preview-image", async (req, res) => {
 
     try {
         const avatar = await Canvas.loadImage(avatarUrl);
-        const avatarSize = 250;
-        const avatarX = 100;
+        const avatarSize = 300;
+        const avatarX = 80;
         const avatarY = (height - avatarSize) / 2;
 
         ctx.save();
@@ -423,25 +427,43 @@ router.get("/users/:username/preview-image", async (req, res) => {
         
         ctx.beginPath();
         ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2, true);
-        ctx.lineWidth = 8;
-        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 12;
+        ctx.strokeStyle = '#3b82f6';
         ctx.stroke();
     } catch (e) { console.error("Errore avatar canvas:", e); }
 
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 80px sans-serif';
-    ctx.shadowColor = "rgba(0,0,0,0.8)";
-    ctx.shadowBlur = 10;
-    ctx.fillText(user.username, 400, 250);
+    const textX = 450;
+    let textY = 200;
 
-    ctx.font = '40px sans-serif';
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillText(`Wins: ${user.wins || 0}  •  Kills: ${user.kills || 0}`, 400, 330);
+    // Role
+    const role = (user.role || "Utente").toUpperCase();
+    ctx.font = 'bold 30px sans-serif';
+    ctx.fillStyle = '#60a5fa';
+    ctx.fillText(role, textX, textY);
     
+    textY += 90;
+
+    // Username
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 100px sans-serif';
+    ctx.shadowColor = "rgba(0,0,0,0.8)";
+    ctx.shadowBlur = 20;
+    ctx.fillText(user.username, textX, textY);
+
+    textY += 70;
+
+    // Stats
+    ctx.shadowBlur = 0;
+    ctx.font = '45px sans-serif';
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillText(`Level: ${user.points || 0}  •  Wins: ${user.wins || 0}`, textX, textY);
+    
+    textY += 60;
+
     if (user.minecraftUsername) {
-        ctx.font = '30px sans-serif';
+        ctx.font = 'italic 35px sans-serif';
         ctx.fillStyle = '#94a3b8';
-        ctx.fillText(`MC: ${user.minecraftUsername}`, 400, 380);
+        ctx.fillText(`IGN: ${user.minecraftUsername}`, textX, textY);
     }
 
     const buffer = canvas.toBuffer('image/png');
@@ -450,6 +472,142 @@ router.get("/users/:username/preview-image", async (req, res) => {
 
   } catch (err) {
     console.error(err);
+    res.status(500).send("Error generating image");
+  }
+});
+
+router.get("/tournaments/:id/preview-image", async (req, res) => {
+  try {
+    const tournament = await Tournament.findById(req.params.id);
+    if (!tournament) return res.status(404).send("Tournament not found");
+
+    let Canvas;
+    try { Canvas = require('canvas'); } catch (e) { return res.status(500).send("Canvas missing"); }
+
+    const width = 1200;
+    const height = 630;
+    const canvas = Canvas.createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, width, height);
+
+    if (tournament.image) {
+        try {
+            const bg = await Canvas.loadImage(tournament.image);
+            // Draw image covering the canvas (aspect fill)
+            const scale = Math.max(width / bg.width, height / bg.height);
+            const x = (width / 2) - (bg.width / 2) * scale;
+            const y = (height / 2) - (bg.height / 2) * scale;
+            ctx.drawImage(bg, x, y, bg.width * scale, bg.height * scale);
+        } catch (e) {}
+    }
+
+    // Gradient Overlay
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, 'rgba(15, 23, 42, 0.3)');
+    gradient.addColorStop(0.6, 'rgba(15, 23, 42, 0.8)');
+    gradient.addColorStop(1, 'rgba(15, 23, 42, 1)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    // Text
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = "rgba(0,0,0,0.8)";
+    ctx.shadowBlur = 20;
+
+    // Title
+    ctx.font = 'bold 80px sans-serif';
+    const title = tournament.title.length > 25 ? tournament.title.substring(0, 25) + "..." : tournament.title;
+    ctx.fillText(title, 60, 480);
+
+    // Info
+    ctx.font = '40px sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    const dateStr = new Date(tournament.date).toLocaleDateString('it-IT');
+    const count = tournament.subscribers ? tournament.subscribers.length : 0;
+    const label = (tournament.format === 'duo' || tournament.format === 'trio') && tournament.teams ? `${tournament.teams.length} Teams` : `${count} Iscritti`;
+    
+    ctx.fillText(`${dateStr}  •  ${label}  •  ${tournament.status}`, 60, 550);
+
+    // Logo/Brand (Optional, top right)
+    ctx.font = 'bold 30px sans-serif';
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillText("ASTRAL CUP", width - 250, 60);
+
+    const buffer = canvas.toBuffer('image/png');
+    res.set('Content-Type', 'image/png');
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).send("Error generating image");
+  }
+});
+
+router.get("/memories/:id/preview-image", async (req, res) => {
+  try {
+    const memory = await Memory.findById(req.params.id);
+    if (!memory) return res.status(404).send("Memory not found");
+
+    const user = await User.findOne({ discordId: memory.authorId });
+    const authorName = user ? user.username : "Utente";
+
+    let Canvas;
+    try { Canvas = require('canvas'); } catch (e) { return res.status(500).send("Canvas missing"); }
+
+    const width = 1200;
+    const height = 630;
+    const canvas = Canvas.createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+
+    // Background (Memory Image)
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, width, height);
+
+    let imgUrl = memory.image || memory.videoUrl;
+    if (imgUrl.includes("youtube") || imgUrl.includes("youtu.be")) {
+        const match = imgUrl.match(/[?&]v=([^&#]+)/) || imgUrl.match(/youtu\.be\/([^?&#]+)/);
+        if (match && match[1]) imgUrl = `https://img.youtube.com/vi/${match[1]}/maxresdefault.jpg`;
+    }
+
+    try {
+        const bg = await Canvas.loadImage(imgUrl);
+        const scale = Math.max(width / bg.width, height / bg.height);
+        const x = (width / 2) - (bg.width / 2) * scale;
+        const y = (height / 2) - (bg.height / 2) * scale;
+        ctx.drawImage(bg, x, y, bg.width * scale, bg.height * scale);
+    } catch (e) {
+        // Fallback if image load fails
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(0, 0, width, height);
+    }
+
+    // Gradient Overlay
+    const gradient = ctx.createLinearGradient(0, height / 2, 0, height);
+    gradient.addColorStop(0, 'rgba(0,0,0,0)');
+    gradient.addColorStop(1, 'rgba(0,0,0,0.9)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    // Text
+    ctx.shadowColor = "rgba(0,0,0,1)";
+    ctx.shadowBlur = 10;
+
+    // Title
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 70px sans-serif';
+    const title = memory.title.length > 30 ? memory.title.substring(0, 30) + "..." : memory.title;
+    ctx.fillText(title, 50, 520);
+
+    // Author
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '40px sans-serif';
+    ctx.fillText(`Memory di ${authorName}`, 50, 580);
+
+    const buffer = canvas.toBuffer('image/png');
+    res.set('Content-Type', 'image/png');
+    res.send(buffer);
+  } catch (err) {
     res.status(500).send("Error generating image");
   }
 });
@@ -1224,7 +1382,7 @@ router.get("/memories", async (req, res) => {
 
 router.post("/memories", ensureAuth, async (req, res) => {
   try {
-    const { title, videoUrl, description } = req.body;
+    const { title, videoUrl, description, image } = req.body;
 
     if (!title || !videoUrl) {
       return res.status(400).json({ message: "Titolo e URL sono obbligatori" });
@@ -1245,6 +1403,7 @@ router.post("/memories", ensureAuth, async (req, res) => {
     const memory = new Memory({
       title,
       videoUrl,
+      image,
       description,
 
       authorId: req.user.discordId,
@@ -1432,104 +1591,6 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
       console.warn(`UUID non trovato per ${username}: ${e.message}`);
     }
 
-    /*
-    // Fetch HTML della pagina CoralMC
-    const response = await fetch(`https://coralmc.it/it/stats/player/${username}`, {
-      headers: { "User-Agent": "Mozilla/5.0" },
-    });
-
-    if (response.status === 404) {
-      return res.status(404).json({ exists: false, message: "Player non trovato" });
-    }
-
-    const html = await response.text();
-
-    // Funzione per estrarre le stats dall'HTML con parser migliorato
-    const getStat = (labels, htmlContent, targetClassPart = null) => {
-      for (const label of labels) {
-        const safeLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        
-        let regexes = [];
-
-        if (targetClassPart) {
-          // Cerca Label ... <tag class="...targetClassPart...">Value</tag>
-          // Usa una parte unica della classe per matchare (es. "font-mono")
-          regexes.push(new RegExp(`>\\s*${safeLabel}\\s*<[\\s\\S]{0,800}?(?:class=["'][^"']*${targetClassPart}[^"']*["'])[^>]*>\\s*([\\d.,]+)\\s*<`, "i"));
-          regexes.push(new RegExp(`${safeLabel}[\\s\\S]{0,800}?(?:class=["'][^"']*${targetClassPart}[^"']*["'])[^>]*>\\s*([\\d.,]+)\\s*<`, "i"));
-        }
-
-        // Fallback patterns
-        regexes.push(new RegExp(`>\\s*${safeLabel}\\s*<[\\s\\S]{0,400}?>\\s*([\\d.,]+)\\s*<`, "i"));
-        regexes.push(new RegExp(`${safeLabel}\\s*[:]?\\s*([\\d.,]+)`, "i"));
-
-        for (const regex of regexes) {
-          const match = htmlContent.match(regex);
-          if (match && match[1]) {
-            let val = match[1].replace(/[.,]/g, "").trim();
-            return parseInt(val) || 0;
-          }
-        }
-      }
-      return 0;
-    };
-
-    // Prova a leggere le stats dall'HTML
-    const mainStatClass = "font-mono"; // Parte unica della classe per stats principali
-    const levelClass = "text-3xl";     // Parte unica per il livello
-    const winLossClass = "text-sm";    // Parte unica per wins/losses
-
-    let stats = {
-      wins: getStat(["Wins", "Vittorie"], html, winLossClass),
-      losses: getStat(["Losses", "Sconfitte"], html, winLossClass),
-      kills: getStat(["Uccisioni", "Kills"], html, mainStatClass),
-      deaths: getStat(["Morti", "Deaths"], html, mainStatClass),
-      beds: getStat(["Letti rotti", "Letti distrutti", "Beds broken"], html, mainStatClass),
-      finals: getStat(["Final kills", "Uccisioni finali", "Finali"], html, mainStatClass),
-      finalDeaths: getStat(["Morti finali", "Final deaths"], html),
-      games: getStat(["Partite giocate", "Games played", "Partite"], html),
-      level: getStat(["Livello Bedwars", "Level", "Livello"], html, levelClass),
-      winstreak: getStat(["Winstreak", "Serie", "Serie attuale", "Current Winstreak", "Streak", "Vittorie consecutive"], html, mainStatClass),
-      topWinstreak: getStat(["Top Winstreak", "Highest Winstreak", "Winstreak migliore", "Best Winstreak", "Miglior serie", "Max Winstreak", "Best Streak", "Record serie"], html, mainStatClass),
-      coins: getStat(["Monete", "Coins", "Denaro", "Soldi", "Bilancio"], html, mainStatClass)
-    };
-
-    // Se HTML non ha trovato nulla → fallback API JSON
-    const allZero = Object.values(stats).every((v) => v === 0);
-    if (allZero) {
-      try {
-        const jsonResponse = await fetch(`https://coralmc.it/api/player/${username}`, {
-          headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json" },
-        });
-
-        if (jsonResponse.ok) {
-          const data = await jsonResponse.json();
-          stats = {
-            wins: data.bedwars?.stats?.wins ?? data.wins ?? 0,
-            losses: data.bedwars?.stats?.losses ?? data.losses ?? 0,
-            kills: data.bedwars?.stats?.kills ?? data.kills ?? 0,
-            deaths: data.bedwars?.stats?.deaths ?? data.deaths ?? 0,
-            beds: data.bedwars?.stats?.bedsBroken ?? data.bedsBroken ?? 0,
-            finals: data.bedwars?.stats?.finalKills ?? data.finalKills ?? 0,
-            finalDeaths: data.bedwars?.stats?.finalDeaths ?? data.finalDeaths ?? 0,
-            games: data.bedwars?.stats?.gamesPlayed ?? data.gamesPlayed ?? 0,
-            level: data.bedwars?.level ?? data.level ?? 0,
-            winstreak: data.bedwars?.stats?.winstreak ?? data.winstreak ?? 0,
-            topWinstreak: data.bedwars?.stats?.highestWinstreak ?? data.highestWinstreak ?? 0,
-            coins: data.coins ?? 0
-          };
-          console.log(`Stats di ${username} caricate dal fallback API JSON`);
-          console.log(`Dati grezzi JSON:`, JSON.stringify(data, null, 2));
-        } else {
-          console.warn(`API JSON CoralMC fallita per ${username}, status: ${jsonResponse.status}`);
-        }
-      } catch (e) {
-        console.error(`Errore fallback API JSON per ${username}:`, e.message);
-      }
-    } else {
-      console.log(`Stats di ${username} caricate dall'HTML`);
-    }
-    */
-
     let stats = {
       wins: 0, losses: 0, kills: 0, deaths: 0, beds: 0, finals: 0, finalDeaths: 0,
       games: 0, level: 0, winstreak: 0, topWinstreak: 0, coins: 0
@@ -1544,16 +1605,17 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
         const data = await response.json();
         stats = {
             wins: data.wins || 0,
-            losses: data.looses || data.losses || 0,
+            losses: data.looses || 0,
             kills: data.kills || 0,
             deaths: data.deaths || 0,
-            beds: data.beds_destroyed || data.beds_broken || data.beds || 0,
-            finals: data.final_kills || data.finals || 0,
-            finalDeaths: data.final_deaths || data.finalDeaths || 0,
+            beds: data.beds_destroyed || 0,
+            finals: data.final_kills || 0,
+            finalDeaths: data.final_deaths || 0,
             games: data.games_played || data.games || 0,
             level: data.level || 0,
-            winstreak: data.currentStreak || data.winstreak || 0,
-            topWinstreak: data.maxStreak || data.highest_winstreak || data.topWinstreak || 0,
+            xp: data.xp || 0,
+            winstreak: data.currentStreak ||  0,
+            topWinstreak: data.maxStreak || 0,
             coins: data.coins || 0
         };
       }
@@ -1572,6 +1634,25 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
     const wlr = losses > 0 ? parseFloat((stats.wins / losses).toFixed(2)) : stats.wins;
     const fkdr = (stats.finalDeaths || 0) > 0 ? parseFloat((stats.finals / stats.finalDeaths).toFixed(2)) : stats.finals;
 
+    // Aggiorna il profilo utente nel database se le statistiche sono valide
+    if (stats.games > 0 || stats.level > 0) {
+        try {
+            await User.findOneAndUpdate(
+                { minecraftUsername: { $regex: new RegExp(`^${username}$`, "i") } },
+                { 
+                    $set: { 
+                        wins: stats.wins, 
+                        kills: stats.kills, 
+                        bedBroken: stats.beds, 
+                        points: stats.level 
+                    } 
+                }
+            );
+        } catch (dbErr) {
+            console.error("Errore aggiornamento stats DB:", dbErr);
+        }
+    }
+
     const responseData = {
       uuid,
       username,
@@ -1585,6 +1666,7 @@ router.get("/proxy/coralmc/:username", async (req, res) => {
       finalDeaths: stats.finalDeaths,
       games: stats.games,
       level: stats.level,
+      xp: stats.xp,
       winstreak: stats.winstreak,
       topWinstreak: stats.topWinstreak,
       coins: stats.coins,
