@@ -1,4 +1,4 @@
-// npm i axios canvas cheerio cookie-parser dotenv express express-session git github jsonwebtoken mongoose node-fetch passport passport-discord path puppeteer-core session socket.io websocket
+
 
 require("dotenv").config();
 const express = require("express");
@@ -151,17 +151,64 @@ app.get("/tornei", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "pages", "tornei.html"));
 });
 
+app.get("/bwrules", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "pages", "policies", "bw_rules.html"));
+});
+
 app.get("/profile", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "pages", "profile.html"));
 });
 
-app.get("/profile/:username", (req, res) => {
+app.get("/pages/admin.html", (req, res) => res.redirect("/admin"));
+
+app.get("/admin", async (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.redirect("/");
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (user && ["gestore", "founder", "developer", "admin"].includes(user.role)) {
+      return res.sendFile(
+        path.join(__dirname, "public", "pages", "admin.html"),
+      );
+    }
+    return res.redirect("/");
+  } catch (err) {
+    return res.redirect("/");
+  }
+});
+
+app.get("/admin/:page", async (req, res) => {
+  const page = req.params.page;
+  const validPages = ["classifica", "iscrizioni", "tornei", "user"];
+  if (!validPages.includes(page)) return res.redirect("/admin");
+
+  const token = req.cookies.token;
+  if (!token) return res.redirect("/");
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (user && ["gestore", "founder", "developer", "admin"].includes(user.role)) {
+      return res.sendFile(
+        path.join(__dirname, "public", "pages", "adminpanel", `${page}.html`),
+      );
+    }
+    return res.redirect("/");
+  } catch (err) {
+    return res.redirect("/");
+  }
+});
+app.get("/profile/:username", (req, res, next) => {
   const { username } = req.params;
+  if (["api", "auth", "images", "js", "styles", "pages"].includes(username)) return next();
+
   const { memory: memoryId } = req.query;
   const filePath = path.join(__dirname, "public", "pages", "profile.html");
 
   fs.readFile(filePath, "utf8", async (err, data) => {
-    if (err) return res.status(500).send("Errore caricamento pagina");
+    if (err) return next();
 
     let title = `${username} | Astral Cup`;
     let description = `Guarda il profilo di ${username} su Astral Cup!`;
@@ -207,48 +254,6 @@ app.get("/profile/:username", (req, res) => {
     html = html.replace("</head>", `${metaTags}</head>`);
     res.send(html);
   });
-});
-
-app.get("/pages/admin.html", (req, res) => res.redirect("/admin"));
-
-app.get("/admin", async (req, res) => {
-  const token = req.cookies.token;
-  if (!token) return res.redirect("/");
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-    if (user && ["gestore", "founder", "developer", "admin"].includes(user.role)) {
-      return res.sendFile(
-        path.join(__dirname, "public", "pages", "admin.html"),
-      );
-    }
-    return res.redirect("/");
-  } catch (err) {
-    return res.redirect("/");
-  }
-});
-
-app.get("/admin/:page", async (req, res) => {
-  const page = req.params.page;
-  const validPages = ["classifica", "iscrizioni", "tornei", "user"];
-  if (!validPages.includes(page)) return res.redirect("/admin");
-
-  const token = req.cookies.token;
-  if (!token) return res.redirect("/");
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-    if (user && ["gestore", "founder", "developer", "admin"].includes(user.role)) {
-      return res.sendFile(
-        path.join(__dirname, "public", "pages", "adminpanel", `${page}.html`),
-      );
-    }
-    return res.redirect("/");
-  } catch (err) {
-    return res.redirect("/");
-  }
 });
 
 app.use(express.static(path.join(__dirname, "public")));

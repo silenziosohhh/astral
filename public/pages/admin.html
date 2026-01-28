@@ -13,83 +13,6 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     />
     <link rel="icon" type="image/x-icon" href="/images/astralcup-logo.png" />
-    <style>
-        .admin-card-modern {
-            background: #1e293b;
-            padding: 2rem;
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.05);
-            height: 100%;
-            width: 100%;
-            max-width: 800px;
-            overflow: visible;
-        }
-        .input-modern-group {
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            padding: 0 12px;
-            display: flex;
-            align-items: center;
-            transition: border-color 0.2s;
-            max-width: 100%;
-            overflow: visible;
-        }
-        .input-modern-group:focus-within {
-            border-color: var(--primary-2);
-        }
-        .input-modern {
-            background: transparent;
-            border: none;
-            color: #fff;
-            padding: 12px 0;
-            width: auto;
-            flex: 1;
-            outline: none;
-            min-width: 0;
-            max-width: 100%;
-        }
-        .admin-form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        @media (max-width: 768px) {
-            .admin-form-grid {
-                grid-template-columns: 1fr;
-            }
-            .admin-card-modern {
-                padding: 1rem;
-            }
-        }
-        .admin-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .admin-table th {
-            text-align: left;
-            padding: 15px;
-            color: #94a3b8;
-            font-weight: 600;
-            background: #0f172a;
-            white-space: nowrap;
-        }
-        .admin-table td {
-            padding: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            color: #e2e8f0;
-            white-space: nowrap;
-        }
-        .admin-table tr:last-child td {
-            border-bottom: none;
-        }
-        /* Override for admin form integration */
-        .admin-form .custom-select__trigger {
-            background: transparent;
-            border: none;
-            padding: 12px 0;
-        }
-    </style>
   </head>
   <body>
     <nav class="navbar">
@@ -124,7 +47,7 @@
       </div>
     </nav>
 
-    <div class="container" style="padding-top: 120px; padding-bottom: 50px; max-width: 100vw; overflow-x: hidden; padding-left: 15px; padding-right: 15px;">
+    <div class="container" style="padding-top: 120px; padding-bottom: 50px">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
           <div>
             <h1 class="section-title" style="margin-bottom: 0.5rem; text-align: left;">Dashboard Amministrazione</h1>
@@ -138,23 +61,23 @@
 
       <div style="display: flex; flex-direction: column; gap: 2rem; justify-content: center; align-items: center;">
         <section class="admin-card-modern">
-            <h2 style="color: #fff; margin-bottom: 1.5rem; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <span style="background: rgba(16, 185, 129, 0.1); color: #34d399; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 1.2rem; flex-shrink: 0;"><i class="fas fa-plus"></i></span>
+            <h2 class="admin-card-header">
+                <span class="admin-card-icon icon-green"><i class="fas fa-plus"></i></span>
                 Crea Nuovo Torneo
             </h2>
             <form class="admin-form admin-form-grid">
-                <div class="form-group" style="grid-column: 1 / -1;">
-                    <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-weight: 500;">Titolo Torneo</label>
+                <div class="form-group full-width">
+                    <label class="form-label">Titolo Torneo</label>
                     <div class="input-modern-group">
-                        <i class="fas fa-id" style="color: #64748b; margin-right: 10px;"></i>
+                        <i class="fas fa-heading input-icon"></i>
                         <input type="text" class="input-modern" placeholder="Es. Astral Weekly #45" required>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-weight: 500;">Formato</label>
-                    <div class="input-modern-group" style="position: relative; z-index: 0;">
-                        <i class="fas fa-users" style="color: #64748b; margin-right: 10px;"></i>
+                    <label class="form-label">Formato</label>
+                    <div class="input-modern-group" style="z-index: 0;">
+                        <i class="fas fa-users input-icon"></i>
                         <div class="custom-select" id="format-select-wrapper" style="flex: 1;">
                             <div class="custom-select__trigger">
                                 <span id="format-selected-text">Solo (1v1)</span>
@@ -171,35 +94,36 @@
                 </div>
 
                 <div class="form-group">
-                    <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-weight: 500;">Data e Ora</label>
+                    <label class="form-label">Data e Ora</label>
                     <div class="input-modern-group">
+                        <i class="fas fa-clock input-icon"></i>
                         <input type="datetime-local" class="input-modern" required style="color-scheme: dark;">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-weight: 500;">Montepremi</label>
+                    <label class="form-label">Montepremi</label>
                     <div class="input-modern-group">
-                        <i class="fas fa-trophy" style="color: #64748b; margin-right: 10px;"></i>
+                        <i class="fas fa-trophy input-icon"></i>
                         <input type="text" class="input-modern" placeholder="Es. 50€">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-weight: 500;">URL Immagine</label>
+                    <label class="form-label">URL Immagine</label>
                     <div class="input-modern-group">
-                        <i class="fas fa-image" style="color: #64748b; margin-right: 10px;"></i>
+                        <i class="fas fa-image input-icon"></i>
                         <input type="url" class="input-modern" placeholder="https://...">
                     </div>
                 </div>
 
-                <div class="form-group" style="grid-column: 1 / -1;">
-                    <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-weight: 500;">Descrizione</label>
-                        <textarea rows="4" class="input-modern" placeholder="Dettagli del torneo..." style="resize: vertical; font-family: inherit;"></textarea>
+                <div class="form-group full-width">
+                    <label class="form-label">Descrizione</label>
+                        <textarea rows="4" class="input-modern" placeholder="Dettagli del torneo..."></textarea>
                 </div>
 
-                <div style="grid-column: 1 / -1;">
-                    <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <div class="full-width">
+                    <button type="submit" class="btn-primary btn-submit">
                         <i class="fas fa-paper-plane"></i> Pubblica Torneo
                     </button>
                 </div>
@@ -208,11 +132,11 @@
 
         <!-- Lista Tornei -->
         <section class="admin-card-modern">
-            <h2 style="color: #fff; margin-bottom: 1.5rem; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <span style="background: rgba(59, 130, 246, 0.1); color: #60a5fa; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 1.2rem; flex-shrink: 0;"><i class="fas fa-list"></i></span>
+            <h2 class="admin-card-header">
+                <span class="admin-card-icon icon-blue"><i class="fas fa-list"></i></span>
                 Lista Tornei
             </h2>
-            <div class="table-responsive" style="border-radius: 12px; overflow-x: auto; border: 1px solid rgba(255,255,255,0.05);">
+            <div class="table-responsive admin-table-container">
                 <table class="admin-table">
                     <thead>
                         <tr>
@@ -231,11 +155,11 @@
 
         <!-- Classifica -->
         <section class="admin-card-modern">
-            <h2 style="color: #fff; margin-bottom: 1.5rem; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <span style="background: rgba(245, 158, 11, 0.1); color: #fbbf24; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 1.2rem; flex-shrink: 0;"><i class="fas fa-trophy"></i></span>
+            <h2 class="admin-card-header">
+                <span class="admin-card-icon icon-yellow"><i class="fas fa-trophy"></i></span>
                 Gestione Classifica
             </h2>
-            <div class="table-responsive" style="border-radius: 12px; overflow-x: auto; border: 1px solid rgba(255,255,255,0.05);">
+            <div class="table-responsive admin-table-container">
                 <table class="admin-table">
                     <thead>
                         <tr>
@@ -278,10 +202,7 @@
               classifica verso la gloria eterna.
             </p>
             <div class="social-links">
-              <a href="#"><i class="fab fa-discord"></i></a>
-              <a href="#"><i class="fab fa-twitter"></i></a>
-              <a href="#"><i class="fab fa-instagram"></i></a>
-              <a href="#"><i class="fab fa-youtube"></i></a>
+              <a href="https://discord.gg/TXwYrtmZ42"><i class="fab fa-discord"></i></a>
             </div>
           </div>
           <div class="footer-section">
@@ -296,7 +217,7 @@
           <div class="footer-section">
             <h3>Supporto</h3>
             <ul class="footer-links">
-              <li><a href="#">Regolamento</a></li>
+              <li><a href="/bwrules">Regolamento</a></li>
               <li><a href="#">FAQ</a></li>
               <li><a href="#">Contattaci</a></li>
             </ul>

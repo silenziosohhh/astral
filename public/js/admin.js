@@ -275,8 +275,9 @@ window.showSubscribers = function (id) {
           membersHtml = team.teammates
             .map(
               (mate) => {
-                const name = mate.username || mate;
-                const userId = mate.userId || '';
+                const userObj = (typeof mate === 'object' && mate.userId && typeof mate.userId === 'object') ? mate.userId : null;
+                const name = userObj ? (userObj.minecraftUsername || userObj.username) : (mate.username || mate);
+                const userId = userObj ? userObj._id : (mate.userId || '');
                 const statusIcon = typeof mate === 'object' ? 
                     (mate.status === 'accepted' ? '<i class="fas fa-check" style="color: #4ade80; font-size: 0.7rem; margin-left: 5px;" title="Accettato"></i>' : 
                      mate.status === 'rejected' ? '<i class="fas fa-times" style="color: #f87171; font-size: 0.7rem; margin-left: 5px;" title="Rifiutato"></i>' : 

@@ -93,4 +93,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (typeof loadNotifications === "function") loadNotifications();
   });
+  socket.on("profile:update", (data) => {
+    const profileUsername = document.getElementById("profile-username")?.textContent;
+    if (profileUsername === data.username) {
+      const countSpan = document.getElementById("profile-likes-count");
+      if (countSpan) {
+        countSpan.textContent = data.profileLikesCount;
+        const btn = countSpan.closest("button");
+        if (btn) {
+           const icon = btn.querySelector("i");
+           if (icon) {
+             icon.animate([{ transform: "scale(1)" }, { transform: "scale(1.4)" }, { transform: "scale(1)" }], { duration: 300 });
+           }
+        }
+      }
+    }
+  });
 });

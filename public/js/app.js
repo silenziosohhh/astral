@@ -94,10 +94,24 @@ window.openMediaModal = function (
   type,
   id,
   authorName,
-  likes = 0,
-  shares = 0,
-  isLiked = false,
+  likes = 0, // Fallback
+  shares = 0, // Fallback
+  isLiked = false, // Fallback
 ) {
+  const card = id ? document.getElementById(`memory-${id}`) : null;
+  if (card) {
+    try {
+      const likeBtn = card.querySelector('.fa-heart').closest('button');
+      const shareBtn = card.querySelector('.fa-share').closest('button');
+      
+      likes = parseInt(likeBtn.querySelector('span').textContent.trim()) || 0;
+      shares = parseInt(shareBtn.querySelector('span').textContent.trim()) || 0;
+      isLiked = likeBtn.querySelector('i').classList.contains('fas');
+    } catch (e) {
+      console.warn("Could not read like/share counts from card, using fallbacks.", e);
+    }
+  }
+
   const existing = document.querySelector(".media-modal-overlay");
   if (existing) existing.remove();
 
@@ -257,6 +271,22 @@ window.shareMemory = async function (id, authorName, title, el) {
   });
 };
 
+window.deleteMemory = function(id) {
+  window.showConfirmModal("Elimina Memory", "Sei sicuro di voler eliminare questa memory?", async () => {
+    try {
+      const res = await fetch(`/api/memories/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        if (typeof showToast === "function") showToast("Memory eliminata", "success");
+        if (typeof loadMemories === "function") loadMemories();
+      } else {
+        if (typeof showToast === "function") showToast("Errore durante l'eliminazione", "error");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, "Elimina");
+};
+
 async function loadTournaments() {
   const container = document.querySelector("#tornei .grid-3") || document.querySelector(".grid-3");
   if (!container) return;
@@ -267,13 +297,11 @@ async function loadTournaments() {
     if (sessionRes.ok) user = (await sessionRes.json()).user;
   } catch {}
 
-  // 1. Cache First (Render immediately)
   const cached = getCache("tournaments");
   if (cached) {
     renderTournamentsList(cached, user, container);
   }
 
-  // 2. Network (Update in background)
   try {
     const res = await fetch("/api/tournaments", { credentials: "include" });
     const tournaments = await res.json();
@@ -609,7 +637,6 @@ window.showConfirmModal = function (title, message, onConfirm, confirmText = "Co
   };
 };
 
-// Funzioni Globali per Gestione Admin (chiamate dai pulsanti nelle card)
 window.updateStatus = function(id, status) {
     window.showConfirmModal("Aggiorna Stato", `Sei sicuro di voler impostare lo stato a: <b>${status}</b>?`, async () => {
         try {
@@ -678,11 +705,15 @@ async function openSubscriptionModal(tid) {
           
           let membersHtml = "";
           if (team.teammates && team.teammates.length > 0) {
-            membersHtml = team.teammates.map(mate => `
+            membersHtml = team.teammates.map(mate => {
+              const userObj = (typeof mate === 'object' && mate.userId && typeof mate.userId === 'object') ? mate.userId : null;
+              const name = userObj ? (userObj.minecraftUsername || userObj.username) : (mate.username || mate);
+              
+              return `
               <div style="display: flex; align-items: center; gap: 10px; padding: 4px 0; color: #cbd5e1; font-size: 0.9rem; justify-content: space-between;">
                  <div style="display: flex; align-items: center; gap: 10px;">
-                    <img src="https://minotar.net/helm/${mate.username || mate}/24.png" style="width: 20px; height: 20px; border-radius: 4px;"> 
-                    ${mate.username || mate}
+                    <img src="https://minotar.net/helm/${name}/24.png" style="width: 20px; height: 20px; border-radius: 4px;"> 
+                    ${name}
                  </div>
                  ${typeof mate === 'object' ? 
                     (mate.status === 'accepted' ? '<i class="fas fa-check-circle" style="color: #4ade80;" title="Accettato"></i>' : 
@@ -690,7 +721,7 @@ async function openSubscriptionModal(tid) {
                      '<i class="fas fa-hourglass-half" style="color: #fbbf24;" title="In attesa"></i>') 
                     : ''}
               </div>
-            `).join("");
+            `}).join("");
           }
 
           contentHtml += `
@@ -866,23 +897,43 @@ function renderMemoriesList(memories, currentUser, container) {
       const safeAuthor = (m.authorName || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
       let media = "";
-      if (m.videoUrl && m.videoUrl.includes("youtube")) {
+      let fullscreenBtn = "";
+      const iframeStyles = `style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"`;
+
+      if (m.videoUrl && (m.videoUrl.includes("youtube.com") || m.videoUrl.includes("youtu.be"))) {
         const match =
           m.videoUrl.match(/[?&]v=([^&#]+)/) ||
           m.videoUrl.match(/youtu\.be\/([^?&#]+)/);
         const videoId = match ? match[1] : null;
         if (videoId) {
-          media = `<iframe width="100%" height="180" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen style="border-radius:10px;"></iframe>`;
+          media = `<div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 0; background: #000;"><iframe src="https://www.youtube.com/embed/${videoId}" ${iframeStyles} allowfullscreen></iframe></div>`;
         } else {
           media = `<a href="${m.videoUrl}" target="_blank">${m.videoUrl}</a>`;
+        }
+      } else if (m.videoUrl && m.videoUrl.includes("tiktok.com")) {
+        const match = m.videoUrl.match(/tiktok\.com\/.*\/video\/(\d+)/);
+        const videoId = match ? match[1] : null;
+        if (videoId) {
+            media = `<div style="position: relative; width: 100%; padding-bottom: 100%; height: 0; overflow: hidden; border-radius: 0; background: #000;"><iframe src="https://www.tiktok.com/embed/v2/${videoId}" ${iframeStyles} allowfullscreen scrolling="no"></iframe></div>`;
+        } else {
+            media = `<a href="${m.videoUrl}" target="_blank">${m.videoUrl}</a>`;
+        }
+      } else if (m.videoUrl && m.videoUrl.includes("clips.twitch.tv")) {
+        const match = m.videoUrl.match(/clips\.twitch\.tv\/([\w-]+)/);
+        const clipSlug = match ? match[1] : null;
+        if (clipSlug) {
+            media = `<div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 0; background: #000;"><iframe src="https://clips.twitch.tv/embed?clip=${clipSlug}&parent=${window.location.hostname}" ${iframeStyles} allowfullscreen="true" scrolling="no"></iframe></div>`;
+        } else {
+            media = `<a href="${m.videoUrl}" target="_blank">${m.videoUrl}</a>`;
         }
       } else if (
         m.videoUrl &&
         /\.(jpg|jpeg|png|webp|gif|bmp)(\?.*)?$/i.test(m.videoUrl)
       ) {
-        media = `<img src="${m.videoUrl}" alt="Memory" onerror="this.onerror=null;this.src='/images/astralcup_404.png';" onclick="event.stopPropagation(); openMediaModal(this.src, 'image', '${m._id}', '${safeAuthor}', ${likesCount}, ${sharesCount}, ${isLiked})" style="width:100%;height:180px;object-fit:cover;border-radius:10px; cursor: zoom-in;">`;
+        media = `<img src="${m.videoUrl}" alt="Memory" onerror="this.onerror=null;this.src='/images/astralcup_404.png';" onclick="event.stopPropagation(); openMediaModal(this.src, 'image', '${m._id}', '${safeAuthor}')" style="width: 100%; height: auto; display: block; cursor: zoom-in;">`;
+        fullscreenBtn = `<button onclick="event.stopPropagation(); openMediaModal('${m.videoUrl}', 'image', '${m._id}', '${safeAuthor}')" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;"><i class="fas fa-expand"></i></button>`;
       } else if (m.videoUrl) {
-        media = `<a href="${m.videoUrl}" target="_blank" onclick="event.stopPropagation()">${m.videoUrl}</a>`;
+        media = `<a href="${m.videoUrl}" target="_blank" onclick="event.stopPropagation()" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${m.videoUrl}</a>`;
       }
 
       const date = m.createdAt
@@ -896,22 +947,30 @@ function renderMemoriesList(memories, currentUser, container) {
       const heartClass = isLiked ? "fas" : "far";
       const heartColor = isLiked ? "#ef4444" : "#cbd5e1";
 
+      let deleteBtn = "";
+      if (currentUser && (m.authorId === currentUser.discordId || ["gestore", "founder", "admin"].includes(currentUser.role))) {
+        deleteBtn = `<button onclick="event.stopPropagation(); deleteMemory('${m._id}')" class="btn-icon delete" title="Elimina" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #ef4444; z-index: 10;"><i class="fas fa-trash"></i></button>`;
+      }
+
       const card = `
-        <div id="memory-${m._id}" class="card memory-card" onclick="window.location.href='/profile/${encodeURIComponent(m.authorName)}?memory=${m._id}'" style="min-height:320px;display:flex;flex-direction:column;justify-content:space-between; cursor: pointer;">
-          <div>
-            ${media}
-            <h3 style="margin:0.7rem 0 0.3rem 0;">${m.title || "Memory"}</h3>
+        <div id="memory-${m._id}" class="card memory-card" onclick="window.location.href='/profile/${encodeURIComponent(m.authorName)}?memory=${m._id}'" style="min-height:320px;display:flex;flex-direction:column;justify-content:space-between; cursor: pointer; padding: 0; overflow: hidden;">
+          ${media}
+          ${deleteBtn}
+          <div style="padding: 1.5rem; display: flex; flex-direction: column; flex: 1;">
+            <h3 style="margin:0 0 0.3rem 0;">${m.title || "Memory"}</h3>
             ${authorHtml}
             <p style="font-size:0.98em;color:#aaa;margin-bottom:0.5rem;">${date}</p>
-            <p style="margin-bottom:0.7rem;">${m.description ? m.description : ""}</p>
-          </div>
-          <div style="display: flex; gap: 15px; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-            <button onclick="event.stopPropagation(); toggleLike(this, '${m._id}')" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
-                <i class="${heartClass} fa-heart" style="font-size: 1.1rem; color: ${heartColor};"></i> <span>${likesCount}</span>
-            </button>
-            <button onclick="event.stopPropagation(); shareMemory('${m._id}', '${safeAuthor}', '${safeTitle}', this)" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
-                <i class="fas fa-share" style="font-size: 1.1rem;"></i> <span>${sharesCount}</span>
-            </button>
+            <p style="margin-bottom:0.7rem; flex: 1;">${m.description ? m.description : ""}</p>
+            
+            <div style="display: flex; gap: 15px; margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                <button onclick="event.stopPropagation(); toggleLike(this, '${m._id}')" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
+                    <i class="${heartClass} fa-heart" style="font-size: 1.1rem; color: ${heartColor};"></i> <span>${likesCount}</span>
+                </button>
+                <button onclick="event.stopPropagation(); shareMemory('${m._id}', '${safeAuthor}', '${safeTitle}', this)" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
+                    <i class="fas fa-share" style="font-size: 1.1rem;"></i> <span>${sharesCount}</span>
+                </button>
+                ${fullscreenBtn}
+            </div>
           </div>
         </div>
       `;

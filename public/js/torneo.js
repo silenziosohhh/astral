@@ -60,17 +60,17 @@ async function loadTournament() {
   let actionBtn = "";
 
   if (!user) {
-    actionBtn = `<button class="btn-discord" onclick="window.location.href='/auth/discord'" style="width: 100%; justify-content: center; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;"><i class="fab fa-discord"></i> Accedi per Iscriverti</button>`;
+    actionBtn = `<button class="btn-discord" onclick="window.location.href='/auth/discord'" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px;"><i class="fab fa-discord"></i> Accedi per Iscriverti</button>`;
   } else if (isSubscribed) {
-    actionBtn = `<button id="btn-view-sub" class="btn-visit" style="width: 100%; justify-content: center; margin-bottom: 12px;">Visualizza Iscrizioni</button>`;
+    actionBtn = `<button id="btn-view-sub" class="btn-visit" style="width: 100%; justify-content: center;">Visualizza Iscrizioni</button>`;
   } else if (t.status === "Aperto") {
     if (t.format === "solo") {
-      actionBtn = `<button id="btn-subscribe" class="btn-visit" style="width: 100%; justify-content: center; margin-bottom: 12px;">Iscriviti Ora</button>`;
+      actionBtn = `<button id="btn-subscribe" class="btn-visit" style="width: 100%; justify-content: center;">Iscriviti Ora</button>`;
     } else {
-      actionBtn = `<button id="btn-subscribe-team" class="btn-visit" style="width: 100%; justify-content: center; margin-bottom: 12px;">Iscriviti (Team)</button>`;
+      actionBtn = `<button id="btn-subscribe-team" class="btn-visit" style="width: 100%; justify-content: center;">Iscriviti (Team)</button>`;
     }
   } else {
-    actionBtn = `<button disabled style="width: 100%; padding: 0.8rem; border-radius: 8px; font-weight: 600; margin-bottom: 12px; background: #334155; color: #94a3b8; border: none; cursor: not-allowed;">Iscrizioni Chiuse</button>`;
+    actionBtn = `<button disabled style="width: 100%; padding: 0.8rem; border-radius: 8px; font-weight: 600; background: #334155; color: #94a3b8; border: none; cursor: not-allowed;">Iscrizioni Chiuse</button>`;
   }
 
   let subsHtml = "";
@@ -89,7 +89,8 @@ async function loadTournament() {
                   let membersHtml = "";
                   if (team.teammates && team.teammates.length > 0) {
                       membersHtml = team.teammates.map(mate => {
-                          const mName = mate.username || mate;
+                          const userObj = (typeof mate === 'object' && mate.userId && typeof mate.userId === 'object') ? mate.userId : null;
+                          const mName = userObj ? (userObj.minecraftUsername || userObj.username) : (mate.username || mate);
                           return `
                               <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 0.9rem; color: #cbd5e1; padding-left: 42px;">
                                   <img src="https://minotar.net/helm/${mName}/24.png" style="width: 20px; height: 20px; border-radius: 4px;">
@@ -246,6 +247,9 @@ async function loadTournament() {
                     ${actionBtn}
                     <button class="btn-visit" id="copy-tournament-link" style="width: 100%; justify-content: center; font-size: 1rem;">
                         <i class="fas fa-share-alt" style="margin-right: 8px;"></i> Condividi
+                    </button>
+                    <button class="btn-visit" onclick="window.location.href='/bwrules'">
+                        <i class="fas fa-book" style="margin-right: 6px;"></i> Regole
                     </button>
                     <a href="/" class="btn-back">
                         <i class="fas fa-arrow-left" style="margin-right: 6px;"></i> Torna alla Home

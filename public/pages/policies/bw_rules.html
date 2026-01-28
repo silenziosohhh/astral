@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Regolamento BedWars - Astral Cup</title>
+  <link rel="stylesheet" href="/styles/main.css" />
+  <link rel="icon" type="image/x-icon" href="/images/astralcup-logo.png" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    .rules-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    .rule-section {
+        background: var(--glass-dark);
+        border: 1px solid var(--glass-border-light);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        animation: fadeUp 0.5s ease-out;
+    }
+    .rule-section h2 {
+        color: var(--primary-2);
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .rule-item {
+        margin-bottom: 1.2rem;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    .rule-item:last-child {
+        margin-bottom: 0;
+    }
+    .rule-item i {
+        color: var(--primary-2);
+        margin-top: 4px;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+    .rule-text {
+        color: #e2e8f0;
+        line-height: 1.6;
+        font-size: 1rem;
+    }
+    .punishment {
+        display: block;
+        color: #f87171;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-top: 4px;
+        background: rgba(239, 68, 68, 0.1);
+        padding: 4px 10px;
+        border-radius: 6px;
+        width: fit-content;
+    }
+    .client-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 1rem;
+    }
+    .client-tag {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        color: #cbd5e1;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    .client-tag:hover {
+        background: rgba(59, 130, 246, 0.2);
+        color: #fff;
+        transform: translateY(-2px);
+    }
+    .general-rule {
+        background: rgba(255,255,255,0.03);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        border-left: 3px solid var(--primary-2);
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="/" class="navbar-brand">
+        <img src="/images/astralcup.png" alt="Astral Cup Logo" />
+        <span>ASTRAL CUP</span>
+      </a>
+      <div class="navbar-content">
+        <ul class="navbar-menu">
+          <li><a href="/staff">Staff</a></li>
+          <li><a href="/classifica">Classifica</a></li>
+          <li><a href="/">Home</a></li>
+          <li><a href="/memories">Memories</a></li>
+          <li><a href="/tornei">Tornei</a></li>
+        </ul>
+        <div class="navbar-search-trigger" id="nav-search-trigger">
+          <i class="fas fa-search"></i>
+        </div>
+        <div class="navbar-actions">
+          <a href="/discord" class="btn-discord outline-glow"><i class="fab fa-discord"></i> Login</a>
+        </div>
+        <div class="navbar-login"></div>
+      </div>
+      <div class="navbar-toggle" id="mobile-menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container" style="padding-top: 120px; padding-bottom: 50px;">
+    <div style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 3rem;">
+      <h1 class="section-title" style="margin-bottom: 0;">Regolamento Tornei</h1>
+    </div>
+    
+    <div class="rules-container">
+        
+        <div class="rule-section">
+            <h2><i class="fas fa-book"></i> Regolamento Generale</h2>
+            <div class="general-rule">
+                Gli organizzatori si riservano il diritto di modificare il regolamento; eventuali modifiche verranno comunicate ai partecipanti.
+            </div>
+            <div class="rule-item">
+                <i class="fas fa-exclamation-circle"></i>
+                <div class="rule-text">In caso di violazione del regolamento, i partecipanti possono essere soggetti a squalifica.</div>
+            </div>
+            <div class="rule-item">
+                <i class="fas fa-gavel"></i>
+                <div class="rule-text">In caso di dispute o contestazioni durante le partite, le decisioni dello Staff sono definitive e insindacabili.</div>
+            </div>
+            <a href="/api/download/bedwars-rules" class="btn-visit" style="padding: 10px 20px;">
+                <i class="fas fa-download" style="margin-right: 8px;"></i> Scarica PDF
+            </a>
+        </div>
+
+        <div class="rule-section">
+            <h2><i class="fas fa-users"></i> Comportamento</h2>
+            <div class="rule-item">
+                <i class="fas fa-comment-slash"></i>
+                <div class="rule-text">
+                    Insultare, provocare, assumere atteggiamenti tossici e qualsiasi forma di discriminazione.
+                    <span class="punishment">Avvertimento; recidiva comporta squalifica.</span>
+                </div>
+            </div>
+            <div class="rule-item">
+                <i class="fas fa-file-contract"></i>
+                <div class="rule-text">
+                    Falsificare prove per segnalare altri player.
+                    <span class="punishment">Squalifica; recidiva comporta esclusione dai successivi tornei.</span>
+                </div>
+            </div>
+            <div class="rule-item">
+                <i class="fas fa-user-secret"></i>
+                <div class="rule-text">
+                    Fingere di essere un membro dello Staff.
+                    <span class="punishment">Squalifica; recidiva comporta esclusione dai successivi tornei.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="rule-section">
+            <h2><i class="fas fa-ban"></i> Mod, Account e Attività Vietate</h2>
+            <div class="rule-item">
+                <i class="fas fa-microchip"></i>
+                <div class="rule-text">
+                    Uso di hack, cheat o client modificati.
+                    <span class="punishment">Squalifica; recidiva comporta esclusione dai successivi tornei.</span>
+                </div>
+            </div>
+            <div class="rule-item">
+                <i class="fas fa-user-friends"></i>
+                <div class="rule-text">
+                    È consentito un solo account per partecipante.
+                    <span class="punishment">Squalifica; recidiva comporta esclusione dai successivi tornei.</span>
+                </div>
+            </div>
+            <div class="rule-item">
+                <i class="fas fa-ad"></i>
+                <div class="rule-text">
+                    Qualsiasi attività commerciale o promozionale senza autorizzazione dello Staff.
+                    <span class="punishment">Avvertimento o squalifica a discrezione dello staff; recidiva comporta esclusione.</span>
+                </div>
+            </div>
+            <div class="rule-item">
+                <i class="fas fa-puzzle-piece"></i>
+                <div class="rule-text">
+                    Sono consentite esclusivamente mod estetiche o di performance.
+                    <span class="punishment">Violazione: Avvertimento o squalifica a discrezione dello staff.</span>
+                </div>
+            </div>
+            <div class="rule-item">
+                <i class="fas fa-desktop"></i>
+                <div class="rule-text">
+                    È consentito utilizzare solo i client elencati e approvati dallo Staff.
+                    <span class="punishment">Violazione: Avvertimento o squalifica a discrezione dello staff.</span>
+                    
+                    <div style="margin-top: 15px; font-weight: 600; color: var(--light);">Client legali consentiti:</div>
+                    <div class="client-list">
+                        <span class="client-tag">Lunar Client</span>
+                        <span class="client-tag">OCMC Client</span>
+                        <span class="client-tag">MisteryMod</span>
+                        <span class="client-tag">Zonix Client</span>
+                        <span class="client-tag">CheatBreaker</span>
+                        <span class="client-tag">PvPLounge Client</span>
+                        <span class="client-tag">Cosmic Client</span>
+                        <span class="client-tag">Hyperium Client</span>
+                        <span class="client-tag">Badlion Client</span>
+                        <span class="client-tag">Arcane Client</span>
+                        <span class="client-tag">LabyMod</span>
+                        <span class="client-tag">CM Pack</span>
+                        <span class="client-tag">Pixel Client</span>
+                        <span class="client-tag">Salwyrr Client</span>
+                        <span class="client-tag">Melon Client</span>
+                        <span class="client-tag">Ares Client</span>
+                        <span class="client-tag">Feather Client</span>
+                        <span class="client-tag">Crystal Client</span>
+                        <span class="client-tag">Blazing Pack</span>
+                        <span class="client-tag">BatMod</span>
+                        <span class="client-tag">Solar Tweaks</span>
+                        <span class="client-tag">Cloud Client</span>
+                        <span class="client-tag">SkyClient</span>
+                        <span class="client-tag">Tecknix Client</span>
+                        <span class="client-tag">Soar Client</span>
+                        <span class="client-tag">Orbit Client</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="rule-section">
+            <h2><i class="fas fa-wifi"></i> Match e Disconnessioni</h2>
+            <div class="rule-item">
+                <i class="fas fa-plug"></i>
+                <div class="rule-text">In caso di disconnessione, è possibile rientrare utilizzando il comando <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; color: var(--primary-2);">/torneo rejoin</code>.</div>
+            </div>
+            <div class="rule-item">
+                <i class="fas fa-tachometer-alt"></i>
+                <div class="rule-text">I problemi di lag personali non giustificano il rematch.</div>
+            </div>
+        </div>
+
+        <div class="rule-section">
+            <h2><i class="fas fa-balance-scale"></i> Fair Play</h2>
+            <div class="rule-item">
+                <i class="fas fa-video"></i>
+                <div class="rule-text">
+                    Stream sniping.
+                    <span class="punishment">Squalifica; recidiva comporta esclusione dai successivi tornei.</span>
+                </div>
+            </div>
+            <div class="rule-item">
+                <i class="fas fa-campground"></i>
+                <div class="rule-text">
+                    Camping.
+                    <span class="punishment">Avvertimento; recidiva comporta squalifica.</span>
+                </div>
+            </div>
+            <div class="rule-item">
+                <i class="fas fa-handshake-slash"></i>
+                <div class="rule-text">
+                    Cross teaming.
+                    <span class="punishment">Squalifica; recidiva comporta esclusione dai successivi tornei.</span>
+                </div>
+            </div>
+            <div class="rule-item">
+                <i class="fas fa-bomb"></i>
+                <div class="rule-text">
+                    Team Griefing.
+                    <span class="punishment">Avvertimento; recidiva comporta squalifica ed esclusione.</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>Astral Cup</h3>
+          <p>
+            La piattaforma competitiva definitiva per dimostrare il tuo
+            valore. Unisciti alla community, partecipa ai tornei e scala la
+            classifica verso la gloria eterna.
+          </p>
+          <div class="social-links">
+            <a href="#"><i class="fab fa-discord"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+            <a href="#"><i class="fab fa-youtube"></i></a>
+          </div>
+        </div>
+        <div class="footer-section">
+          <h3>Navigazione</h3>
+          <ul class="footer-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/tornei">Tornei</a></li>
+            <li><a href="/classifica">Classifica</a></li>
+            <li><a href="/staff">Staff</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Supporto</h3>
+          <ul class="footer-links">
+            <li><a href="/bwrules">Regolamento</a></li>
+            <li><a href="#">FAQ</a></li>
+            <li><a href="#">Contattaci</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2023 Astral Cup. Tutti i diritti riservati.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/navbar.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/socket.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/safe-load.js"></script>
+</body>
+</html>

@@ -50,6 +50,7 @@
 }
 
 .navbar-menu {
+  width: 100%;
   display: flex;
   list-style: none;
   gap: 2.5rem;
@@ -204,7 +205,8 @@
 
   .navbar-menu {
     flex-direction: column;
-    align-items: center;
+    align-items: left;
+    padding-left: 2rem;
     gap: 2rem;
   }
 

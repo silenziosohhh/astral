@@ -7,11 +7,6 @@ const UserSchema = new mongoose.Schema({
   avatar: { type: String },
   minecraftUsername: { type: String },
   role: { type: String, default: "utente" }, // 'utente', 'iscritto', 'developer', 'gestore', 'founder'
-  wins: { type: Number, default: 0 },
-  kills: { type: Number, default: 0 },
-  bedBroken: { type: Number, default: 0 },
-  points: { type: Number, default: 0 },
-  skills: { type: [String], default: [] },
   socials: {
     tiktok: String,
     youtube: String,
@@ -37,7 +32,9 @@ const UserSchema = new mongoose.Schema({
     showBedwarsStats: { type: Boolean, default: true },
     showSocials: { type: Boolean, default: true },
     showSkills: { type: Boolean, default: true },
-    showMemories: { type: Boolean, default: true }
+    showMemories: { type: Boolean, default: true },
+    allowSkinDownload: { type: Boolean, default: true },
+    showProfileLikes: { type: Boolean, default: false }
   },
   recentSearches: [{
     username: String,
@@ -46,6 +43,7 @@ const UserSchema = new mongoose.Schema({
     minecraftUsername: String,
     searchedAt: { type: Date, default: Date.now }
   }],
+  profileLikes: { type: [String], default: [] },
   tournaments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tournament" }],
 });
 

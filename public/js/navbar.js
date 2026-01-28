@@ -255,7 +255,7 @@ function updateNavbarUI(user) {
   };
 
   if (notifBtn && panel) {
-    notifBtn.addEventListener("click", (e) => {
+    notifBtn.addEventListener("click", async (e) => {
       e.stopPropagation();
       if (panel.classList.contains("active")) {
         panel.classList.remove("active");
@@ -265,6 +265,23 @@ function updateNavbarUI(user) {
         panel.classList.add("active");
         if (window.innerWidth <= 768) {
           document.body.style.overflow = "hidden";
+        }
+
+        // Segna tutte come lette (UI + API)
+        const badge = document.getElementById("nav-notification-badge");
+        if (badge && badge.style.display !== "none") {
+            badge.style.display = "none";
+            badge.style.animation = "none";
+            
+            const items = panel.querySelectorAll(".notif-item.unread");
+            items.forEach(item => {
+                item.classList.remove("unread");
+                item.classList.add("read");
+            });
+
+            try {
+                await fetch("/api/notifications/read-all", { method: "POST" });
+            } catch (err) { console.error("Errore sync notifiche", err); }
         }
       }
     });

@@ -26,7 +26,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             showBedwarsStats: document.getElementById("setting-privacy-bw-stats")?.checked,
             showSocials: document.getElementById("setting-privacy-socials")?.checked,
             showSkills: document.getElementById("setting-privacy-skills")?.checked,
-            showMemories: document.getElementById("setting-privacy-memories")?.checked
+            showMemories: document.getElementById("setting-privacy-memories")?.checked,
+            allowSkinDownload: document.getElementById("setting-privacy-skin-download")?.checked,
+            showProfileLikes: document.getElementById("setting-privacy-profile-likes")?.checked
         };
 
         try {
@@ -48,7 +50,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (res.ok) {
             const user = await res.json();
             const settings = user.notificationSettings || { tournamentStart: true, tournamentUpdates: true, tournamentEnd: true, newTournament: true };
-            const privacy = user.privacySettings || { showBedwarsStats: true, showSocials: true, showSkills: true, showMemories: true };
+            const privacy = user.privacySettings || { showBedwarsStats: true, showSocials: true, showSkills: true, showMemories: true, allowSkinDownload: true, showProfileLikes: true };
             
             const newTournamentCheck = document.getElementById("setting-new-tournament");
             const startCheck = document.getElementById("setting-tournament-start");
@@ -59,6 +61,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             const socialsCheck = document.getElementById("setting-privacy-socials");
             const skillsCheck = document.getElementById("setting-privacy-skills");
             const memoriesCheck = document.getElementById("setting-privacy-memories");
+            const skinDownloadCheck = document.getElementById("setting-privacy-skin-download");
+            const profileLikesCheck = document.getElementById("setting-privacy-profile-likes");
 
             if (newTournamentCheck) newTournamentCheck.checked = settings.newTournament !== false;
             if (startCheck) startCheck.checked = settings.tournamentStart !== false;
@@ -69,12 +73,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (socialsCheck) socialsCheck.checked = privacy.showSocials !== false;
             if (skillsCheck) skillsCheck.checked = privacy.showSkills !== false;
             if (memoriesCheck) memoriesCheck.checked = privacy.showMemories !== false;
+            if (skinDownloadCheck) skinDownloadCheck.checked = privacy.allowSkinDownload !== false;
+            if (profileLikesCheck) profileLikesCheck.checked = privacy.showProfileLikes !== false;
 
             [newTournamentCheck, startCheck, updateCheck, endCheck].forEach(el => {
                 if (el) el.addEventListener('change', saveSettings);
             });
 
-            [bwStatsCheck, socialsCheck, skillsCheck, memoriesCheck].forEach(el => {
+            [bwStatsCheck, socialsCheck, skillsCheck, memoriesCheck, skinDownloadCheck, profileLikesCheck].forEach(el => {
                 if (el) el.addEventListener('change', savePrivacySettings);
             });
         } else {

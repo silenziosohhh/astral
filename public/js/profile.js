@@ -27,21 +27,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  if (profileUsername) {
-    document.body.classList.add("viewing-other-profile");
-    const addMemoryBtn = document.getElementById("add-memory-btn");
-    const editSkillsBtn = document.getElementById("edit-skills-btn");
-    const editSocialsBtn = document.getElementById("edit-socials-btn");
-    if (addMemoryBtn) addMemoryBtn.style.display = "none";
-    if (logoutProfileBtn) logoutProfileBtn.style.display = "none";
-    if (editSkillsBtn) editSkillsBtn.style.display = "none";
-    if (editSocialsBtn) editSocialsBtn.style.display = "none";
-    
-    await Promise.all([p1, p2]);
-    if (typeof window.enablePageInteractions === 'function') window.enablePageInteractions();
-    return;
-  }
-
   const addBtn = document.getElementById("add-memory-btn");
   if (addBtn) {
     addBtn.addEventListener("click", function (e) {
@@ -141,6 +126,8 @@ async function loadUserProfile(username) {
         if (notFoundEl && mainContentEl) {
             mainContentEl.style.display = 'none';
             notFoundEl.style.display = 'flex';
+            mainContentEl.style.width = '100%';
+            mainContentEl.style.maxWidth = '100%';
         } else {
             document.querySelector(".container").innerHTML = "<h2 style='text-align:center; margin-top: 50px;'>Utente non trovato</h2>";
         }
@@ -159,7 +146,11 @@ async function loadUserProfile(username) {
 
     if (loadingEl) loadingEl.style.display = 'none';
     if (notFoundEl) notFoundEl.style.display = 'none';
-    if (mainContentEl) mainContentEl.style.display = 'block';
+    if (mainContentEl) {
+        mainContentEl.style.display = 'block'
+        mainContentEl.style.width = '100%';
+        mainContentEl.style.maxWidth = '100%';
+      }
 
     renderUserProfile(user, username);
   } catch (err) {
@@ -171,9 +162,19 @@ async function renderUserProfile(user, username) {
     // Gestione pulsanti modifica (Spostato all'inizio per evitare flash durante il caricamento async)
     const editSkillsBtn = document.getElementById("edit-skills-btn");
     const editSocialsBtn = document.getElementById("edit-socials-btn");
+    const addMemoryBtn = document.getElementById("add-memory-btn");
+    const logoutProfileBtn = document.getElementById("btn-logout-profile");
 
     if (editSkillsBtn) editSkillsBtn.style.display = user.isSelf ? "flex" : "none";
     if (editSocialsBtn) editSocialsBtn.style.display = user.isSelf ? "flex" : "none";
+    if (addMemoryBtn) addMemoryBtn.style.display = user.isSelf ? "" : "none";
+    if (logoutProfileBtn) logoutProfileBtn.style.display = user.isSelf ? "" : "none";
+
+    if (!user.isSelf) {
+        document.body.classList.add("viewing-other-profile");
+    } else {
+        document.body.classList.remove("viewing-other-profile");
+    }
 
     document.getElementById("profile-username").textContent = user.username;
     document.getElementById("profile-role").textContent =
@@ -183,7 +184,7 @@ async function renderUserProfile(user, username) {
     const saveNickBtn = document.getElementById("save-mc-nick");
     const clearNickBtn = document.getElementById("clear-mc-nick");
 
-    if (username) {
+    if (username && !user.isSelf) {
       // Gestione visualizzazione nick per altri profili (sostituisce input con span)
       let displaySpan = document.getElementById("mc-nick-display");
       
@@ -304,15 +305,16 @@ async function renderUserProfile(user, username) {
           if (el) el.textContent = "...";
         });
 
+      (async () => {
       try {
-        const coralRes = await fetch(
-          `/api/proxy/coralmc/${user.minecraftUsername}`,
+        const svRes = await fetch(
+          `/api/proxy/spacevalley/${user.minecraftUsername}`,
         );
-        if (coralRes.ok) {
-          const coralData = await coralRes.json();
+        if (svRes.ok) {
+          const svData = await svRes.json();
 
           if (killsEl) {
-            killsEl.textContent = (coralData.kills || 0).toLocaleString(
+            killsEl.textContent = (svData.kills || 0).toLocaleString(
               "it-IT",
             );
             const p = killsEl.parentElement.querySelector("p");
@@ -321,7 +323,7 @@ async function renderUserProfile(user, username) {
                 'Uccisioni <small style="color:var(--primary-2)">(CoralMC)</small>';
           }
           if (deathsEl) {
-            deathsEl.textContent = (coralData.deaths || 0).toLocaleString(
+            deathsEl.textContent = (svData.deaths || 0).toLocaleString(
               "it-IT",
             );
             const p = deathsEl.parentElement.querySelector("p");
@@ -331,45 +333,45 @@ async function renderUserProfile(user, username) {
           }
 
           if (bwWinsEl)
-            bwWinsEl.textContent = (coralData.wins || 0).toLocaleString(
+            bwWinsEl.textContent = (svData.wins || 0).toLocaleString(
               "it-IT",
             );
           if (bwLossesEl)
-            bwLossesEl.textContent = (coralData.looses || 0).toLocaleString(
+            bwLossesEl.textContent = (svData.looses || 0).toLocaleString(
               "it-IT",
             );
           if (bwKillsEl)
-            bwKillsEl.textContent = (coralData.kills || 0).toLocaleString(
+            bwKillsEl.textContent = (svData.kills || 0).toLocaleString(
               "it-IT",
             );
           if (bwDeathsEl)
-            bwDeathsEl.textContent = (coralData.deaths || 0).toLocaleString(
+            bwDeathsEl.textContent = (svData.deaths || 0).toLocaleString(
               "it-IT",
             );
           if (bwFinalsEl)
-            bwFinalsEl.textContent = (coralData.final_kills || 0).toLocaleString(
+            bwFinalsEl.textContent = (svData.final_kills || 0).toLocaleString(
               "it-IT",
             );
           if (bwBedsEl)
-            bwBedsEl.textContent = (coralData.beds_destroyed || 0).toLocaleString(
+            bwBedsEl.textContent = (svData.beds_destroyed || 0).toLocaleString(
               "it-IT",
             );
           if (bwLevelEl)
-            bwLevelEl.textContent = (coralData.level || 0).toLocaleString("it-IT");
+            bwLevelEl.textContent = (svData.level || 0).toLocaleString("it-IT");
           if (bwXpEl)
-            bwXpEl.textContent = (coralData.xp || 0).toLocaleString("it-IT");
+            bwXpEl.textContent = (svData.xp || 0).toLocaleString("it-IT");
 
           if (bwKdrEl) {
             const kdr =
-              coralData.deaths > 0
-                ? (coralData.kills / coralData.deaths).toFixed(2)
-                : coralData.kills;
+              svData.deaths > 0
+                ? (svData.kills / svData.deaths).toFixed(2)
+                : svData.kills;
             bwKdrEl.textContent = kdr;
           }
           
           if (bwBarWinsEl && bwBarLossesEl && bwWinBar && bwLossBar) {
-            const wins = coralData.wins || 0;
-            const losses = coralData.looses || 0;
+            const wins = svData.wins || 0;
+            const losses = svData.looses || 0;
             const total = wins + losses;
             
             let winPct = 50;
@@ -391,46 +393,52 @@ async function renderUserProfile(user, username) {
           }
 
           if (bwWinstreakEl)
-            bwWinstreakEl.textContent = (coralData.currentStreak || 0).toLocaleString(
+            bwWinstreakEl.textContent = (svData.currentStreak || 0).toLocaleString(
               "it-IT",
             );
           if (bwTopWinstreakEl)
-            bwTopWinstreakEl.textContent = (coralData.maxStreak || 0).toLocaleString("it-IT");
+            bwTopWinstreakEl.textContent = (svData.maxStreak || 0).toLocaleString("it-IT");
 
           if (bwSkinRender) {
-            const skinUrl = coralData.uuid
-              ? `https://visage.surgeplay.com/full/512/${coralData.uuid}`
+            const skinUrl = svData.uuid
+              ? `https://visage.surgeplay.com/full/512/${svData.uuid}`
               : `https://minotar.net/armor/body/${user.minecraftUsername}/300.png`;
             bwSkinRender.src = skinUrl;
             if (bwCardBg)
               bwCardBg.style.backgroundImage = `url('https://minotar.net/helm/${user.minecraftUsername}/100.png')`;
+
+            const skinCol = bwSkinRender.closest('.bw-skin-col');
+            const existingBtn = document.getElementById('download-skin-btn');
+            if (existingBtn) existingBtn.remove();
+
+            if (user.allowSkinDownload && skinCol) {
+                 const downloadBtn = document.createElement('a');
+                 downloadBtn.id = 'download-skin-btn';
+                 downloadBtn.href = `https://minotar.net/download/${user.minecraftUsername}`;
+                 downloadBtn.download = `${user.minecraftUsername}.png`;
+                 downloadBtn.target = '_blank';
+                 downloadBtn.className = 'btn-icon download-skin-btn';
+                 downloadBtn.innerHTML = '<i class="fas fa-download"></i>';
+                 downloadBtn.title = "Scarica Skin";
+                 skinCol.appendChild(downloadBtn);
+            }
           }
-        } else if (coralRes.status === 404) {
-          if (killsEl) killsEl.textContent = "Non trovato";
-          if (deathsEl) deathsEl.textContent = "Non trovato";
-          if (bwWinsEl)
-            [
-              bwWinsEl,
-              bwLossesEl,
-              bwKillsEl,
-              bwDeathsEl,
-              bwFinalsEl,
-              bwBedsEl,
-              bwLevelEl,
-              bwXpEl,
-              bwKdrEl,
-              bwBarWinsEl,
-              bwBarLossesEl,
-              bwWinPctEl,
-              bwLossPctEl,
-              bwTopWinstreakEl
-            ].forEach((el) => {
-              if (el) el.textContent = "-";
-            });
+        } else {
+          const bg = document.getElementById("bw-card-bg");
+          if (bg) {
+            const card = bg.closest(".admin-card");
+            if (card) card.style.display = "none";
+          }
         }
       } catch (e) {
-        console.error("Errore fetch CoralMC", e);
+        console.error("Errore fetch dati utente.", e);
+        const bg = document.getElementById("bw-card-bg");
+        if (bg) {
+            const card = bg.closest(".admin-card");
+            if (card) card.style.display = "none";
+        }
       }
+      })();
     }
 
     if (username)
@@ -441,9 +449,13 @@ async function renderUserProfile(user, username) {
     const memoriesHeader = document.getElementById("memories-title")?.closest(".section-header-flex");
     const memoriesGrid = document.getElementById("my-memories-grid");
     
-    if (!user.isSelf && user.showMemories === false) {
+    const showMemories = user.isSelf || user.showMemories !== false;
+    if (!showMemories) {
         if (memoriesHeader) memoriesHeader.style.display = "none";
         if (memoriesGrid) memoriesGrid.style.display = "none";
+    } else {
+        if (memoriesHeader) memoriesHeader.style.display = "flex";
+        if (memoriesGrid) memoriesGrid.style.display = "grid";
     }
 
     const skillsContainer = document.getElementById("skills-container");
@@ -452,22 +464,23 @@ async function renderUserProfile(user, username) {
       skillsContainer.innerHTML = "";
 
       const showSkills = user.isSelf || user.showSkills !== false;
+      const hasSkills = user.skills && user.skills.length > 0;
 
-      if (showSkills && user.skills && user.skills.length > 0) {
-        if (skillsCard) skillsCard.style.display = "block";
-        user.skills.forEach((skill) => {
-          const badge = document.createElement("span");
-          badge.style.cssText =
-            "background: rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.2);";
-          badge.textContent = skill;
-          skillsContainer.appendChild(badge);
-        });
-      } else {
-        if (!user.isSelf || !showSkills) {
-            if (skillsCard) skillsCard.style.display = "none";
-        } else {
-            if (skillsCard) skillsCard.style.display = "block";
-            skillsContainer.innerHTML = '<span style="color: #94a3b8; font-style: italic;">Nessuna skill selezionata.</span>';
+      if (skillsCard) {
+        const shouldShowCard = showSkills && (hasSkills || user.isSelf);
+        skillsCard.style.display = shouldShowCard ? "block" : "none";
+      }
+
+      if (showSkills) {
+        if (hasSkills) {
+          user.skills.forEach((skill) => {
+            const badge = document.createElement("span");
+            badge.style.cssText = "background: rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.2);";
+            badge.textContent = skill;
+            skillsContainer.appendChild(badge);
+          });
+        } else if (user.isSelf) {
+          skillsContainer.innerHTML = '<span style="color: #94a3b8; font-style: italic;">Nessuna skill selezionata.</span>';
         }
       }
     }
@@ -475,8 +488,10 @@ async function renderUserProfile(user, username) {
     const socialsContainer = document.getElementById("header-socials-container");
     if (socialsContainer) {
       socialsContainer.innerHTML = "";
+      const wrapper = socialsContainer.closest('.socials-wrapper');
+      const showSocials = user.isSelf || user.showSocials !== false;
       
-      if (user.isSelf || user.showSocials !== false) {
+      if (showSocials) {
           const socials = user.socials || {};
           const links = [
             { key: "twitch", icon: "fab fa-twitch", color: "#9146FF" },
@@ -582,14 +597,10 @@ async function renderUserProfile(user, username) {
           });
       }
 
-      // Hide wrapper if empty and not self
-      const wrapper = socialsContainer.closest('.socials-wrapper');
       if (wrapper) {
-          if (!user.isSelf && socialsContainer.children.length === 0) {
-              wrapper.style.display = 'none';
-          } else {
-              wrapper.style.display = 'flex';
-          }
+          const hasSocials = socialsContainer.children.length > 0;
+          const shouldShowWrapper = showSocials && (hasSocials || user.isSelf);
+          wrapper.style.display = shouldShowWrapper ? 'flex' : 'none';
       }
     }
 
@@ -608,11 +619,22 @@ async function renderUserProfile(user, username) {
         newLikeBtn.style.justifyContent = 'center';
         newLikeBtn.style.gap = '5px';
         
-        if (likeCountSpan) likeCountSpan.textContent = user.profileLikesCount || 0;
+        if (likeCountSpan) {
+            if (user.showProfileLikes === false) {
+                likeCountSpan.style.display = 'none';
+            } else {
+                likeCountSpan.style.display = '';
+                likeCountSpan.textContent = user.profileLikesCount !== null ? user.profileLikesCount : 0;
+            }
+        }
 
         if (user.isSelf) {
             newLikeBtn.className = '';
-            newLikeBtn.style.cssText = 'background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); padding: 0 15px; height: 42px; border-radius: 6px; color: #fff; cursor: default; display: flex; align-items: center; justify-content: center; gap: 5px;';
+            newLikeBtn.style.cssText = 'background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); padding: 10px 15px; height: 42px; border-radius: 6px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: background 0.2s;';
+            
+            newLikeBtn.onclick = () => openProfileLikesModal(user.username);
+            newLikeBtn.onmouseover = () => { newLikeBtn.style.background = "rgba(255,255,255,0.1)"; };
+            newLikeBtn.onmouseout = () => { newLikeBtn.style.background = "rgba(0,0,0,0.3)"; };
             
             if (likeIcon) {
                 likeIcon.className = 'fas fa-heart';
@@ -681,16 +703,6 @@ async function renderUserProfile(user, username) {
             navigator.clipboard.writeText(link).then(() => {
                 if (typeof showToast === 'function') showToast('Link profilo copiato!', 'success');
             });
-        });
-    }
-
-    if (typeof socket !== 'undefined') {
-        socket.off('profile:update');
-        socket.on('profile:update', (evt) => {
-            if (evt.username === user.username) {
-                const countSpan = document.getElementById('profile-likes-count');
-                if (countSpan) countSpan.textContent = evt.profileLikesCount;
-            }
         });
     }
 }
@@ -778,23 +790,43 @@ function renderProfileMemories(memories, username, currentUser, container) {
       const safeAuthor = (currentAuthorName || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
       let media = "";
-      if (m.videoUrl && m.videoUrl.includes("youtube")) {
+      let fullscreenBtn = "";
+      const iframeStyles = `style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"`;
+
+      if (m.videoUrl && (m.videoUrl.includes("youtube.com") || m.videoUrl.includes("youtu.be"))) {
         const match =
           m.videoUrl.match(/[?&]v=([^&#]+)/) ||
           m.videoUrl.match(/youtu\.be\/([^?&#]+)/);
         const videoId = match ? match[1] : null;
         if (videoId) {
-          media = `<iframe width="100%" height="180" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen style="border-radius:10px;"></iframe>`;
+          media = `<div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 0; background: #000;"><iframe src="https://www.youtube.com/embed/${videoId}" ${iframeStyles}></iframe></div>`;
         } else {
-          media = `<a href="${m.videoUrl}" target="_blank" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${m.videoUrl}</a>`;
+          media = `<a href="${m.videoUrl}" target="_blank" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${m.title}</a>`;
+        }
+      } else if (m.videoUrl && m.videoUrl.includes("tiktok.com")) {
+        const match = m.videoUrl.match(/tiktok\.com\/.*\/video\/(\d+)/);
+        const videoId = match ? match[1] : null;
+        if (videoId) {
+            media = `<div style="position: relative; width: 100%; padding-bottom: 100%; height: 0; overflow: hidden; border-radius: 0; background: #000;"><iframe src="https://www.tiktok.com/embed/v2/${videoId}" ${iframeStyles} scrolling="no"></iframe></div>`;
+        } else {
+            media = `<a href="${m.videoUrl}" target="_blank" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${m.title}</a>`;
+        }
+      } else if (m.videoUrl && m.videoUrl.includes("clips.twitch.tv")) {
+        const match = m.videoUrl.match(/clips\.twitch\.tv\/([\w-]+)/);
+        const clipSlug = match ? match[1] : null;
+        if (clipSlug) {
+            media = `<div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 0; background: #000;"><iframe src="https://clips.twitch.tv/embed?clip=${clipSlug}&parent=${window.location.hostname}" ${iframeStyles} allowfullscreen="false" scrolling="no"></iframe></div>`;
+        } else {
+            media = `<a href="${m.videoUrl}" target="_blank" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${m.title}</a>`;
         }
       } else if (
         m.videoUrl &&
         /\.(jpg|jpeg|png|webp|gif|bmp)(\?.*)?$/i.test(m.videoUrl)
       ) {
-        media = `<img src="${m.videoUrl}" alt="Memory" onerror="this.onerror=null;this.src='/images/astralcup_404.png';" onclick="event.stopPropagation(); openMediaModal(this.src, 'image', '${m._id}', '${safeAuthor}', ${likesCount}, ${sharesCount}, ${isLiked})" style="width:100%;height:180px;object-fit:cover;border-radius:10px; cursor: zoom-in;">`;
+        media = `<img src="${m.videoUrl}" alt="Memory" onerror="this.onerror=null;this.src='/images/astralcup_404.png';" onclick="event.stopPropagation(); openMediaModal(this.src, 'image', '${m._id}', '${safeAuthor}')" style="width: 100%; height: auto; display: block; cursor: zoom-in;">`;
+        fullscreenBtn = `<button onclick="event.stopPropagation(); openMediaModal('${m.videoUrl}', 'image', '${m._id}', '${safeAuthor}')" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;"><i class="fas fa-expand"></i></button>`;
       } else if (m.videoUrl) {
-        media = `<a href="${m.videoUrl}" target="_blank" onclick="event.stopPropagation()" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${m.videoUrl}</a>`;
+        media = `<a href="${m.videoUrl}" target="_blank" onclick="event.stopPropagation()" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${m.title}</a>`;
       }
 
       const date = m.createdAt
@@ -806,7 +838,7 @@ function renderProfileMemories(memories, username, currentUser, container) {
         : "";
 
       let deleteBtn = "";
-      if (!username) {
+      if (isOwner || (currentUser && ["gestore", "founder", "admin"].includes(currentUser.role))) {
         deleteBtn = `<button onclick="event.stopPropagation(); deleteMemory('${m._id}')" class="btn-icon delete" title="Elimina" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #ef4444; z-index: 10;"><i class="fas fa-trash"></i></button>`;
       }
 
@@ -814,22 +846,24 @@ function renderProfileMemories(memories, username, currentUser, container) {
       const heartColor = isLiked ? "#ef4444" : "#cbd5e1";
 
       const card = `
-        <div id="memory-${m._id}" class="card memory-card" onclick="window.location.href='/profile/${encodeURIComponent(currentAuthorName)}?memory=${m._id}'" style="min-height:320px; display:flex; flex-direction:column; justify-content:space-between; position: relative; cursor: pointer;">
+        <div id="memory-${m._id}" class="card memory-card" onclick="window.location.href='/profile/${encodeURIComponent(currentAuthorName)}?memory=${m._id}'" style="min-height:320px; display:flex; flex-direction:column; justify-content:space-between; position: relative; cursor: pointer; padding: 0; overflow: hidden;">
+            ${media}
             ${deleteBtn}
-            <div>
-                ${media}
-                <h3 style="margin:0.7rem 0 0.3rem 0;">${m.title || "Memory"}</h3>
+            <div style="padding: 1.5rem; display: flex; flex-direction: column; flex: 1;">
+                <h3 style="margin:0 0 0.3rem 0;">${m.title || "Memory"}</h3>
                 ${authorHtml}
                 <p style="font-size:0.98em; color:#aaa; margin-bottom:0.5rem;">${date}</p>
-                <p style="margin-bottom:0.7rem;">${m.description ? m.description : ""}</p>
-            </div>
-            <div style="display: flex; gap: 15px; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-                <button onclick="event.stopPropagation(); toggleLike(this, '${m._id}')" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
-                    <i class="${heartClass} fa-heart" style="font-size: 1.1rem; color: ${heartColor};"></i> <span>${likesCount}</span>
-                </button>
-                <button onclick="event.stopPropagation(); shareMemory('${m._id}', '${safeAuthor}', '${safeTitle}', this)" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
-                    <i class="fas fa-share" style="font-size: 1.1rem;"></i> <span>${sharesCount}</span>
-                </button>
+                <p style="margin-bottom:0.7rem; flex: 1;">${m.description ? m.description : ""}</p>
+                
+                <div style="display: flex; gap: 15px; margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                    <button onclick="event.stopPropagation(); toggleLike(this, '${m._id}')" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
+                        <i class="${heartClass} fa-heart" style="font-size: 1.1rem; color: ${heartColor};"></i> <span>${likesCount}</span>
+                    </button>
+                    <button onclick="event.stopPropagation(); shareMemory('${m._id}', '${safeAuthor}', '${safeTitle}', this)" class="btn-icon" style="width: auto; padding: 5px 10px; gap: 6px; background: transparent; color: #cbd5e1; font-size: 0.9rem;">
+                        <i class="fas fa-share" style="font-size: 1.1rem;"></i> <span>${sharesCount}</span>
+                    </button>
+                    ${fullscreenBtn}
+                </div>
             </div>
         </div>
       `;
@@ -853,7 +887,11 @@ function deleteMemory(id) {
     try {
       const res = await fetch(`/api/memories/${id}`, { method: "DELETE" });
       if (res.ok) {
-        loadMemories(null);
+        // Rileva l'username corrente dall'URL per ricaricare la lista corretta
+        const pathParts = window.location.pathname.split("/");
+        let profileUsername = pathParts.length > 2 && pathParts[2] ? decodeURIComponent(pathParts[2]) : null;
+        if (profileUsername === "profile.html") profileUsername = null;
+        loadMemories(profileUsername);
       } else {
         showToast("Errore durante l'eliminazione", "error");
       }
@@ -1211,4 +1249,85 @@ function debounce(func, wait) {
     clearTimeout(timeout);
     timeout = setTimeout(() => func.apply(context, args), wait);
   };
+}
+
+async function openProfileLikesModal(username) {
+  // Loading Spinner
+  const loadingOverlay = document.createElement("div");
+  loadingOverlay.className = "modal-overlay loading-modal";
+  loadingOverlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999;";
+  loadingOverlay.innerHTML = `<div class="spinner" style="border: 4px solid rgba(255,255,255,0.1); border-left-color: var(--primary-2); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div><style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>`;
+  document.body.appendChild(loadingOverlay);
+
+  try {
+    const res = await fetch(`/api/users/${encodeURIComponent(username)}/likes`);
+    loadingOverlay.remove();
+
+    if (res.status === 403) return showToast("Non autorizzato", "error");
+    if (!res.ok) return showToast("Errore nel caricamento", "error");
+    
+    const likers = await res.json();
+    
+    const existingModal = document.querySelector(".modal-overlay:not(.loading-modal)");
+    if (existingModal) existingModal.remove();
+
+    let listHtml = "";
+    if (likers.length === 0) {
+        listHtml = `<div style="text-align: center; color: #94a3b8; padding: 30px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+            <i class="far fa-heart" style="font-size: 2rem; opacity: 0.5;"></i>
+            <span>Nessun like ricevuto ancora.</span>
+        </div>`;
+    } else {
+        listHtml = `<div style="display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; padding-right: 5px;" class="custom-scrollbar">`;
+        likers.forEach(u => {
+             let avatar = "https://cdn.discordapp.com/embed/avatars/0.png";
+             if (u.avatar) avatar = `https://cdn.discordapp.com/avatars/${u.discordId}/${u.avatar}.png`;
+             
+             listHtml += `
+                <div onclick="window.location.href='/profile/${u.username}'" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.05)'">
+                    <img src="${avatar}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover;">
+                    <span style="color: #e2e8f0; font-weight: 500; font-size: 1rem;">${u.username}</span>
+                    <i class="fas fa-chevron-right" style="margin-left: auto; color: #475569; font-size: 0.8rem;"></i>
+                </div>
+             `;
+        });
+        listHtml += `</div>`;
+    }
+
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 9999; opacity: 0; transition: opacity 0.2s;";
+    
+    overlay.innerHTML = `
+        <div style="background: #181a20; padding: 2rem; border-radius: 20px; width: 90%; max-width: 420px; position: relative; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5); transform: scale(0.95); transition: transform 0.2s;">
+            <button class="modal-close" style="position:absolute; top:15px; right:15px; background:rgba(255,255,255,0.05); border:none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color:#94a3b8; cursor:pointer; transition: 0.2s;">&times;</button>
+            <h3 style="margin-bottom: 1.5rem; color: #fff; display: flex; align-items: center; gap: 10px; font-size: 1.3rem;">
+                <i class="fas fa-heart" style="color: #f87171;"></i> Likes al Profilo
+                <span style="background: rgba(239, 68, 68, 0.1); color: #f87171; font-size: 0.8rem; padding: 2px 8px; border-radius: 12px;">${likers.length}</span>
+            </h3>
+            ${listHtml}
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Animation
+    requestAnimationFrame(() => {
+        overlay.style.opacity = "1";
+        overlay.querySelector("div").style.transform = "scale(1)";
+    });
+
+    const close = () => {
+        overlay.style.opacity = "0";
+        overlay.querySelector("div").style.transform = "scale(0.95)";
+        setTimeout(() => overlay.remove(), 200);
+    };
+
+    overlay.querySelector(".modal-close").onclick = close;
+    overlay.onclick = (e) => { if (e.target === overlay) close(); };
+  } catch (e) { 
+    if(document.querySelector(".loading-modal")) document.querySelector(".loading-modal").remove();
+    console.error(e); 
+    if(typeof showToast === 'function') showToast("Errore imprevisto", "error");
+  }
 }

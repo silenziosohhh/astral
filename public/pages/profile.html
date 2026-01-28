@@ -127,7 +127,7 @@
       </div>
     </div>
   </nav>
-  <div class="container" style="padding-top: 120px; padding-bottom: 50px">
+  <div class="container" style="padding-top: 120px; padding-bottom: 50px;">
     <div id="user-not-found" style="display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 1rem; min-height: 60vh;">
         <i class="fas fa-user-slash" style="font-size: 8rem; color: #ef4444; margin-bottom: 2rem; filter: drop-shadow(0 0 30px rgba(239, 68, 68, 0.4)); animation: float 6s ease-in-out infinite;"></i>
         <h1 style="font-size: 3rem; margin-bottom: 1rem; color: #fff; font-weight: 800;">Utente non trovato</h1>
@@ -172,14 +172,14 @@
     </div>
 
     <div id="profile-main-content" style="display: none;">
-      <div class="profile-header admin-card">
-      <div class="profile-info-main" style="flex: 1; min-width: 0;">
+      <div class="profile-header admin-card" style="width: 100%; max-width: 100%;">
+      <div class="profile-info-main" style="flex: 1;">
         <div
           style="display: flex; flex-direction: column; gap: 10px; flex-wrap: wrap; align-items: flex-start; justify-content: center;">
           <div style="display: flex; flex-direction: row; gap: 20px; flex-wrap: wrap; align-items: flex-start; justify-content: center;">
             <img id="profile-avatar" src="" alt="Avatar" />
-              <div style="display: flex; flex-direction: column; gap: 5px;">
-                            <div style="
+              <div style="display: flex; flex-direction: column; gap: 5px; text-align: left; align-items: left; justify-content: left;">
+                  <div style="
                     display: flex;
                     flex-direction: row;
                     flex-wrap: wrap;
@@ -387,9 +387,9 @@
       <h2 id="memories-title" class="section-title" style="margin-bottom: 0; text-align: left; font-size: 2rem;">
         Le Mie Memories
       </h2>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+      <div style="display: flex; gap: 10px; flex-wrap: nowrap; align-items: center; flex-direction: row;">
         <input type="text" id="search-profile-memories" placeholder="Cerca..." style="
-              padding: 0.6rem 1rem;
+              padding: 0.8rem 1rem;
               border-radius: 50px;
               border: 1px solid #334155;
               background: rgba(0, 0, 0, 0.3);
@@ -400,8 +400,8 @@
               max-width: 250px;
               box-sizing: border-box;
             " onfocus="this.style.borderColor='var(--primary-2)'" onblur="this.style.borderColor='#334155'" />
-        <button id="add-memory-btn" class="btn-primary">
-          <i class="fas fa-plus"></i> Nuova Memory
+        <button id="add-memory-btn" class="btn-primary" style="text-align: left; justify-content: left;">
+          <i class="fas fa-plus"></i> Aggiungi
         </button>
       </div>
     </div>
@@ -419,10 +419,7 @@
             classifica verso la gloria eterna.
           </p>
           <div class="social-links">
-            <a href="#"><i class="fab fa-discord"></i></a>
-            <a href="#"><i class="fab fa-twitter"></i></a>
-            <a href="#"><i class="fab fa-instagram"></i></a>
-            <a href="#"><i class="fab fa-youtube"></i></a>
+              <a href="https://discord.gg/TXwYrtmZ42"><i class="fab fa-discord"></i></a>
           </div>
         </div>
         <div class="footer-section">
@@ -437,7 +434,7 @@
         <div class="footer-section">
           <h3>Supporto</h3>
           <ul class="footer-links">
-            <li><a href="#">Regolamento</a></li>
+            <li><a href="/bwrules">Regolamento</a></li>
             <li><a href="#">FAQ</a></li>
             <li><a href="#">Contattaci</a></li>
           </ul>

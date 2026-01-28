@@ -117,8 +117,9 @@ function renderSubscribers(filter = "") {
             count++;
 
             let membersHtml = members.map(m => {
-                const mName = m.username || m;
-                const mId = m.userId;
+                const userObj = (typeof m === 'object' && m.userId && typeof m.userId === 'object') ? m.userId : null;
+                const mName = userObj ? (userObj.minecraftUsername || userObj.username) : (m.username || m);
+                const mId = userObj ? userObj._id : m.userId;
                 const kickBtn = mId ? `<i class="fas fa-times" onclick="event.stopPropagation(); kickUser('${currentTournament._id}', '${mId}', false)" style="cursor: pointer; color: #f87171; margin-left: 5px; font-size: 0.8rem; transition: color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#f87171'" title="Rimuovi membro"></i>` : '';
                 return `
                 <span style="display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; margin-right: 5px;">

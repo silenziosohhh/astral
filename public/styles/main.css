@@ -40,7 +40,14 @@ body {
   padding: 0;
 }
 
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
 .container {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1.5rem;
@@ -73,7 +80,7 @@ body {
 }
 
 .hero {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -344,7 +351,6 @@ body {
 .admin-form textarea,
 .admin-form select {
   width: 100%;
-  padding: 0.8rem;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--glass-border-light);
   border-radius: 8px;
@@ -381,6 +387,7 @@ body {
   padding: 1rem;
   text-align: left;
   border-bottom: 1px solid var(--glass-border-dark);
+  white-space: nowrap;
 }
 
 .admin-table th {
@@ -388,6 +395,7 @@ body {
   text-transform: uppercase;
   font-size: 0.9rem;
   letter-spacing: 1px;
+  background: #0f172a;
 }
 
 .admin-table tr:last-child td {
@@ -453,28 +461,6 @@ body {
   100% {
     filter: drop-shadow(0 0 25px rgba(59, 130, 246, 0.8));
   }
-}
-
-:root {
-  --primary-color: #2c3e50;
-  --accent-color: #3498db;
-  --text-color: #333;
-  --bg-light: #f4f7f6;
-  --white: #ffffff;
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --transition: all 0.3s ease;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
 }
 
 .main-header {
@@ -619,9 +605,8 @@ body {
 .admin-form input,
 .admin-form select,
 .admin-form textarea {
-  padding-left: 3rem !important;
+  padding-inline: 10px;
   background: rgba(0, 0, 0, 0.4);
-  border: 1px solid var(--glass-border-light);
   transition: all 0.3s ease;
 }
 
@@ -830,7 +815,7 @@ body {
 .section-header-flex {
   display: flex;
   justify-content: space-between;
-  align-items: left;
+  align-items: center;
   margin-bottom: 2rem;
   margin-top: 3rem;
 }
@@ -1281,6 +1266,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 }
 
 .bw-skin-container {
@@ -1290,6 +1276,41 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.download-skin-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  z-index: 20;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.download-skin-btn:hover {
+  background: var(--primary-2);
+  color: #000;
+}
+
+@media (max-width: 768px) {
+  .download-skin-btn {
+    position: static;
+    margin-top: 15px;
+    width: auto;
+    padding: 8px 20px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.1);
+  }
+  .download-skin-btn::after { content: " Scarica Skin"; margin-left: 8px; font-weight: 600; font-size: 0.9rem; }
 }
 
 .bw-stats-grid {
@@ -1455,6 +1476,140 @@ body {
 
   .bw-span-2 {
     grid-column: auto;
+  }
+}
+
+/* Admin Modern UI */
+.admin-card-modern {
+  background: #1e293b;
+  padding: 2rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.admin-card-header {
+  color: #fff;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-card-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.icon-green { background: rgba(16, 185, 129, 0.1); color: #34d399; }
+.icon-blue { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
+.icon-yellow { background: rgba(245, 158, 11, 0.1); color: #fbbf24; }
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-label {
+  display: block;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.input-modern-group {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding-left: 12px;
+  display: flex;
+  align-items: center;
+  transition: border-color 0.2s;
+  width: 100%;
+  position: relative;
+}
+
+.input-modern-group:focus-within {
+  border-color: var(--primary-2);
+}
+
+.input-icon {
+  color: #64748b;
+  margin-right: 10px;
+  font-size: 1rem;
+}
+
+.input-modern {
+  background: transparent;
+  border: none;
+  color: #fff;
+  padding: 12px 0;
+  width: 100%;
+  flex: 1;
+  outline: none;
+  font-size: 1rem;
+}
+
+textarea.input-modern {
+  resize: vertical;
+  min-height: 100px;
+  padding: 12px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  font-family: inherit;
+}
+
+textarea.input-modern:focus {
+  border-color: var(--primary-2);
+}
+
+.btn-submit {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Override for admin form integration */
+.admin-form .custom-select__trigger {
+  background: transparent;
+  border: none;
+  padding: 12px 0;
+}
+
+.admin-table-container {
+  border-radius: 12px;
+  overflow-x: auto;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+@media (max-width: 768px) {
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-card-modern {
+    padding: 1.5rem;
   }
 }
 
